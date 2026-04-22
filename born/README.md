@@ -24,7 +24,9 @@ orn train --config orn_v3_61m_50b     # 6x wide shared FFN; half GPT-2 params
 
 ## Paper source
 
-`paper/orn_lab_notebook.tex` (drop in when porting from stig-res).
+- `paper/the_orbital_response_network.tex` — archive-shape paper (this is the one to submit).
+- `paper/orn_lab_notebook.tex` — comprehensive lab-notebook technical report; too sprawling for archive but useful as the full reference.
+- Rendered PDFs alongside.
 
 ## Custom experiments
 

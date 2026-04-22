@@ -30,8 +30,10 @@ drops below 2/K; `val_ce` drops below a matched `orn_v3_61m_2b` run.
 
 ## Paper source
 
-- `paper/two_hemisphere_concept_circuits.tex`
-- `paper/lorn_gauge.tex`
+- `paper/two_hemisphere_lorn_gauge.tex` — current canonical LORN paper (v3/gauge).
+- `paper/concept_circuits.tex` — the concept-circuit battery (CC-1..CC-23).
+- `paper/two_hemispheres.tex` — legacy comprehensive draft, preserved for reference.
+- Rendered PDFs alongside each.
 
 ## Key do/don't
 
