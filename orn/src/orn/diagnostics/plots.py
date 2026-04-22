@@ -464,3 +464,103 @@ def plot_rank_trajectory(trajectory: list[dict], d_model: int,
     if save_path:
         fig.savefig(save_path)
     return fig
+
+
+def plot_architecture_diagram(save_path=None):
+    """Side-by-side diagram: a standard transformer block next to an ORN block.
+
+    Highlights the decomposition claim: the coupling matrices (W_Q, W_K) on
+    the left are per-layer, which is what ALBERT-style full-sharing removes
+    in bulk. ORN pulls only the coupling out into a shared (A, B) pair; the
+    value and output projections, the FFN, and the perturbative correction
+    stay per-layer. The shared components are drawn in the shared-palette
+    blue; per-layer components in the accent orange.
+    """
+    apply_style()
+    shared = PALETTE[0]
+    per_layer = PALETTE[1]
+    shared_text = "#2c4a7a"
+    per_layer_text = "#8a4823"
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6),
+                              gridspec_kw={"wspace": 0.12})
+    for ax, title, is_orn in (
+        (axes[0], "Standard transformer layer", False),
+        (axes[1], "Orbital Response Network layer", True),
+    ):
+        ax.set_xlim(0, 10); ax.set_ylim(0, 12)
+        ax.set_aspect("equal"); ax.axis("off")
+        ax.set_title(title, fontsize=12, fontweight="semibold", pad=10)
+
+        def box(x, y, w, h, label, color, text_color, note=None):
+            from matplotlib.patches import FancyBboxPatch
+            p = FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.03,rounding_size=0.18",
+                               linewidth=1.0, edgecolor=text_color,
+                               facecolor=color, alpha=0.85)
+            ax.add_patch(p)
+            ax.text(x + w/2, y + h/2, label, ha="center", va="center",
+                    fontsize=10.5, fontweight="semibold", color=text_color)
+            if note:
+                ax.text(x + w/2, y - 0.28, note, ha="center", va="top",
+                        fontsize=8, color=text_color, style="italic")
+
+        def arrow(x0, y0, x1, y1):
+            ax.annotate("", xy=(x1, y1), xytext=(x0, y0),
+                         arrowprops=dict(arrowstyle="-|>", lw=1.2, color="#555"))
+
+        # Residual stream in/out arrows
+        ax.text(5, 11.5, "residual in", ha="center", fontsize=9, color="#666")
+        arrow(5, 11.3, 5, 10.6)
+        ax.text(5, 0.2, "residual out", ha="center", fontsize=9, color="#666")
+
+        if not is_orn:
+            box(0.6, 9.4, 3.8, 1.0, "W_Q (per layer)", per_layer, per_layer_text,
+                note="d*d params")
+            box(5.6, 9.4, 3.8, 1.0, "W_K (per layer)", per_layer, per_layer_text,
+                note="d*d params")
+            arrow(5, 9.35, 2.5, 9.4); arrow(5, 9.35, 7.5, 9.4)
+        else:
+            box(0.6, 9.4, 3.8, 1.0, "shared A", shared, shared_text,
+                note="one copy for all L layers")
+            box(5.6, 9.4, 3.8, 1.0, "shared B", shared, shared_text,
+                note="one copy for all L layers")
+            arrow(5, 9.35, 2.5, 9.4); arrow(5, 9.35, 7.5, 9.4)
+
+        # Attention mechanism (same in both)
+        box(3, 7.2, 4, 1.2, "softmax(QK^T / sqrt(d)) V",
+            "#eef2f8", "#334", note="per-layer V, O projections")
+        arrow(2.5, 9.35, 3.5, 8.4); arrow(7.5, 9.35, 6.5, 8.4)
+        arrow(5, 7.15, 5, 6.6)
+
+        # FFN
+        box(2.5, 5.2, 5, 1.2, "FFN (per layer)", per_layer, per_layer_text)
+        arrow(5, 5.15, 5, 4.6)
+
+        if is_orn:
+            box(3.1, 3.2, 3.8, 1.2, "perturbative correction",
+                per_layer, per_layer_text,
+                note="small gated MLP")
+            arrow(5, 3.15, 5, 2.4)
+            box(3.1, 1.2, 3.8, 1.1, "+ (residual add)", "#eef2f8", "#334")
+            arrow(5, 1.15, 5, 0.4)
+        else:
+            box(3.1, 2.2, 3.8, 1.1, "+ (residual add)", "#eef2f8", "#334")
+            arrow(5, 2.15, 5, 0.4)
+
+    # Legend explaining the colour code
+    from matplotlib.patches import Patch
+    handles = [
+        Patch(facecolor=shared, edgecolor=shared_text,
+              label="shared across all L layers"),
+        Patch(facecolor=per_layer, edgecolor=per_layer_text,
+              label="per-layer (response)"),
+    ]
+    fig.legend(handles=handles, loc="lower center", ncol=2,
+                bbox_to_anchor=(0.5, -0.02), frameon=False, fontsize=10)
+
+    fig.suptitle("Decomposing attention: what to share, what to keep per-layer",
+                 fontsize=13, fontweight="bold", y=0.99)
+    fig.tight_layout(rect=[0, 0.04, 1, 0.96])
+    if save_path:
+        fig.savefig(save_path)
+    return fig
