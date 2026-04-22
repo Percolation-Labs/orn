@@ -67,12 +67,13 @@ def run(device: str | None = None, train_steps: int = 150, seed: int = 0) -> dic
     }
 
 
-def plot(result: dict, save_path=None):
+def plot(result: dict, save_path=None, backend: str = "matplotlib"):
     """Motivating figure: per-layer eigenspectra overlay + cross-layer correlation."""
-    from orn.diagnostics.plots import plot_layer_invariance
     Ms = result["_per_layer_M"]
-    return plot_layer_invariance(
-        Ms, titles=[f"layer {i}" for i in range(len(Ms))],
-        save_path=save_path,
-        suptitle="Per-layer W_Q^T W_K — invariance motivates shared M",
-    )
+    titles = [f"layer {i}" for i in range(len(Ms))]
+    suptitle = "Per-layer W_Q^T W_K: invariance motivates shared M"
+    if backend == "plotly":
+        from orn.diagnostics.plotly_plots import plot_layer_invariance
+    else:
+        from orn.diagnostics.plots import plot_layer_invariance
+    return plot_layer_invariance(Ms, titles=titles, save_path=save_path, suptitle=suptitle)

@@ -119,8 +119,11 @@ def run(device: str | None = None, steps: int = 400) -> dict:
     }
 
 
-def plot(result: dict, save_path=None):
-    from orn.diagnostics.plots import plot_memoise_vs_store
+def plot(result: dict, save_path=None, backend: str = "matplotlib"):
+    if backend == "plotly":
+        from orn.diagnostics.plotly_plots import plot_memoise_vs_store
+    else:
+        from orn.diagnostics.plots import plot_memoise_vs_store
     return plot_memoise_vs_store(
         result["_mem_history"], result["_sto_history"],
         result["coupling_params_memoise"], result["coupling_params_store"],

@@ -260,6 +260,7 @@ def cmd_reproduce(args):
     save_dir = Path(args.save_plots) if args.save_plots else None
     if save_dir:
         save_dir.mkdir(parents=True, exist_ok=True)
+    backend = args.backend
 
     results = resolve(args.names)
     for r in results:
@@ -271,8 +272,9 @@ def cmd_reproduce(args):
             s = f"{v:.4f}" if isinstance(v, float) else str(v)
             print(f"    {k}: {s}")
         if save_dir and r.has_plot:
-            path = save_dir / f"{r.code}_{r.slug}.png"
-            r.plot(out, save_path=path)
+            ext = ".png" if backend == "matplotlib" else ".html"
+            path = save_dir / f"{r.code}_{r.slug}{ext}"
+            r.plot(out, save_path=path, backend=backend)
             print(f"    plot: {path}")
 
 
@@ -367,7 +369,11 @@ def main():
     sp.add_argument("--list", action="store_true")
     sp.add_argument("--slow", action="store_true", help="Include slow-tier results")
     sp.add_argument("--save-plots", default=None, metavar="DIR",
-                    help="Save plots (PNG) for every result that defines plot()")
+                    help="Save plots for every result that defines plot()")
+    sp.add_argument("--backend", choices=["matplotlib", "plotly"],
+                    default="matplotlib",
+                    help="Plot backend. `plotly` writes interactive HTML "
+                         "(requires pip install -e '.[plots]').")
     sp.add_argument("--device", default=None)
     sp.set_defaults(fn=cmd_reproduce)
 
