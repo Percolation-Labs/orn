@@ -32,6 +32,19 @@ import torch
 import torch.nn.functional as F
 
 
+def _infer_arch(model) -> str:
+    """Map the model class name back to its `arch` key used by build_model."""
+    cls = type(model).__name__
+    return {
+        "ORN": "orn_v1",
+        "ORNV2": "orn_v2",
+        "ORNV3": "orn_v3",
+        "CORN": "corn",
+        "LORN": "lorn_v4",
+        "Transformer": "transformer",
+    }.get(cls, cls.lower())
+
+
 @dataclass
 class TrainingConfig:
     """Training hyperparameters."""
@@ -372,7 +385,14 @@ class Trainer:
         }
         if hasattr(model, "config"):
             mc = model.config
-            ckpt["model_config"] = mc.to_dict() if hasattr(mc, "to_dict") else mc
+            mc_dict = mc.to_dict() if hasattr(mc, "to_dict") else dict(mc)
+            mc_dict.setdefault("arch", _infer_arch(model))
+            ckpt["model_config"] = mc_dict
+        elif hasattr(model, "cfg"):   # LORN uses .cfg, not .config
+            mc = model.cfg
+            mc_dict = mc.to_dict() if hasattr(mc, "to_dict") else dict(vars(mc))
+            mc_dict.setdefault("arch", _infer_arch(model))
+            ckpt["model_config"] = mc_dict
 
         if tag:
             path = self.ckpt_dir / f"{tag}.pt"
