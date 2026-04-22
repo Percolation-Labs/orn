@@ -17,6 +17,10 @@ from pathlib import Path
 from typing import Optional
 
 from orn.diagnostics.spectral import spectral_analysis
+from orn.diagnostics.style import apply_style, PALETTE, CMAP_SEQ
+
+# Apply shared style on import so every figure matches.
+apply_style()
 
 
 def plot_spectrum(M: np.ndarray, title: str = "M Spectral Structure",
@@ -349,32 +353,35 @@ def plot_layer_invariance(
             for j in range(L):
                 corr[i, j], _ = spearmanr(eig_mags_trim[i], eig_mags_trim[j])
 
-    fig = plt.figure(figsize=(12, 5))
-    gs = GridSpec(1, 2, width_ratios=[1.4, 1], wspace=0.25)
+    apply_style()
+    fig = plt.figure(figsize=(12, 4.8))
+    gs = GridSpec(1, 2, width_ratios=[1.4, 1], wspace=0.28)
 
     ax0 = fig.add_subplot(gs[0])
-    for e, title in zip(eig_mags, titles):
-        ax0.semilogy(e / (e[0] + 1e-12), alpha=0.75, linewidth=1.5, label=title)
+    depth_cmap = plt.get_cmap("viridis", max(L, 2))
+    for i, (e, title) in enumerate(zip(eig_mags, titles)):
+        ax0.semilogy(e / (e[0] + 1e-12), color=depth_cmap(i),
+                     alpha=0.85, linewidth=1.4, label=title)
     ax0.set_xlabel("rank (sorted)")
     ax0.set_ylabel("|eigenvalue| (normalised)")
     ax0.set_title("Sorted eigenvalue magnitudes per layer")
     if L <= 12:
-        ax0.legend(fontsize=7, loc="upper right", ncol=2)
-    ax0.grid(alpha=0.3)
+        ax0.legend(fontsize=8, loc="upper right", ncol=2)
 
     ax1 = fig.add_subplot(gs[1])
-    im = ax1.imshow(corr, vmin=0.0, vmax=1.0, cmap="viridis", aspect="auto")
+    im = ax1.imshow(corr, vmin=0.0, vmax=1.0, cmap=CMAP_SEQ, aspect="auto")
     ax1.set_xticks(range(L)); ax1.set_yticks(range(L))
-    ax1.set_xticklabels(titles, rotation=90, fontsize=7)
-    ax1.set_yticklabels(titles, fontsize=7)
-    ax1.set_title(f"Spearman ρ across layers\n(mean off-diag = {_mean_offdiag(corr):.3f})")
+    ax1.set_xticklabels(titles, rotation=90, fontsize=8)
+    ax1.set_yticklabels(titles, fontsize=8)
+    ax1.set_title(f"Spearman ρ across layers (mean off-diag {_mean_offdiag(corr):.3f})")
+    ax1.grid(False)
     plt.colorbar(im, ax=ax1, shrink=0.85, label="ρ")
 
     fig.suptitle(suptitle, fontsize=12, fontweight="bold")
-    fig.tight_layout()
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
 
     if save_path:
-        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        fig.savefig(save_path)
     return fig
 
 
@@ -394,23 +401,37 @@ def plot_memoise_vs_store(
     save_path: str | Path | None = None,
 ):
     """Colour-matching / memoise-vs-store comparison: loss curves + param-budget bar."""
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"width_ratios": [2, 1]})
+    apply_style()
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4),
+                                    gridspec_kw={"width_ratios": [2, 1]})
 
-    ax0.plot(memoise_history, label=f"MEMOISE (shared AB^T)", linewidth=1.5)
-    ax0.plot(store_history, label=f"STORE (per-layer M_l)", linewidth=1.5, alpha=0.8)
+    # Lightly smooth the loss curves so the eye reads trend, not step noise.
+    def _smooth(xs, w=9):
+        if len(xs) < w:
+            return xs
+        import numpy as _np
+        c = _np.convolve(_np.asarray(xs), _np.ones(w)/w, mode="valid")
+        pad = (len(xs) - len(c)) // 2
+        return [float(x) for x in _np.concatenate([xs[:pad], c, xs[len(xs)-pad:]])][:len(xs)]
+
+    ax0.plot(_smooth(memoise_history), label="MEMOISE (shared AB^T)",
+             color=PALETTE[0], linewidth=2.0)
+    ax0.plot(_smooth(store_history), label="STORE (per-layer M_l)",
+             color=PALETTE[1], linewidth=2.0, alpha=0.9)
     ax0.set_xlabel("training step"); ax0.set_ylabel("loss")
     ax0.set_title("Training loss")
-    ax0.legend(); ax0.grid(alpha=0.3)
+    ax0.legend(loc="upper right")
 
-    ax1.bar(["MEMOISE", "STORE"], [mem_params, sto_params],
-            color=["#4c72b0", "#dd8452"])
+    bars = ax1.bar(["MEMOISE", "STORE"], [mem_params, sto_params],
+                    color=[PALETTE[0], PALETTE[1]], width=0.6)
     ax1.set_ylabel("coupling parameters")
-    ax1.set_title(f"Coupling budget\n({sto_params/max(mem_params,1):.1f}x compression)")
-    for i, v in enumerate([mem_params, sto_params]):
-        ax1.text(i, v, f"{v:,}", ha="center", va="bottom", fontsize=9)
-    ax1.grid(alpha=0.3, axis="y")
+    ax1.set_title(f"Coupling budget ({sto_params/max(mem_params,1):.1f}x compression)")
+    for b, v in zip(bars, [mem_params, sto_params]):
+        ax1.text(b.get_x() + b.get_width()/2, v, f"{v:,}",
+                 ha="center", va="bottom", fontsize=9)
+    ax1.margins(y=0.18)
 
-    fig.suptitle("Colour matching — MEMOISE ≈ STORE on a provably-invariant task",
+    fig.suptitle("Colour matching: MEMOISE matches STORE on a provably-invariant task",
                  fontsize=12, fontweight="bold")
     fig.tight_layout()
     if save_path:
@@ -425,21 +446,21 @@ def plot_rank_trajectory(trajectory: list[dict], d_model: int,
     ranks = [t["eff_rank_90"] for t in trajectory]
     conds = [t["condition_number"] for t in trajectory]
 
+    apply_style()
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4))
 
-    ax0.plot(steps, ranks, marker="o", linewidth=1.5, color="#4c72b0")
-    ax0.axhline(d_model, color="grey", linestyle=":", label=f"d_model = {d_model}")
-    ax0.axhline(d_model / 2, color="grey", linestyle="--", alpha=0.5, label="d/2")
+    ax0.plot(steps, ranks, marker="o", linewidth=2.0, color=PALETTE[0])
+    ax0.axhline(d_model, color="#888", linestyle=":", label=f"d_model = {d_model}")
+    ax0.axhline(d_model / 2, color="#888", linestyle="--", alpha=0.6, label="d/2")
     ax0.set_xlabel("training step"); ax0.set_ylabel("effective rank (90% energy)")
     ax0.set_title("M crystallisation trajectory")
-    ax0.legend(); ax0.grid(alpha=0.3)
+    ax0.legend()
 
-    ax1.semilogy(steps, conds, marker="o", linewidth=1.5, color="#dd8452")
+    ax1.semilogy(steps, conds, marker="o", linewidth=2.0, color=PALETTE[1])
     ax1.set_xlabel("training step"); ax1.set_ylabel("condition number σ_max/σ_min")
     ax1.set_title("M becomes ill-conditioned (spectral structure emerges)")
-    ax1.grid(alpha=0.3)
 
     fig.tight_layout()
     if save_path:
-        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        fig.savefig(save_path)
     return fig

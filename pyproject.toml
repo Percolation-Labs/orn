@@ -15,10 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-data = ["datasets>=2.14", "huggingface-hub>=0.16"]
-eval = ["lm-eval>=0.4"]
-dev  = ["pytest>=7.0", "ruff>=0.1"]
-vast = ["wandb>=0.15", "datasets>=2.14", "huggingface-hub>=0.16"]
+data  = ["datasets>=2.14", "huggingface-hub>=0.16", "transformers>=4.36"]
+eval  = ["lm-eval>=0.4"]
+plots = ["plotly>=5.20", "kaleido>=0.2"]
+dev   = ["pytest>=7.0", "ruff>=0.1"]
+vast  = ["wandb>=0.15", "datasets>=2.14", "huggingface-hub>=0.16"]
 
 [project.scripts]
 orn = "orn.cli:main"

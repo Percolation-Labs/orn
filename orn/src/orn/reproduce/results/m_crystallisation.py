@@ -55,7 +55,10 @@ def run(device: str | None = None, train_steps: int = 2000,
     }
 
 
-def plot(result: dict, save_path=None):
-    from orn.diagnostics.plots import plot_rank_trajectory
+def plot(result: dict, save_path=None, backend: str = "matplotlib"):
+    if backend == "plotly":
+        from orn.diagnostics.plotly_plots import plot_rank_trajectory
+    else:
+        from orn.diagnostics.plots import plot_rank_trajectory
     return plot_rank_trajectory(result["trajectory"], result["d_model"],
                                  save_path=save_path)

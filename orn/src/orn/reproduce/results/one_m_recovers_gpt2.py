@@ -55,22 +55,23 @@ def run(device: str | None = None, train_steps: int = 150, seed: int = 0) -> dic
     }
 
 
-def plot(result: dict, save_path=None):
+def plot(result: dict, save_path=None, backend: str = "matplotlib"):
     """Per-layer bar chart of Frobenius recovery from a single shared M."""
-    import matplotlib
-    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from orn.diagnostics.style import apply_style, PALETTE
+    apply_style()
 
     rec = result["_per_layer_recovery"]
     fig, ax = plt.subplots(figsize=(7, 4))
     xs = np.arange(len(rec))
-    ax.bar(xs, [100 * r for r in rec], color="#4c72b0")
-    ax.axhline(100 * result["mean_recovery"], color="black", linestyle="--",
-               label=f"mean = {100*result['mean_recovery']:.1f}%")
+    ax.bar(xs, [100 * r for r in rec], color=PALETTE[0], width=0.7)
+    ax.axhline(100 * result["mean_recovery"], color="#333", linestyle="--",
+               linewidth=1.2, label=f"mean {100*result['mean_recovery']:.1f}%")
     ax.set_xlabel("layer"); ax.set_ylabel("Frobenius recovery (%)")
-    ax.set_title("One shared M recovers per-layer W_Q^T W_K")
-    ax.set_ylim(0, 100); ax.legend(); ax.grid(alpha=0.3, axis="y")
+    ax.set_title("A single shared M recovers most of per-layer W_Q^T W_K")
+    ax.set_ylim(0, 100); ax.set_xticks(xs)
+    ax.legend(loc="lower right")
     fig.tight_layout()
     if save_path:
-        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        fig.savefig(save_path)
     return fig
