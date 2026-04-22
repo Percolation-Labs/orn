@@ -312,3 +312,134 @@ def plot_training_report(log_entries: list[dict], model_name: str = "ORN",
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
+
+
+def plot_layer_invariance(
+    per_layer_M: list[np.ndarray],
+    titles: list[str] | None = None,
+    save_path: str | Path | None = None,
+    suptitle: str = "Per-layer coupling eigenspectra — the motivation for shared M",
+):
+    """The motivating figure for shared M.
+
+    Left : overlay of sorted eigenvalue magnitudes for each layer's
+           M_l = W_Q^T W_K. Curves should lie on top of each other — the
+           *rule* is invariant — even when the raw matrices differ.
+    Right: Spearman-correlation heatmap of those eigenvalue curves across
+           layers. Values near 1 = identical structure; near 0 = unrelated.
+
+    Works for any sequence of square matrices. Use with a trained transformer
+    (one model, many layers) or across model families (concatenate a layer
+    from each).
+    """
+    from scipy.stats import spearmanr
+
+    L = len(per_layer_M)
+    if titles is None:
+        titles = [f"layer {i}" for i in range(L)]
+
+    with np.errstate(all="ignore"):
+        eig_mags = [np.sort(np.abs(np.linalg.eigvals(M.astype(np.float64))))[::-1]
+                    for M in per_layer_M]
+        # Pad/truncate to common length for heatmap alignment
+        d = min(len(e) for e in eig_mags)
+        eig_mags_trim = [e[:d] for e in eig_mags]
+        corr = np.zeros((L, L))
+        for i in range(L):
+            for j in range(L):
+                corr[i, j], _ = spearmanr(eig_mags_trim[i], eig_mags_trim[j])
+
+    fig = plt.figure(figsize=(12, 5))
+    gs = GridSpec(1, 2, width_ratios=[1.4, 1], wspace=0.25)
+
+    ax0 = fig.add_subplot(gs[0])
+    for e, title in zip(eig_mags, titles):
+        ax0.semilogy(e / (e[0] + 1e-12), alpha=0.75, linewidth=1.5, label=title)
+    ax0.set_xlabel("rank (sorted)")
+    ax0.set_ylabel("|eigenvalue| (normalised)")
+    ax0.set_title("Sorted eigenvalue magnitudes per layer")
+    if L <= 12:
+        ax0.legend(fontsize=7, loc="upper right", ncol=2)
+    ax0.grid(alpha=0.3)
+
+    ax1 = fig.add_subplot(gs[1])
+    im = ax1.imshow(corr, vmin=0.0, vmax=1.0, cmap="viridis", aspect="auto")
+    ax1.set_xticks(range(L)); ax1.set_yticks(range(L))
+    ax1.set_xticklabels(titles, rotation=90, fontsize=7)
+    ax1.set_yticklabels(titles, fontsize=7)
+    ax1.set_title(f"Spearman ρ across layers\n(mean off-diag = {_mean_offdiag(corr):.3f})")
+    plt.colorbar(im, ax=ax1, shrink=0.85, label="ρ")
+
+    fig.suptitle(suptitle, fontsize=12, fontweight="bold")
+    fig.tight_layout()
+
+    if save_path:
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    return fig
+
+
+def _mean_offdiag(C: np.ndarray) -> float:
+    n = C.shape[0]
+    if n < 2:
+        return float("nan")
+    mask = ~np.eye(n, dtype=bool)
+    return float(C[mask].mean())
+
+
+def plot_memoise_vs_store(
+    memoise_history: list[float],
+    store_history: list[float],
+    mem_params: int,
+    sto_params: int,
+    save_path: str | Path | None = None,
+):
+    """Colour-matching / memoise-vs-store comparison: loss curves + param-budget bar."""
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"width_ratios": [2, 1]})
+
+    ax0.plot(memoise_history, label=f"MEMOISE (shared AB^T)", linewidth=1.5)
+    ax0.plot(store_history, label=f"STORE (per-layer M_l)", linewidth=1.5, alpha=0.8)
+    ax0.set_xlabel("training step"); ax0.set_ylabel("loss")
+    ax0.set_title("Training loss")
+    ax0.legend(); ax0.grid(alpha=0.3)
+
+    ax1.bar(["MEMOISE", "STORE"], [mem_params, sto_params],
+            color=["#4c72b0", "#dd8452"])
+    ax1.set_ylabel("coupling parameters")
+    ax1.set_title(f"Coupling budget\n({sto_params/max(mem_params,1):.1f}x compression)")
+    for i, v in enumerate([mem_params, sto_params]):
+        ax1.text(i, v, f"{v:,}", ha="center", va="bottom", fontsize=9)
+    ax1.grid(alpha=0.3, axis="y")
+
+    fig.suptitle("Colour matching — MEMOISE ≈ STORE on a provably-invariant task",
+                 fontsize=12, fontweight="bold")
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    return fig
+
+
+def plot_rank_trajectory(trajectory: list[dict], d_model: int,
+                          save_path: str | Path | None = None):
+    """SPE-02: eff_rank_90 of M across training steps."""
+    steps = [t["step"] for t in trajectory]
+    ranks = [t["eff_rank_90"] for t in trajectory]
+    conds = [t["condition_number"] for t in trajectory]
+
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4))
+
+    ax0.plot(steps, ranks, marker="o", linewidth=1.5, color="#4c72b0")
+    ax0.axhline(d_model, color="grey", linestyle=":", label=f"d_model = {d_model}")
+    ax0.axhline(d_model / 2, color="grey", linestyle="--", alpha=0.5, label="d/2")
+    ax0.set_xlabel("training step"); ax0.set_ylabel("effective rank (90% energy)")
+    ax0.set_title("M crystallisation trajectory")
+    ax0.legend(); ax0.grid(alpha=0.3)
+
+    ax1.semilogy(steps, conds, marker="o", linewidth=1.5, color="#dd8452")
+    ax1.set_xlabel("training step"); ax1.set_ylabel("condition number σ_max/σ_min")
+    ax1.set_title("M becomes ill-conditioned (spectral structure emerges)")
+    ax1.grid(alpha=0.3)
+
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    return fig

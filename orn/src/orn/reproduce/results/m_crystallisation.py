@@ -46,10 +46,16 @@ def run(device: str | None = None, train_steps: int = 2000,
     final = trajectory[-1]
     initial = trajectory[0]
     return {
-        "d_model": cfg.d_model,
+        "d_model":          cfg.d_model,
         "initial_eff_rank": initial["eff_rank_90"],
         "final_eff_rank":   final["eff_rank_90"],
         "rank_fraction":    final["eff_rank_90"] / cfg.d_model,
         "rank_collapsed":   final["eff_rank_90"] < cfg.d_model / 2,
         "trajectory":       trajectory,
     }
+
+
+def plot(result: dict, save_path=None):
+    from orn.diagnostics.plots import plot_rank_trajectory
+    return plot_rank_trajectory(result["trajectory"], result["d_model"],
+                                 save_path=save_path)

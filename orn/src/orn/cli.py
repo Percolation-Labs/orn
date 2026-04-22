@@ -54,6 +54,27 @@ def cmd_prepare(args):
 # train
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _ensure_data_dir(data_dir: str, config_name: str, seq: int,
+                      batch_size: int, vocab_size: int) -> None:
+    """If using dry_run and no shards exist, drop a small synthetic shard.
+
+    Real configs (orn_v*, lorn_v4_*) should use `orn prepare` instead; we do
+    not silently synthesise data for them.
+    """
+    import torch
+    from pathlib import Path
+    p = Path(data_dir)
+    if p.exists() and any(p.glob("shard_*.pt")):
+        return
+    if config_name != "dry_run":
+        return
+    p.mkdir(parents=True, exist_ok=True)
+    n_tokens = max(batch_size * seq * 400, 50_000)
+    torch.save(torch.randint(0, vocab_size, (n_tokens,), dtype=torch.int32),
+               p / "shard_0000.pt")
+    print(f"  [dry_run] synthesised {n_tokens:,} random tokens at {p / 'shard_0000.pt'}")
+
+
 def _apply_overrides(model_kw: dict, training_kw: dict, args):
     for k in ("d_model", "n_layers", "n_heads", "n_q_heads", "n_kv_heads",
              "d_head", "seq_len", "d_corr", "vocab_size", "ffn_width_mult"):
@@ -89,6 +110,12 @@ def cmd_train(args):
 
     data_dir = args.data or cfg.get("data", {}).get("path") or "data"
     seq = model_kw.get("seq_len") or model_kw.get("T_max") or train_cfg.seq_len
+
+    # Zero-friction dry run: if no shards exist and this is the dry_run config,
+    # synthesize one so new users can smoke the pipeline with no HF token.
+    _ensure_data_dir(data_dir, args.config, seq, train_cfg.batch_size,
+                     vocab_size=model_kw.get("vocab_size", 50257))
+
     train_loader = ShardedDataLoader(data_dir, seq, train_cfg.batch_size, device)
     val_loader = ShardedDataLoader(data_dir, seq, train_cfg.batch_size, device, eval_mode=True)
 
@@ -199,19 +226,31 @@ def cmd_reproduce(args):
     if args.list or not args.names:
         tier = "slow_reproduce" if args.slow else None
         results = list_results(tier=tier) if args.slow else list_results()
-        print(f"{'CODE':<8s} {'TIER':<16s} {'RUNTIME':<8s} SLUG")
+        print(f"{'CODE':<8s} {'TIER':<16s} {'RUNTIME':<8s} {'PLOT':<5s} SLUG")
         for r in results:
-            print(f"{r.code:<8s} {r.tier:<16s} {r.runtime_s:<5d}s   {r.slug}")
-        print(f"\nUsage: orn reproduce <code|slug|prefix> [...]")
+            plot = "✓" if r.has_plot else "."
+            print(f"{r.code:<8s} {r.tier:<16s} {r.runtime_s:<5d}s   "
+                  f"{plot:<5s} {r.slug}")
+        print("\nUsage: orn reproduce <code|slug|prefix> [...] [--save-plots DIR]")
         return
+
+    save_dir = Path(args.save_plots) if args.save_plots else None
+    if save_dir:
+        save_dir.mkdir(parents=True, exist_ok=True)
 
     results = resolve(args.names)
     for r in results:
         print(f"\n── {r.code}  {r.slug} ──")
         out = r.run(device=args.device)
         for k, v in out.items():
+            if k.startswith("_"):   # internal payloads (e.g. _per_layer_M)
+                continue
             s = f"{v:.4f}" if isinstance(v, float) else str(v)
             print(f"    {k}: {s}")
+        if save_dir and r.has_plot:
+            path = save_dir / f"{r.code}_{r.slug}.png"
+            r.plot(out, save_path=path)
+            print(f"    plot: {path}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -296,6 +335,8 @@ def main():
     sp.add_argument("names", nargs="*")
     sp.add_argument("--list", action="store_true")
     sp.add_argument("--slow", action="store_true", help="Include slow-tier results")
+    sp.add_argument("--save-plots", default=None, metavar="DIR",
+                    help="Save plots (PNG) for every result that defines plot()")
     sp.add_argument("--device", default=None)
     sp.set_defaults(fn=cmd_reproduce)
 

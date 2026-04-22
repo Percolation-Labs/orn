@@ -47,8 +47,30 @@ def run(device: str | None = None, train_steps: int = 150, seed: int = 0) -> dic
             recovery.append(1 - num / (den + 1e-12))
 
     return {
-        "n_layers": len(per_layer_M),
+        "n_layers":      len(per_layer_M),
         "mean_recovery": float(np.mean(recovery)),
-        "min_recovery": float(np.min(recovery)),
-        "final_loss": loss.item(),
+        "min_recovery":  float(np.min(recovery)),
+        "final_loss":    loss.item(),
+        "_per_layer_recovery": recovery,
     }
+
+
+def plot(result: dict, save_path=None):
+    """Per-layer bar chart of Frobenius recovery from a single shared M."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    rec = result["_per_layer_recovery"]
+    fig, ax = plt.subplots(figsize=(7, 4))
+    xs = np.arange(len(rec))
+    ax.bar(xs, [100 * r for r in rec], color="#4c72b0")
+    ax.axhline(100 * result["mean_recovery"], color="black", linestyle="--",
+               label=f"mean = {100*result['mean_recovery']:.1f}%")
+    ax.set_xlabel("layer"); ax.set_ylabel("Frobenius recovery (%)")
+    ax.set_title("One shared M recovers per-layer W_Q^T W_K")
+    ax.set_ylim(0, 100); ax.legend(); ax.grid(alpha=0.3, axis="y")
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    return fig

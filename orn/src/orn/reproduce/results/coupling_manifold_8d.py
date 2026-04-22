@@ -5,6 +5,9 @@ task, then stack per-layer M_l = W_Q^T W_K and measure the effective rank of
 the stacked matrix. At real scale this lands near 8 for GPT-2; at our smoke
 scale (d_model=64, L=4) we just verify (a) the eff-rank is well below L*d and
 (b) the spectral-correlation metric matches the claim of universality.
+
+Also exposes `plot(result)` that draws the motivating invariance figure:
+overlaid per-layer eigenspectra + Spearman-correlation heatmap across layers.
 """
 from __future__ import annotations
 
@@ -60,4 +63,16 @@ def run(device: str | None = None, train_steps: int = 150, seed: int = 0) -> dic
         "mean_pairwise_spectral_corr": float(np.mean(corrs)),
         "min_pairwise_spectral_corr": float(np.min(corrs)),
         "final_loss": loss.item(),
+        "_per_layer_M": per_layer_M,  # kept for plot()
     }
+
+
+def plot(result: dict, save_path=None):
+    """Motivating figure: per-layer eigenspectra overlay + cross-layer correlation."""
+    from orn.diagnostics.plots import plot_layer_invariance
+    Ms = result["_per_layer_M"]
+    return plot_layer_invariance(
+        Ms, titles=[f"layer {i}" for i in range(len(Ms))],
+        save_path=save_path,
+        suptitle="Per-layer W_Q^T W_K — invariance motivates shared M",
+    )

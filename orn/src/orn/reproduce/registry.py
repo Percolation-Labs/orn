@@ -29,6 +29,23 @@ class Result:
             raise RuntimeError(f"Result {self.code} has no loader")
         return self._loader()
 
+    @property
+    def plot(self) -> Callable | None:
+        """Return the module's plot(result_dict, save_path=None) if it exists."""
+        if self._loader is None:
+            return None
+        import importlib
+        mod = importlib.import_module(self._loader.__module__
+                                       if hasattr(self._loader, "__module__") else "")
+        # The loader is a closure; pull the module path from its origin.
+        # Simpler: look it up by slug convention.
+        mod = importlib.import_module(f"orn.reproduce.results.{self.slug}")
+        return getattr(mod, "plot", None)
+
+    @property
+    def has_plot(self) -> bool:
+        return self.plot is not None
+
 
 def _lazy(module_path: str, fn_name: str = "run"):
     """Defer import of result modules — avoids paying the cost until invoked."""
@@ -70,6 +87,16 @@ _register(Result(
     runtime_s=2700,
     papers=["born/paper/orn_lab_notebook.tex"],
     _loader=_lazy("orn.reproduce.results.m_crystallisation"),
+))
+
+_register(Result(
+    code="SPE-03",
+    slug="spectral_universality_pretrained",
+    title="Per-layer W_Q^T W_K eigenspectra correlate on a pretrained GPT-2 (the motivating figure)",
+    tier="slow_reproduce",
+    runtime_s=120,
+    papers=["born/paper/orn_lab_notebook.tex"],
+    _loader=_lazy("orn.reproduce.results.spectral_universality_pretrained"),
 ))
 
 

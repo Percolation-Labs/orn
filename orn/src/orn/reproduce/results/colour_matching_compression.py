@@ -84,33 +84,45 @@ class _Model(nn.Module):
         return logits
 
 
-def _train(mode: str, steps: int = 400, seed: int = 0) -> tuple[float, int]:
+def _train(mode: str, steps: int = 400, seed: int = 0) -> tuple[float, int, list[float]]:
     torch.manual_seed(seed)
     m = _Model(mode)
     opt = torch.optim.AdamW(m.parameters(), lr=3e-3)
     best = float("inf")
+    history: list[float] = []
     for step in range(steps):
         x, y = _palette_batch()
         _, loss = m(x, targets=y)
         opt.zero_grad(); loss.backward(); opt.step()
+        history.append(loss.item())
         if step >= steps - 20:
             best = min(best, loss.item())
-    coupling = 0
     if mode == "memoise":
         coupling = m.A.numel() + m.B.numel()
     else:
         coupling = sum(p.numel() for p in m.As) + sum(p.numel() for p in m.Bs)
-    return best, coupling
+    return best, coupling, history
 
 
 def run(device: str | None = None, steps: int = 400) -> dict:
-    mem_loss, mem_params = _train("memoise", steps=steps)
-    sto_loss, sto_params = _train("store",   steps=steps)
+    mem_loss, mem_params, mem_hist = _train("memoise", steps=steps)
+    sto_loss, sto_params, sto_hist = _train("store",   steps=steps)
     return {
-        "memoise_best_loss":   mem_loss,
-        "store_best_loss":     sto_loss,
-        "loss_ratio":          mem_loss / max(sto_loss, 1e-8),
+        "memoise_best_loss":       mem_loss,
+        "store_best_loss":         sto_loss,
+        "loss_ratio":              mem_loss / max(sto_loss, 1e-8),
         "coupling_params_memoise": mem_params,
         "coupling_params_store":   sto_params,
-        "compression_factor":  sto_params / max(mem_params, 1),
+        "compression_factor":      sto_params / max(mem_params, 1),
+        "_mem_history":            mem_hist,
+        "_sto_history":            sto_hist,
     }
+
+
+def plot(result: dict, save_path=None):
+    from orn.diagnostics.plots import plot_memoise_vs_store
+    return plot_memoise_vs_store(
+        result["_mem_history"], result["_sto_history"],
+        result["coupling_params_memoise"], result["coupling_params_store"],
+        save_path=save_path,
+    )
