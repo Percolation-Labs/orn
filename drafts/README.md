@@ -5,20 +5,19 @@ package; lives on the `article-drafts` branch so main stays focused on code.
 
 ## Publishing to Medium (no API token needed)
 
-1. Write / edit the draft here as Markdown (one `.md` per article).
-2. Upload it as a public Gist — `gh gist create --public <file>.md`.
-3. Go to <https://medium.com/p/import> and paste the gist's raw URL.
-4. Medium pulls the content into a new draft on your account (`@mrsirsh`).
-5. Edit / polish in the Medium editor, publish when ready.
+The working pipeline is documented in `scripts/README.md` (local, git-ignored).
+Short version: render the Markdown to HTML, commit it to this branch, and
+paste the GitHub Pages URL into `medium.com/p/import`. The helper at
+`scripts/publish_to_medium.sh <draft.md>` automates the render-commit-push
+round trip and prints the URL to paste.
 
-The helper at `../scripts/publish_to_medium.sh <draft.md>` wraps steps 2-3
-— it creates the gist with `gh` and prints the raw URL plus the Medium
-import URL to paste.
+## Current draft
 
-## Current drafts
-
-- `shared_m_invariance.md` — a short explainer built around the COU-02
-  motivating figure. Draft status: seed only.
+- `shared_coupling_is_a_world_model_hint.md` — the basic-ORN summary.
+  Leads with the rotational invariance of per-layer coupling, frames
+  parameter saving as the bonus, lands on the world-model / shared-ontology
+  implication. Public page:
+  <https://percolation-labs.github.io/orn/drafts/shared_coupling_is_a_world_model_hint.html>
 
 ## `.seed/` — voice / style reference (git-ignored)
 
