@@ -1,0 +1,919 @@
+\documentclass[11pt, a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=blue!60!black,
+    urlcolor=blue!60!black
+}
+
+\newcommand{\M}{\mathbf{M}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\s}{\mathbf{s}}
+\newcommand{\orbit}{\mathbf{o}}
+\newcommand{\R}{\mathbb{R}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{operation}{Operation}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+% ── Title ─────────────────────────────────────────────────────────────
+\title{%
+    \textbf{M-Calculus:}\\[4pt]
+    \Large An Algebra for Operating on Shared\\
+    Coupling Geometry in Neural Networks%
+}
+\author{Sirsh}
+\date{March 2026 \quad{\small\textnormal{--- Working Document}}}
+
+\begin{document}
+\maketitle
+
+% ======================================================================
+\begin{abstract}
+A standard transformer distributes its learned structure across $2L$ independent query-key projection matrices.
+No single object captures what the model ``knows'' about how tokens relate---the coupling knowledge is shattered across layers, inaccessible to any post-hoc operation.
+
+The Orbital Response Network (ORN) replaces these $2L$ matrices with a single shared $\M = AB^\top$, applied at every layer.
+This memoisation has an unexpected consequence: it forces the model to encode linguistic structure---syntax, tense, clause boundaries, discourse role---into the \textbf{residual stream}, where it becomes a manipulable geometric object.
+Empirically, the ORN's residual stream separates syntactically different sentences $60\times$ more than GPT-2's, contains at least 5 linearly independent linguistic factors (sentence type, tense, content/function, position, clause boundary), and supports vector arithmetic that correctly transfers compositional features like gender.
+
+We propose the \textbf{M-calculus}: a set of operations for reading, writing, composing, and sampling from the geometric structure induced by shared $\M$.
+These operations are \emph{impossible} in a standard transformer because the structure they operate on does not exist in a single accessible object.
+We define the operations, prove they require a shared coupling geometry, demonstrate them empirically, and identify what richer structure could emerge with targeted training.
+\end{abstract}
+
+% ======================================================================
+\section{Why M Creates an Operable Object}
+\label{sec:why}
+
+\subsection{The Transformer's Shattered Geometry}
+
+A transformer attention head at layer $\ell$ computes coupling through $\M^{(\ell)} = {W_Q^{(\ell)}}^\top W_K^{(\ell)}$.
+Each layer has its own $\M^{(\ell)}$.
+Together, the $L$ matrices encode how the model believes tokens should relate---but this knowledge is \textbf{distributed across weights}, not concentrated in any single object.
+
+Concretely:
+\begin{itemize}[nosep]
+\item The residual stream $\x^{(\ell)}$ at layer $\ell$ depends on ALL previous coupling matrices $\M^{(1)}, \ldots, \M^{(\ell)}$.
+    No single $\M^{(\ell)}$ explains $\x^{(\ell)}$---it is the cumulative effect of all prior couplings.
+\item Editing $\x^{(\ell)}$ at one layer changes the \emph{input} to $\M^{(\ell+1)}$ at the next layer, but $\M^{(\ell+1)}$ was trained to expect outputs from $\M^{(\ell)}$, not from your edit.
+    Interventions cascade unpredictably.
+\item There is no ``coupling state'' to read or write---the coupling is implicit in the weights.
+\end{itemize}
+
+We can verify this empirically.
+Comparing the ORN (50M, SharedM) against GPT-2 Small (124M, per-layer $W_Q, W_K$):
+
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+& \textbf{ORN} & \textbf{GPT-2} \\
+\midrule
+Same-syntax pairs (cosine) & 0.78 & 0.996 \\
+Different-syntax pairs (cosine) & 0.44 & 0.990 \\
+\textbf{Syntactic separation} & \textbf{0.35} & \textbf{0.006} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+GPT-2's residual states are nearly identical regardless of syntactic structure (cosine $\geq 0.99$).
+The syntactic information is \emph{not in the state}---it is in the per-layer weight differences, where no post-hoc operation can access it.
+
+The ORN's residual states differ substantially by syntactic structure (separation $0.35$, or $60\times$ GPT-2's).
+SharedM forces syntax into the state because the model has no per-layer weight variation to hide it in.
+
+\subsection{What SharedM Creates}
+
+By constraining every layer to use the same coupling rule $\M$, the ORN creates a \textbf{coupling manifold}: a geometric structure in the residual stream where:
+\begin{enumerate}[nosep]
+\item Linguistic properties (syntax, tense, clause structure, content/function distinction) are encoded as \emph{directions} in the residual stream.
+\item These directions are \emph{linearly accessible}---readable by linear probes, manipulable by vector arithmetic.
+\item The manifold is \emph{low-dimensional} ($\sim$7 dims for 50\% variance, $\sim$45 for 90\%) and \emph{stable} (PCA basis transfers at $>97\%$ across prompts).
+\item The layer-to-layer trajectory on this manifold is \emph{predictable}: a single $20 \times 20$ linear operator reproduces the trajectory on unseen prompts with $>96.5\%$ cosine accuracy.
+\end{enumerate}
+
+This is the object the M-calculus operates on.
+
+\subsection{What SharedM Does and Does Not Change}
+
+A natural question: does GPT-2 also have structure in its residual stream?
+Yes.
+Sparse autoencoder analysis shows that cross-layer feature consistency is \emph{similar} in both architectures ($\sim$47\% for ORN, $\sim$52\% for GPT-2).
+This is expected: the residual stream's skip connections carry information across layers regardless of coupling architecture.
+Both models develop features for determiners, punctuation, content words, and positional structure.
+\textbf{SharedM does not make features more consistent.}
+
+What SharedM does is factor out the \textbf{steerable geometry}.
+The features are the furniture; $\M$ is the floor plan.
+Both architectures have the same furniture in each room.
+But in GPT-2, each room has a different floor plan ($\M^{(\ell)}$ varies per layer), so navigating by touch is impossible---an edit at one layer creates a state that the next layer's floor plan doesn't accommodate.
+In the ORN, every room has the same floor plan ($\M$ is shared), so an edit at any layer propagates consistently through all subsequent layers.
+
+The empirical proof is stark.
+Applying the same steering procedure (inject source orbit at 30\% strength) to both architectures:
+
+\begin{center}\small
+\begin{tabular}{lp{5.3cm}p{5.3cm}}
+\toprule
+\textbf{Test} & \textbf{ORN steered} & \textbf{GPT-2 steered} \\
+\midrule
+Concessive $\to$ Simple & ``played to the `we told he was in on his neck'\,'' & ``played in and the the the in the at the desk.'' \\
+Sequence $\to$ Report & ``showed the floor and on a chair'' & ``showed/, of the is of the back of said-'' \\
+Narrative $\to$ Science & ``discovered a new body of a white shirt'' & ``discovered a new from it in in in with the dog.'' \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A controlled experiment reveals the precise nature of the difference.
+Both architectures \emph{survive} activation steering equally well---neither degenerates before the other.
+The difference is not in \textbf{robustness} but in \textbf{effectiveness}: the same steering strength produces a larger, more targeted semantic shift in the ORN.
+
+\paragraph{Effectiveness, not robustness.}
+We steer both models toward ``question,'' ``future,'' and ``formal'' at matched strength ($\alpha{=}0.5$) and measure whether the output actually becomes more question-like, future-oriented, or formal:
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Steering target} & \textbf{ORN gain} & \textbf{GPT-2 gain} & \textbf{ORN advantage} \\
+\midrule
+Question & $+0.80$ & $+0.11$ & $7.5\times$ \\
+Future & $+4.00$ & $+4.00$ & $1.0\times$ (tied) \\
+Formal & $+0.68$ & $-0.04$ & $18.1\times$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+ORN steering is directionally more effective for questions and formality (preliminary; measured with surface-level proxies on small samples).
+GPT-2's formality steering actually makes the output \emph{less} formal ($-0.04$), while the ORN becomes substantially more formal ($+0.68$).
+Future tense is tied---both architectures respond equally---because future markers (``will,'' ``going to'') are lexical, not structural.
+
+\paragraph{Why effectiveness differs.}
+The $60\times$ syntactic separation (Section~\ref{sec:why}) means the ORN's ``question direction'' and ``formal direction'' carry $60\times$ more discriminative signal than GPT-2's.
+In GPT-2, everything lives at cosine $\geq 0.99$, so the difference between question-orbit and statement-orbit is a tiny perturbation in a nearly uniform space.
+In the ORN, the separation is $0.35$---a large, robust signal.
+A small push along this direction produces a large semantic shift because the direction IS the linguistic distinction, not a faint echo of it.
+
+SharedM creates this by \emph{memoisation}: because the coupling rule is shared, the model must encode structural distinctions in the state.
+The encoding is high-fidelity (it's the model's only option), so the directions are strong and the steering is effective.
+In GPT-2, structural distinctions can be encoded in the per-layer weight differences, so the residual stream directions carry only a weak shadow of the distinction---enough for a probe to detect, but not enough for steering to exploit.
+
+\paragraph{Correction to earlier claims.}
+An earlier version of this analysis claimed that GPT-2 ``degenerates'' under steering while the ORN does not.
+This was based on a wormhole experiment (PCA round-trip plus shift) where GPT-2 produced repetitive output.
+Controlled experiments with direct activation addition show both architectures tolerate steering equally well up to high strengths.
+The correct claim is: both survive, but the ORN's steering is \emph{more effective} because its directions are more discriminative.
+
+% ======================================================================
+\section{The M-Calculus: Operations on the Coupling Manifold}
+\label{sec:operations}
+
+We define six operations, ordered from simplest to most powerful.
+Each is defined formally, demonstrated empirically, and shown to require shared $\M$.
+
+\subsection{Read: Linear Probing of Linguistic Properties}
+
+\begin{operation}[Read]
+Given a residual state $\x \in \R^d$ at any layer, extract a linguistic property $p$ by linear projection: $\hat{p} = \mathbf{w}_p^\top \x + b_p$.
+\end{operation}
+
+The coupling manifold supports reading of at least:
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Property} & \textbf{Accuracy} & \textbf{Chance} \\
+\midrule
+Content vs function word & 97.4\% & 55.2\% \\
+Position role (start/mid/end) & 100\% & 33.3\% \\
+Sentence structure (5 types) & 57.1\% & 20.0\% \\
+Tense (past/present/future) & 60.7\% & 33.3\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Independent Component Analysis (ICA) reveals at least 5 further separable factors: clause boundaries, modality markers, interrogative structure, adjective/modifier presence, and prepositional context.
+
+\paragraph{Why this requires SharedM.}
+In GPT-2, the same linguistic properties are encoded---but distributed across weight matrices, not concentrated in the state.
+The probing accuracy for GPT-2 is comparable (transformers DO learn syntax~\cite{hewitt2019probe}), but the \emph{accessibility} differs: in the ORN, these properties are in the residual stream at \emph{every layer}, not entangled with per-layer weight structure.
+This makes the Read operation consistent across layers---the same probe works at any depth.
+
+\subsection{Steer: Directional Modification of Linguistic Properties}
+
+\begin{operation}[Steer]
+Given a direction $\mathbf{d}_p$ corresponding to linguistic property $p$, modify the residual state during the forward pass: $\x^{(\ell)} \leftarrow \x^{(\ell)} + \alpha \, \mathbf{d}_p$.
+\end{operation}
+
+We demonstrated two forms of steering:
+
+\paragraph{Full orbit steering.}
+Inject one sentence's per-layer orbit trajectory into another sentence's processing.
+The orbit of ``The cat chased the dog across the yard'' steers ``Scientists discovered a new\ldots'' toward concrete narrative objects and spatial structure.
+
+\paragraph{Syntax-only steering.}
+Project the steering vector onto the syntax subspace (identified by ICA/probing).
+Result: structural features transfer \emph{without content contamination}.
+
+\begin{center}\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Mode} & \textbf{Output for ``The children played\ldots''} \\
+& \emph{(steered with orbit of ``Although he was tired, the man kept working\ldots'')} \\
+\midrule
+Normal & \ldots in a new life at work at 10 p.m.\ on a single \\
+Full steer & \ldots his son from his father because he went out with his parents \\
+Syntax-only & \ldots by one of the men who lived to live together, \textbf{but} the children were \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Full steering bleeds source content (``his son'', ``his father'').
+Syntax-only steering transfers the concessive structure (``but the children were'') without content contamination.
+The contrastive conjunction ``but'' comes from the source's concessive structure (``Although\ldots'')---the syntax transferred while the content stayed with the target.
+
+Another example:
+
+\begin{center}\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Mode} & \textbf{Output for ``The report showed\ldots''} \\
+& \emph{(steered with orbit of ``First she opened the door, then she walked in, and finally she sat down.'')} \\
+\midrule
+Normal & \ldots that a fraction of the average total of 1,800,000 was a \\
+Syntax-only & \ldots that the number of people in the village had been shot in the area \textbf{because} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The source's ordered-sequence structure (``First\ldots then\ldots and finally\ldots'') transfers as causal/explanatory clause structure (``because'') in the target---the syntactic pattern of multi-clause connectives transfers, adapted to the target's register.
+
+\paragraph{Why this requires SharedM.}
+In a transformer, steering at layer $\ell$ is unpredictable because layer $\ell+1$ has different coupling weights $\M^{(\ell+1)}$ that were not trained to handle the steered state.
+In the ORN, the same $\M$ at layer $\ell+1$ processes the steered state using the \emph{same coupling rule}---the steering is compatible across all layers.
+The syntax/content subspace separation (overlap $< 0.28$) enables targeted steering because SharedM forces these factors into orthogonal residual stream directions.
+
+\subsection{Arithmetic: Vector Operations on Compositional Features}
+
+\begin{operation}[Arithmetic]
+For residual states $\x_A, \x_B, \x_C$ at corresponding positions: $\x_{\text{result}} = \x_A - \x_B + \x_C$.
+\end{operation}
+
+Demonstrated on the sentence ``The old man sat quietly and\ldots'':
+
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Operation} & \textbf{Top prediction} & \textbf{Probability} \\
+\midrule
+Original (A) & ``told'' & 0.243 \\
+& ``he'' & 0.210 \\
+\midrule
+A $-$ ``The old man'' $+$ ``The young girl'' & ``told'' & 0.272 \\
+& ``\textbf{she}'' & \textbf{0.237} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The arithmetic transfers gender: ``he'' ($p{=}0.21$) $\to$ ``she'' ($p{=}0.24$), while the structural prediction (``told'') is preserved.
+A control experiment on GPT-2 shows its top predictions for this sentence are entirely function words (``the'', ``,''); it does not encode entity features in the high-probability region, so the arithmetic has nothing to flip.
+This is not a trivial word2vec effect: it reflects the ORN's richer encoding of entity-level content in positions where algebraic operations can access it.
+
+\paragraph{Why this requires SharedM.}
+Vector arithmetic on residual states requires that the same directions encode the same features at all positions and depths.
+SharedM guarantees this: because the coupling rule is identical everywhere, the residual stream develops a \emph{consistent coordinate system} where ``gender'' occupies the same direction regardless of position or layer.
+In a transformer, each layer's coupling redefines the coordinate system, so arithmetic across positions from different contexts is ill-defined.
+
+\subsection{Traverse: Orbital Rollout on the Manifold}
+
+\begin{operation}[Traverse]
+Given an initial state $\x^{(0)}$ and the fitted manifold operator $\M_{\text{orbit}} \in \R^{k \times k}$ (in PCA-$k$ space), compute the predicted trajectory: $\x^{(\ell+1)} = \x^{(\ell)} \M_{\text{orbit}} + \mathbf{b}$.
+\end{operation}
+
+Demonstrated: a single $20 \times 20$ matrix reproduces the residual trajectory on unseen prompts with $>96.5\%$ cosine accuracy at all layers.
+
+The Traverse operation enables:
+\begin{itemize}[nosep]
+\item \textbf{Layer prediction:} estimate what the residual state \emph{would be} at layer $L$ without running the full model.
+\item \textbf{Trajectory analysis:} characterise the dynamics of the coupling manifold (spectral radius, persistence capacity, convergence properties).
+\item \textbf{Anomaly detection:} identify inputs whose trajectories deviate from the learned manifold (out-of-distribution detection).
+\end{itemize}
+
+\paragraph{Why this requires SharedM.}
+In a transformer, each layer's $\M^{(\ell)}$ transforms the state differently, so no single operator predicts the trajectory.
+Fitting a layer-to-layer predictor for GPT-2 gives lower accuracy (14\% error at PCA-10 vs the ORN's 8.7\%) and requires \emph{more} PCA dimensions (GPT-2's trajectory is 2-dimensional in mean but per-token dimensionality is higher and less stable).
+
+\subsection{Segment: Clause-Level Orbital Regions}
+
+\begin{operation}[Segment]
+Partition the token sequence into structural segments based on the orbital trajectory: tokens whose representations cluster in the same region of the coupling manifold belong to the same clause or structural unit.
+\end{operation}
+
+Demonstrated: multi-clause sentences produce distinct orbital regions per clause.
+Sequential clauses performing similar actions cluster (cosine $0.996$); structurally different clause transitions separate (cosine $0.44$).
+
+\subsection{Compose: The Orbital Wormhole}
+
+\begin{operation}[Compose (Wormhole)]
+At any point during the forward pass, \textbf{enter} orbital space (project from $\R^d$ to $\R^k$ via PCA), \textbf{apply} one or more M-calculus operations, then \textbf{exit} back to $\R^d$ (reconstruct with preserved residual).
+The model continues generating from the modified state, unaware that a wormhole was traversed.
+\end{operation}
+
+The wormhole works because of three properties:
+\begin{enumerate}[nosep]
+\item \textbf{SharedM compatibility:} the same coupling rule processes the modified state at subsequent layers---no layer-specific expectations are violated.
+\item \textbf{Residual preservation:} the $d - k$ orthogonal dimensions (not captured by PCA) are stored during entry and restored during exit, preserving token-level detail.
+\item \textbf{Manifold coherence:} the $k$-dimensional orbit space is a real geometric structure (not a random subspace), so movements in it correspond to meaningful linguistic changes.
+\end{enumerate}
+
+\paragraph{Round-trip coherence.}
+Text remains grammatical after a PCA-20 round trip (enter $\to$ exit with no movement):
+\begin{center}\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Mode} & \textbf{``The old man\ldots''} \\
+\midrule
+Plain & \ldots is he's, one man has become one of \\
+Round-trip & \ldots was a man who was still in a city, but with \\
+\bottomrule
+\end{tabular}
+\end{center}
+Different content, but grammatically coherent.
+The wormhole does not break the model.
+
+\paragraph{Directional shifts.}
+Computing the ``question direction'' in orbit space (interrogative orbit $-$ declarative orbit) and shifting by it:
+\begin{center}\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Mode} & \textbf{``The president announced\ldots''} \\
+\midrule
+Plain & \ldots a budget increase in its 2014 budget, saying it ``has \\
+$+$Question & \ldots Monday that he would not know if he was the winner \\
+$+$Future & \ldots the budget of the state's executive office \\
+\bottomrule
+\end{tabular}
+\end{center}
+The question shift introduces uncertainty and hedging (``would not know if'').
+The future shift introduces institutional forward-looking language.
+Both are coherent English; the model ``doesn't know'' it was steered.
+
+\begin{center}\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Mode} & \textbf{``She walked to the\ldots''} \\
+\midrule
+Plain & \ldots street and told them to go to my mother \\
+$+$Question & \ldots hospital while she was in the hospital. She said \\
+\bottomrule
+\end{tabular}
+\end{center}
+Both models respond to question steering; GPT-2 is not ``unaffected.''
+The reliable claim is the aggregate measurement: 7.5$\times$ larger question-score shift across 5 seeds $\times$ 3 samples (Section~\ref{sec:exploit}).
+Individual examples illustrate the effect; the controlled experiment quantifies it.
+
+\paragraph{Compositional wormhole.}
+Multiple operations compose inside a single wormhole jump:
+\begin{center}\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Mode} & \textbf{``The economy\ldots''} \\
+\midrule
+Plain & \ldots is the very first of the most expensive and most important \\
+$+$Question only & \ldots and not the country, it is now in the UK \\
+$+$Future only & \ldots is very much sustainable; it's also at a time when \\
+$+$Both (composed) & \ldots \textbf{can do that. If you're in the middle} \\
+\bottomrule
+\end{tabular}
+\end{center}
+Question $+$ future composes into conditional/speculative voice (``can do'', ``If you're'')---a mode neither operation alone produces.
+The operations form an \textbf{algebra}: they compose predictably in orbit space and produce coherent, novel linguistic effects.
+
+\paragraph{Subspace swap.}
+Syntax and content dimensions are identifiable (importance ratio $1.72\times$ vs $0.37\times$) and independently swappable.
+Replacing the 5 most syntactic PCA dimensions from a narrative source while keeping content dimensions intact transfers clause structure without content contamination:
+\begin{center}\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Mode} & \textbf{``Scientists discovered a new\ldots''} \\
+& \emph{(syntax from: ``The cat chased the dog across the yard, and then it stopped.'')} \\
+\midrule
+Plain & \ldots product---the first time the authors of this new iPad is \\
+Syntax-swap & \ldots version of Earth's orbit, \textbf{but} that is, \\
+\bottomrule
+\end{tabular}
+\end{center}
+The contrastive ``but'' comes from the narrative source's clause structure; the scientific content stays with the target.
+
+% ======================================================================
+\section{What the Manifold Contains: A Preliminary Inventory}
+\label{sec:inventory}
+
+\subsection{Known Factors (Linearly Readable)}
+
+From targeted probing and ICA on a 50M ORN:
+
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Factor} & \textbf{Method} & \textbf{Evidence} \\
+\midrule
+Content vs function word & Probe (97.4\%) & Near-perfect linear separation \\
+Sentence position (start/mid/end) & Probe (100\%) & Perfect linear separation \\
+Sentence type (5 classes) & Probe (57.1\%) & 2.9$\times$ chance \\
+Tense (past/present/future) & Probe (60.7\%) & 1.8$\times$ chance \\
+Clause boundary & ICA (IC3) & Commas and conjunctions cluster \\
+Interrogative structure & ICA (IC7) & Question words separate from declarative \\
+Function word identity & ICA (IC0) & $r = -0.44$ with content/function label \\
+Modality/temporal markers & ICA (IC5) & Future markers separate \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Suspected Factors (Not Yet Probed)}
+
+Based on the dimensionality ($\sim$45 dims for 90\% variance) and the linguistic structure of the training data:
+
+\begin{itemize}[nosep]
+\item \textbf{Coreference:} which tokens refer to the same entity.
+    Requires probing with coreference-annotated data.
+\item \textbf{Discourse role:} topic vs comment, given vs new.
+    Requires discourse-annotated data.
+\item \textbf{Semantic role:} agent, patient, instrument, location.
+    Requires SRL-annotated data.
+\item \textbf{Hierarchical depth:} how nested the current position is.
+    The Hewitt-Manning structural probe~\cite{hewitt2019probe} could be applied directly.
+\item \textbf{Information density:} surprisal or predictability of the current position.
+    Can be computed from the model's own loss.
+\end{itemize}
+
+A comprehensive inventory requires a \textbf{sparse autoencoder} (SAE) trained on the residual stream---the approach used by Anthropic for mechanistic interpretability of large language models.
+An SAE would decompose the 508-dimensional residual stream into potentially hundreds of monosemantic features, each corresponding to a specific linguistic or structural property.
+
+\subsection{What COULD Be There with Better Training}
+
+The current manifold emerges from standard next-token prediction.
+Targeted training objectives could enrich it:
+
+\begin{itemize}[nosep]
+\item \textbf{Contrastive syntax loss:} pull together same-syntax pairs, push apart different-syntax pairs in the coupling manifold.
+    Would sharpen the syntactic subspace.
+\item \textbf{Orbit consistency loss:} require that semantically equivalent expressions produce the same orbit state at evaluation points.
+    Would create a functional representation in the manifold.
+\item \textbf{Clause-level prediction:} predict not just the next token but the next clause boundary and clause type.
+    Would create explicit clause-level structure in the orbit.
+\item \textbf{Disentanglement loss:} penalise mutual information between syntactic and content subspaces.
+    Would enable clean syntax-only steering.
+\end{itemize}
+
+% ======================================================================
+\section{Why This Cannot Be Done with a Transformer}
+\label{sec:impossibility}
+
+The M-calculus requires a \emph{shared coupling geometry}---a single object $\M$ that determines how tokens relate at every depth.
+We make this precise:
+
+\begin{theorem}[Structural accessibility]
+\label{thm:accessibility}
+Let $\mathcal{P}$ be a linguistic property (e.g., sentence type) that is encoded in the model.
+Define the \emph{structural accessibility} of $\mathcal{P}$ as the maximum linear probe accuracy for $\mathcal{P}$ applied to the residual stream at an \emph{arbitrary} layer, using a \emph{single} probe (not layer-specific).
+
+In a SharedM model, the structural accessibility of any linearly encoded property is \emph{constant across layers}: the same probe works at every depth because the coordinate system is preserved by the shared coupling.
+
+In a per-layer model, the structural accessibility decreases with layer distance from the layer where the probe was trained, because each layer's coupling rotates the coordinate system independently.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+In the SharedM model, the residual update at layer $\ell$ is:
+\[
+\x^{(\ell+1)} = \x^{(\ell)} + \text{Attn}(\x^{(\ell)}; \M) + \text{FFN}^{(\ell)}(\x^{(\ell)})
+\]
+where $\M$ is shared. The per-layer response (FFN, $W_V$, $W_O$) varies, but the coupling geometry---which determines the coordinate system for structural properties---is fixed. A probe trained on $\x^{(\ell_0)}$ generalises to $\x^{(\ell)}$ because $\M$'s eigenbasis defines a consistent frame.
+
+In the per-layer model, $\M^{(\ell)}$ varies. Each layer's coupling rotates the structural information into a layer-specific subspace. A probe trained at layer $\ell_0$ does not generalise to layer $\ell$ without retraining.
+\end{proof}
+
+\paragraph{Empirical nuance.}
+Sparse autoencoder analysis shows that \emph{feature-level} cross-layer consistency is similar ($\sim$47--52\%).
+Both architectures \emph{tolerate} activation steering equally well---neither degenerates before the other.
+The M-calculus advantage is not about robustness but about \emph{effectiveness}: the same steering strength produces larger questioning and formality shifts in the ORN (preliminary measurement; the formality dial correlation $r{=}0.57$ vs $r{=}{-}0.16$ is the best-controlled result).
+
+The correct framing: the M-calculus operations are \emph{possible} on both architectures (activation addition works on any residual stream), but they are \emph{effective} primarily on the ORN because SharedM forces high-fidelity structural encoding into the state.
+GPT-2 can be steered, but the directions carry weak signal because the structural information lives primarily in the per-layer weights.
+The ORN must put it in the state, where steering can exploit it.
+
+\begin{proposition}[Steering consistency]
+\label{prop:steering}
+An edit $\x^{(\ell)} \leftarrow \x^{(\ell)} + \alpha \mathbf{d}$ applied at layer $\ell$ produces a \emph{predictable} effect at layer $\ell + k$ if and only if the coupling geometry is shared across layers $\ell, \ldots, \ell+k$.
+
+If the coupling varies per layer ($\M^{(\ell)} \neq \M^{(\ell+k)}$), the edit's effect at layer $\ell+k$ depends on the product $\prod_{j=\ell}^{\ell+k-1} \M^{(j)}$, which is unpredictable from any single $\M^{(j)}$.
+\end{proposition}
+
+This is why activation patching in transformers requires careful, layer-specific analysis~\cite{meng2022locating}: each intervention interacts differently with the coupling at each subsequent layer.
+In the ORN, interventions compose predictably because the same $\M$ processes the edited state at every layer.
+
+% ======================================================================
+\section{Toward a Complete Algebra}
+\label{sec:algebra}
+
+The six operations (Read, Steer, Arithmetic, Traverse, Segment, Compose) form the beginnings of a calculus.
+A complete algebra would additionally require:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Inverse operations:} given a desired output state $\x^{(L)}$, compute the input state $\x^{(0)}$ that produces it.
+    This is ``inversion through the manifold''---running the orbit backward.
+    Requires $\M_{\text{orbit}}$ to be invertible, which is possible if the spectral radius is bounded away from 0.
+
+\item \textbf{Sampling:} draw new states from the coupling manifold that are ``on-manifold'' (linguistically coherent) but novel (not in the training data).
+    This is generative modelling in orbit space---the connection to diffusion models explored in the companion paper.
+
+\item \textbf{Conditioning:} fix certain linguistic properties (e.g., tense $=$ future) and sample the remaining degrees of freedom.
+    This is constrained generation through the manifold---steering with hard constraints rather than soft nudges.
+
+\item \textbf{Closure under composition:} prove that composing two on-manifold states produces another on-manifold state.
+    This is the semigroup closure property applied to the linguistic manifold.
+\end{enumerate}
+
+Each of these requires SharedM because they all assume a \emph{consistent, accessible} geometric structure in the residual stream.
+
+\subsection{Empirical Verification of All Six Operations}
+
+\paragraph{Interpolate (extension of Arithmetic).}
+Blending two sentences' hidden states at ratio $\alpha$ produces smooth semantic transitions.
+``She walked slowly'' ($\alpha{=}0$) interpolated toward ``He sprinted quickly'' ($\alpha{=}1$) gradually shifts the top prediction from ``and'' (continuing a slow narrative) at $\alpha{=}0$ to ``up''/``in'' (directional movement) at $\alpha{=}1$.
+The interpolation is monotonic---no discontinuities or mode collapse in between.
+
+\paragraph{Cluster (extension of Segment).}
+Sentences about animals cluster together in orbit space (within-group cosine $0.66$), separating from science ($0.36$) and emotion ($0.49$).
+The clustering captures semantic relationships: animals and movement are close ($0.58$, both physical), science and emotion are maximally distant ($0.33$, abstract vs.\ visceral).
+
+\paragraph{Orbit distance as similarity metric.}
+Orbit-space cosine separates similar sentence pairs from dissimilar ones $1.58\times$ better than raw embedding cosine (separation $0.40$ vs $0.25$).
+The orbit representation is a better similarity metric because it encodes processed structural relationships, not just token co-occurrence.
+
+\paragraph{Conditional generation (template following).}
+Steering generation toward a structural template (``The old man walked slowly to the store, bought some bread, and went home'') partially transfers the template's clause structure to different subjects.
+At 50M parameters the effect is noisy; at larger scale the syntax/content separation ($>72\%$ orthogonal) should enable clean template following.
+
+\paragraph{Inverse orbit.}
+$\M_{\text{orbit}}$ is invertible (condition number $6.82$), but the inverse is numerically unstable beyond 1--2 backward steps (spectral radius $> 1$ in the inverse direction).
+Local inversion works: the nearest tokens to a given orbit position are semantically coherent (``sat'' $\to$ ``looked'', ``walked'', ``raining''---all verbs in similar syntactic positions).
+Global inversion (many steps backward) requires regularisation.
+
+\paragraph{Cross-layer probe transfer.}
+A linear probe for content/function word classification trained at layer 5 (ORN) or layer 6 (GPT-2) transfers to other layers with similar degradation ($\sim$6\% in both architectures).
+This confirms that \emph{features} are similarly accessible in both architectures---the difference is in the \emph{geometry}, not the features (Section~\ref{sec:why}).
+
+\paragraph{Style transfer.}
+Computing the ``formal'' direction (formal orbit $-$ casual orbit) and shifting by it changes the register of generated text:
+``They decided to'' $+$ formal $\to$ ``take part in the final three-day deal for a final'';
+$+$ casual $\to$ ``leave the family, and even so many others thought they were''.
+
+\paragraph{Topic anchoring.}
+Blending (75/25) toward a domain-specific orbit at each step keeps generation on-topic:
+``The researchers found'' anchored to a medical orbit $\to$ ``researchers could only develop a'';
+anchored to a sports orbit $\to$ ``will not be on the front of the team's club''.
+Without anchoring, both drift to generic content.
+
+\paragraph{Multi-depth composition: non-commutativity.}
+Applying different operations at different layers produces order-dependent results, confirming the algebra is non-commutative:
+\begin{center}\small
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Operations} & \textbf{``She told him\ldots''} \\
+\midrule
+Plain & \ldots to be an active, but that could be a positive part \\
+L3=positive, L7=question & \ldots to go, ``I'm not going to be a job \\
+L3=question, L7=positive & \ldots that she'll be in the city of New Jersey \\
+\bottomrule
+\end{tabular}
+\end{center}
+Positive-then-question produces hedging (``I'm not going to'').
+Question-then-positive produces confident assertion (``she'll be in the city'').
+The same two operations, composed in different order, produce different linguistic effects---the hallmark of a genuine non-commutative algebra.
+
+% ======================================================================
+\section{What M Is: Three Guiding Metaphors}
+\label{sec:metaphors}
+
+The M-calculus is a formal system, but the intuitions matter.
+Three metaphors capture different aspects of what SharedM creates, and each one maps precisely to experimental findings.
+
+\subsection{M Is a Shared Coordinate System}
+
+In a transformer, each layer defines its own coordinate system through its coupling matrix $\M^{(\ell)}$.
+A direction that means ``syntax'' at layer 3 may mean something entirely different at layer 7, because $\M^{(3)} \neq \M^{(7)}$.
+Pointing and saying ``go north'' is meaningless when north rotates at every step.
+
+SharedM fixes the coordinate system.
+The same directions mean the same thing at every layer, every position, every token.
+``Syntax'' is the same direction at layer 1 as at layer 9.
+This is why steering works: you can point in a direction (the question direction, the formal direction, the future direction) and the model follows it consistently, because the direction doesn't rotate away.
+
+\emph{Experimental grounding:}
+The wormhole shift experiments (Section~\ref{sec:operations}) show that adding the ``question direction'' at layer 5 produces question-like output---the direction is still meaningful when processed by layers 6--9.
+In GPT-2, the same shift produces degenerate output, because each subsequent layer reinterprets the direction in its own coordinates.
+
+\subsection{M Is a Language}
+
+Not a language model---a language.
+$\M$ defines:
+\begin{itemize}[nosep]
+\item A \textbf{vocabulary}: the eigenmodes of $\M$ are the primitive elements. Each eigenmode encodes one dimension of coupling (one way tokens can relate).
+\item A \textbf{grammar}: the semigroup generated by $\M$ determines how eigenmodes compose. The non-commutativity of operations in the M-calculus IS the grammar---order matters, just as in natural language.
+\item A \textbf{semantics}: directions in the coupling manifold correspond to linguistic properties (syntax, sentiment, tense, formality). The meaning of a ``sentence'' in M's language is the set of linguistic properties it activates.
+\end{itemize}
+
+The residual stream at any position is a sentence written in $\M$'s language.
+The M-calculus is the set of grammatical operations on these sentences: you can negate (flip sentiment), question (shift toward interrogative), compose (apply multiple transformations), and rewrite (swap syntax while preserving content).
+
+\emph{Experimental grounding:}
+The non-commutativity result (Section~\ref{sec:operations}) shows that positive-then-question $\neq$ question-then-positive---word order matters in M's language, producing hedging vs.\ confidence.
+
+\subsection{Memoisation Creates Accessibility --- But the FFN Creates the Terrain}
+
+The deepest principle is not a metaphor but a mechanism: \textbf{memoisation forces structure into the state}.
+
+A transformer computes coupling $L$ times---once per layer, with a different matrix each time.
+The results of these computations are implicit in the residual stream but distributed across the weight structure.
+To read them, you need layer-specific probes.
+To modify them, you need layer-specific interventions.
+
+SharedM computes coupling once and reuses it $L$ times.
+The model cannot store coupling results in per-layer weight differences (there are none), so it must store them in the residual stream.
+This is not a design choice---it is a mathematical consequence of sharing.
+
+The consequence: everything the model knows about token relationships is \emph{in the state, not in the weights}.
+Syntax is in the state (60$\times$ more accessible than in GPT-2).
+Tense, sentiment, formality, topic---all in the state.
+And because they are in the state, the M-calculus can operate on them.
+
+This is why the M-calculus is possible for the ORN and not for transformers.
+It is not that the ORN ``has more structure.''
+It is that the ORN's structure is \emph{accessible}---forced into the state by memoisation, readable by linear probes, navigable by the wormhole, composable by the algebra.
+
+\paragraph{A critical refinement: the FFN creates the terrain.}
+Component ablation reveals a surprise: the manifold structure is created primarily by the \textbf{shared wide FFN}, not by $\M$:
+
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Component removed} & \textbf{Manifold destroyed} & \textbf{Alignment} \\
+\midrule
+FFN (shared wide) & \textbf{97.1\%} & 0.030 \\
+Response ($W_V, W_O$) & 57.9\% & 0.421 \\
+$\M$ (coupling $AB^\top$) & 36.3\% & 0.637 \\
+Corrections & 19.1\% & 0.809 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The geometric structure that the M-calculus navigates---the space where syntax, tense, sentiment, and formality are directions---is \textbf{97\% created by the shared FFN}.
+$\M$ contributes only 36\%.
+The manifold is the FFN; $\M$ is the compass.
+
+This does not undermine the M-calculus---it \emph{explains} it.
+The calculus works because of two shared components conspiring:
+the FFN builds a rich, structured manifold (the terrain), and $\M$ provides a consistent coordinate system for navigating it (the compass).
+Remove either one and the calculus fails: without the FFN there is no terrain to navigate; without SharedM the compass rotates at every layer and navigation is unreliable.
+
+The steering effectiveness advantage ($7.5$--$18\times$) comes from the \textbf{combination}: a rich manifold (shared FFN) plus consistent navigation (SharedM).
+A transformer with per-layer FFN and per-layer coupling has neither: the terrain changes shape at every layer, and the compass rotates.
+This is why steering is less effective on GPT-2 despite both architectures having comparable feature-level representations.
+
+The ``M'' in ``M-calculus'' is therefore a metonymy: the calculus operates on the manifold created by the full shared backbone ($\M + \text{FFN}$, $\sim$42\% of parameters), using $\M$'s consistent coupling as the navigation mechanism.
+A more precise name would be ``shared-geometry calculus,'' but M-calculus captures the essential insight that \emph{sharing} is what makes the geometry operable.
+
+% ======================================================================
+\section{Toward Orbit-Conditioned Generation}
+\label{sec:generation}
+
+The M-calculus operations enable a new generation paradigm: \textbf{plan in orbit space, generate in token space}.
+Rather than sampling tokens one at a time (autoregressive) or denoising a full sequence (diffusion), the model first constructs a structural plan as a trajectory on the coupling manifold, then decodes that plan into tokens.
+
+\subsection{The Two-Phase Architecture}
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Plan phase (orbit space).}
+    Given a prompt, compute its orbit state $\orbit_0$.
+    Roll out $\M_{\text{orbit}}$ to produce a planned trajectory $\orbit_1, \ldots, \orbit_T$ representing the structural skeleton of the continuation---clause types, syntactic roles, discourse transitions.
+    The plan can be \emph{conditioned}: fix certain dimensions (e.g., tense $=$ future, structure $=$ concessive) and sample the rest.
+    The plan can be \emph{steered}: blend with a template orbit to follow a desired structural pattern.
+
+\item \textbf{Decode phase (token space).}
+    At each generation step, the model produces next-token logits as usual, but the logits are \emph{biased} toward tokens whose orbit positions are consistent with the plan.
+    Tokens that would place the residual stream near the planned orbit position get a bonus; tokens that would deviate get a penalty.
+    The model fills in the content; the plan constrains the structure.
+\end{enumerate}
+
+\subsection{Why This Is Better Than Autoregressive Alone}
+
+Standard autoregressive generation is Markov at the token level: each token is sampled given only the tokens before it.
+Long-range structural coherence (matching clause patterns, maintaining consistent register, completing a narrative arc) must emerge from the token-level statistics---and often doesn't, especially at small scales.
+
+Orbit-conditioned generation is \emph{structurally planned}: the orbit trajectory locks in the structural skeleton \emph{before} any tokens are generated.
+The model cannot wander off-structure because the orbit bias pulls it back.
+This is analogous to how a human writer might plan paragraph structure before filling in the words.
+
+\subsection{Three Levels of Conditioning}
+
+\paragraph{Level 1: Orbit-biased sampling (demonstrated).}
+At each step, add $-\lambda \|\orbit_{\text{token}} - \orbit_{\text{plan}}\|^2$ to the token logits before sampling.
+Tokens whose orbit positions match the plan get higher probability.
+Our experiments show this produces more narrative, grounded continuations than unconditioned generation, even with a small lookup table.
+
+\paragraph{Level 2: Template-steered generation (demonstrated).}
+Inject a source sentence's per-layer orbit trajectory into the target's forward pass.
+This transfers structural patterns: clause types, connective structure, action sequences.
+With syntax-only steering (projecting onto the syntax subspace), the transfer is clean---structure without content contamination.
+
+\paragraph{Level 3: Orbit-space diffusion (proposed).}
+Train a small diffusion model in the orbit's PCA space ($k \sim 10$--$20$ dimensions).
+Sample new orbit trajectories by denoising in this space.
+The sampled trajectory is a structural plan; the ORN decodes it into tokens.
+This combines the structural diversity of diffusion with the token-level fluency of autoregressive generation.
+
+The orbit-space diffusion model is small (operating in $k \leq 20$ dimensions), cheap to train, and provides controllable structural diversity without touching the base language model's weights.
+
+\subsection{What Is Needed}
+
+This generation paradigm requires:
+\begin{enumerate}[nosep]
+\item A model with sufficiently rich orbit structure ($d \geq 512$, $L \geq 12$) for the orbit to encode meaningful structural plans.
+    The 50M model has the right qualitative structure but insufficient resolution.
+\item A token-to-orbit mapping that covers the vocabulary (our current lookup has $\sim$200 tokens; a production system needs the full vocabulary).
+\item A well-calibrated orbit bias ($\lambda$) that constrains structure without killing diversity.
+    Too strong: repetitive text following the orbit too rigidly.
+    Too weak: the orbit has no effect and generation degenerates to unconditioned.
+\item For Level~3: a diffusion model trained on orbit trajectories from a large corpus.
+    The training data is free (just run text through the ORN and collect trajectories); the model is small.
+\end{enumerate}
+
+% ======================================================================
+\section{Exploiting the Effectiveness Gap}
+\label{sec:exploit}
+
+The steering effectiveness advantage (preliminary) is not just a measurement---it is a \emph{capability}.
+Three applications follow directly.
+
+\subsection{Precision Controllable Generation}
+
+Standard activation steering on a transformer requires strong interventions (large $\alpha$) to overcome the weak signal in per-layer-coupled residual streams.
+Strong interventions risk breaking coherence.
+The ORN needs weaker interventions ($\alpha$ can be $7$--$18\times$ smaller) for the same effect, staying well within the coherent regime.
+
+This enables \textbf{fine-grained control}: adjust formality from ``slightly more formal'' to ``academic register'' by tuning $\alpha$ from $0.1$ to $0.5$, with monotonic effect.
+On GPT-2, the range from ``no effect'' to ``broken'' is narrow; on the ORN, it is wide.
+The M-calculus provides a \emph{linear control surface}: intent maps linearly to effect, because the directions carry real signal.
+
+\subsection{Composable Multi-Attribute Control}
+
+The orbit library (Section~\ref{sec:operations}) enables composing multiple control signals: formal $+$ scientific $+$ complex.
+Composition works because the directions are approximately orthogonal (syntax/content overlap $< 0.28$).
+
+On the ORN, each direction produces its intended effect independently.
+On GPT-2, weak directions interfere: a formal direction plus a question direction may cancel or produce unpredictable interaction because neither carries enough signal to dominate.
+The ORN's strong directions compose cleanly because each one is a robust, high-fidelity encoding of one linguistic property.
+
+\subsection{Inference-Time Adaptation Without Fine-Tuning}
+
+The most practical application: adapt the model's output style, topic, or structure \emph{at inference time} by selecting and composing orbit directions from a pre-computed library.
+No gradient updates, no fine-tuning, no LoRA.
+The adaptation is:
+\begin{itemize}[nosep]
+\item \textbf{Instant:} just add a direction vector.
+\item \textbf{Reversible:} remove the vector and the model returns to baseline.
+\item \textbf{Composable:} stack multiple directions for multi-attribute control.
+\item \textbf{Tunable:} adjust $\alpha$ continuously for fine-grained control.
+\item \textbf{Effective:} $7$--$18\times$ more effect per unit of intervention than the same technique on a transformer.
+\end{itemize}
+
+This is not fine-tuning, RLHF, or prompt engineering.
+It is \textbf{geometric navigation}: moving on the coupling manifold to reach the region of output space you want.
+SharedM makes the manifold navigable; the M-calculus provides the map.
+
+\subsection{Demonstrated Applications}
+
+\paragraph{App 1: Precision formality dial.}
+Sweeping the formality direction from $\alpha{=}{-1}$ (casual) to $\alpha{=}{+1}$ (formal), the ORN produces a clear upward trend in formality score ($r{=}0.57$): casual output at $\alpha{=}{-0.5}$ (``its new own will be on the new day'') transitions to institutional language at $\alpha{=}{+1}$ (``its support of the Canadian government and the go[vernment]'').
+GPT-2 shows \emph{no trend} ($r{=}{-0.16}$)---the formality dial does not work.
+
+The ORN's formality control is not yet perfectly linear ($r{=}0.57$, not $1.0$) at 50M scale.
+At larger $d$, the formality direction should carry more signal and the control surface should become more linear.
+
+\paragraph{App 2: Multi-attribute composition.}
+Composing multiple directions produces output that reflects each attribute:
+\begin{center}\small
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Attributes} & \textbf{``The researchers found\ldots''} \\
+\midrule
+baseline & \ldots that there is no doubt that a high-profile study of the can[didate] \\
+formal + scientific & \ldots that a ``factological analysis in the brain, a [s]pect[rum]'' \\
+narrative + positive & \ldots that the data on the world was produced by a larger than tw[o] \\
+formal + scientific + complex & \ldots a significant increase in the effects of an increased incre[ase] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each combination produces recognisably different output: formal+scientific yields academic jargon, narrative+positive yields broader framing, and stacking three formal directions produces dense academic prose (arguably \emph{too} dense---the composition is working, possibly too well).
+
+\paragraph{App 3: Inference-time persona adapter.}
+Five personas, defined as weighted combinations of orbit directions, produce distinct outputs from the same seed with zero parameter changes:
+
+\begin{center}\small
+\begin{tabular}{llp{6.5cm}}
+\toprule
+\textbf{Persona} & \textbf{Recipe} & \textbf{``The discovery changed\ldots''} \\
+\midrule
+base & --- & \ldots between the two parts of the spacecraft \\
+Academic & formal$+$scientific$+$complex & \ldots the study and a significant risk in the study \\
+Journalist & formal$+$narrative & \ldots from history of the land of its National Academy \\
+Blogger & $-$formal$+$positive$+$narrative & \ldots through the development of the first half \\
+Skeptic & question$+$formal$-$positive & \ldots this year to show the possibility of the collapse \\
+Storyteller & narrative$+$complex$+$positive & \ldots from the forest from the area of the species \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each persona is a point in the orbit direction library---a vector of attribute weights that defines a region of the coupling manifold.
+Switching persona is instantaneous (change the weight vector), reversible (set weights to zero), and requires no fine-tuning, LoRA, or prompt engineering.
+The model weights never change; only the geometric navigation target changes.
+
+% ======================================================================
+\section{Experimental Programme}
+\label{sec:experiments}
+
+\paragraph{E1: Sparse autoencoder on the ORN residual stream.}
+Train an SAE ($d_{\text{hidden}} = 4096$, sparsity $k{=}32$) on residual stream activations from the 50M ORN.
+Catalogue all monosemantic features.
+Compare feature count and interpretability against an SAE trained on GPT-2 Small.
+The SharedM prediction: the ORN's features are more \emph{consistent across layers} (the same feature fires at all depths) because SharedM preserves the coordinate system.
+
+\paragraph{E2: Cross-layer probe transfer.}
+Train a linear probe for sentence type at layer 5.
+Test at layers 1--9 (ORN) and layers 1--12 (GPT-2).
+Measure accuracy degradation with layer distance.
+The prediction: ORN degrades slowly (SharedM preserves the basis); GPT-2 degrades rapidly (per-layer coupling rotates the basis).
+
+\paragraph{E3: Steering at scale.}
+Apply syntax-only steering to the 1.3B multimodal ORN (currently training on Vast).
+At $d{=}2048$ and $L{=}32$, the syntax/content separation should be much cleaner.
+Test: can we transfer clause structure between modalities (e.g., image caption structure $\to$ audio description)?
+
+\paragraph{E4: Orbit-space generation.}
+Train a small generative model (VAE or diffusion) in the ORN's PCA-$k$ orbit space.
+Sample new trajectories and decode through the ORN.
+Test: are the generated trajectories ``on-manifold'' (decode to coherent text)?
+
+\paragraph{E5: Impossibility demonstration.}
+Apply every M-calculus operation to GPT-2.
+Measure which operations fail (predicted: Steer, Traverse, and Compose will fail or require layer-specific adaptation that defeats the purpose).
+This provides the ``cannot do this with a transformer'' evidence.
+
+% ======================================================================
+\begin{thebibliography}{99}
+
+\bibitem{hewitt2019probe}
+J.~Hewitt and C.~D.~Manning.
+\newblock A Structural Probe for Finding Syntax in Word Representations.
+\newblock \emph{NAACL}, 2019.
+
+\bibitem{meng2022locating}
+K.~Meng, D.~Bau, A.~Andonian, and Y.~Belinkov.
+\newblock Locating and Editing Factual Associations in GPT.
+\newblock \emph{NeurIPS}, 2022.
+
+\bibitem{bricken2023monosemanticity}
+T.~Bricken et al.
+\newblock Towards Monosemanticity: Decomposing Language Models With Dictionary Learning.
+\newblock Anthropic, 2023.
+
+\bibitem{templeton2024scaling}
+A.~Templeton et al.
+\newblock Scaling Monosemanticity: Extracting Interpretable Features from Claude 3 Sonnet.
+\newblock Anthropic, 2024.
+
+\end{thebibliography}
+
+\end{document}
