@@ -228,10 +228,13 @@ def cmd_pull(args):
 def cmd_pull_checkpoint(args):
     from orn.utils import known_checkpoints, fetch_checkpoint
     if args.list or not args.name:
-        print(f"{'NAME':<28s} {'ARCH':<12s} {'REPO':<34s} DESCRIPTION")
+        print(f"{'NAME':<28s} {'ARCH':<10s} DESCRIPTION")
         for s in known_checkpoints():
-            print(f"  {s.name:<26s} {s.arch:<12s} {s.repo_id:<34s} {s.description}")
-        print(f"\nUsage: orn pull-checkpoint <name>")
+            print(f"  {s.name:<26s} {s.arch:<10s} {s.description}")
+        print("\nDefault: use the unsuffixed name (e.g. `orn-v3-605m`) — that's the "
+              "latest/most-trained\ncheckpoint for each model. Suffixed names "
+              "(-1B, -2B, -branch-2B, ...) pin to a specific\ntraining marker.")
+        print("\nUsage: orn pull-checkpoint <name>")
         return
     path = fetch_checkpoint(args.name, cache_dir=args.cache)
     print(f"Cached at: {path}")

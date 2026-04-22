@@ -39,15 +39,18 @@ orn reproduce SPE-03 --slow --save-plots figs/
 
 # 6) Pull a published ORN checkpoint and generate text from it
 pip install -e '.[data]'
-orn pull-checkpoint --list
-orn predict --checkpoint orn-v2-108m --prompt "The key insight is" --max-tokens 40
-# →  "The key insight is that the problem of air pollution is not just …"
-orn diagnose --checkpoint orn-v3-605m     # spectral read-out of the 605M model's M
+orn predict --checkpoint orn-v3-605m --prompt "The key insight is" --max-tokens 40
+orn diagnose --checkpoint orn-v3-605m     # spectral read-out of M
 ```
 
-The `predict` and `diagnose` commands accept either a local path or any name
-from `orn pull-checkpoint --list` — they resolve known names by hitting the
-HuggingFace repos in `orn/utils/checkpoints.py`. Legacy V2 state-dicts are
+The unsuffixed names (`orn-v3-605m`, `orn-v2-108m`) resolve to the
+latest/most-trained checkpoint for that model. Suffixed variants
+(`-1B`, `-2B`, `-branch-2B`, `-crystallised`) pin to a specific training
+marker — useful for reproducing a paper figure, not for general use. See
+`orn pull-checkpoint --list` for the full catalogue.
+
+`predict` and `diagnose` accept either a local path or any known name; the
+registry lives in `orn/utils/checkpoints.py`. Legacy V2 state-dicts are
 remapped on load so the current architecture consumes them cleanly.
 
 ## Layout
@@ -101,16 +104,19 @@ orn pull-checkpoint [NAME | --list]           download a published ORN checkpoin
 
 ### Published checkpoints
 
-| Name                         | Params | Tokens | Notes                                     |
-|------------------------------|--------|--------|-------------------------------------------|
-| `orn-v3-605m`                | 605M   | ≥2B    | Latest; alias of `v3_latest.pt`           |
-| `orn-v3-605m-2B`             | 605M   | 2B     | Main training trajectory, exact 2B marker |
-| `orn-v3-605m-branch-2B`      | 605M   | 2B     | Branched experiment at the 2B marker      |
-| `orn-v3-605m-1B`             | 605M   | 1B     | Mid-training snapshot                     |
-| `orn-v2-108m`                | 108M   | 7B     | Reference baseline                        |
-| `orn-v2-108m-crystallised`   | 108M   | —      | At the M-crystallisation step             |
+Default (latest) — use these unless you specifically need a marker:
 
-All public at `mr-saoirse/orn-v{2,3}-*`. The largest training run is 605M params on 2B tokens.
+| Name            | Params | Notes                                 |
+|-----------------|--------|---------------------------------------|
+| `orn-v3-605m`   | 605M   | Largest published ORN                 |
+| `orn-v2-108m`   | 108M   | Reference baseline                    |
+
+All public at `mr-saoirse/orn-v{2,3}-*`.
+
+Pinned training markers (for reproducing specific paper figures):
+
+`orn-v3-605m-2B`, `orn-v3-605m-branch-2B`, `orn-v3-605m-1B`,
+`orn-v2-108m-crystallised`. `orn pull-checkpoint --list` shows them all.
 
 All public. `orn predict --checkpoint <name>` and `orn diagnose --checkpoint <name>` accept these names directly.
 
