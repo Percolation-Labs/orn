@@ -11,9 +11,11 @@ dist/
 .venv/
 venv/
 
-output/
-data/
-checkpoints/
+# Runtime output / data dirs (anchored to repo root so the source `orn/src/orn/data/`
+# package is not accidentally excluded).
+/output/
+/data/
+/checkpoints/
 *.pt
 *.bin
 *.npy

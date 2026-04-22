@@ -134,14 +134,17 @@ def cmd_predict(args):
 
 
 def cmd_diagnose(args):
+    import numpy as np
     import torch
     from orn.utils import load_checkpoint
     from orn.diagnostics.spectral import spectral_analysis
 
     ckpt = load_checkpoint(args.checkpoint, map_location="cpu")
     state = ckpt["model"]
-    A = state["A"].numpy(); B = state["B"].numpy()
-    M = A @ B.T
+    A = state["A"].double().numpy()
+    B = state["B"].double().numpy()
+    with np.errstate(all="ignore"):
+        M = A @ B.T
     spectral_analysis(M, verbose=True)
 
     if args.plot:
