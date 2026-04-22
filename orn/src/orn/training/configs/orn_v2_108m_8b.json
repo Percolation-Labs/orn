@@ -1,0 +1,36 @@
+{
+    "_description": "ORN-V2-108M on 8B tokens of FineWeb-Edu. Reference: RTX 4090, ~42h, val 3.007, HellaSwag 33.4.",
+    "_reference_date": "2026-03-24",
+    "model": {
+        "arch": "orn_v2",
+        "d_model": 576,
+        "n_layers": 24,
+        "n_q_heads": 9,
+        "n_kv_heads": 3,
+        "d_head": 64,
+        "d_corr": 64,
+        "vocab_size": 50304,
+        "seq_len": 2048
+    },
+    "tokenizer": { "name": "tiktoken-gpt2" },
+    "data":      { "dataset": "fineweb-edu", "path": "data/" },
+    "loss":      { "type": "lm_ce" },
+    "eval":      { "tasks": ["hellaswag", "piqa", "arc_easy"] },
+    "training": {
+        "lr": 3e-4,
+        "weight_decay": 0.1,
+        "betas": [0.9, 0.95],
+        "grad_clip": 1.0,
+        "warmup_steps": 2000,
+        "max_tokens": 8000000000,
+        "batch_size": 4,
+        "seq_len": 2048,
+        "grad_accum_steps": 16,
+        "log_every_steps": 100,
+        "eval_every_steps": 500,
+        "generate_every_steps": 5000,
+        "checkpoint_every_tokens": 1000000000,
+        "compile": true,
+        "mixed_precision": true
+    }
+}

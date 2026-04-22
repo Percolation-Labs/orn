@@ -1,0 +1,43 @@
+{
+    "_description": "LORN v4 (R + Bridge + L=ORNV3). ~66M params total. 100M tokens (~4h on 4090).",
+    "model": {
+        "arch": "lorn_v4",
+        "vocab_size": 50304,
+        "T_max": 1024,
+        "d_r": 256,
+        "r_depth": 2,
+        "r_heads": 4,
+        "codebook_size": 16,
+        "entropy_weight": 0.5,
+        "d_l": 512,
+        "l_layers": 8,
+        "l_q_heads": 8,
+        "l_kv_heads": 2,
+        "l_d_head": 64,
+        "l_ffn_width_mult": 8,
+        "l_d_corr": 64,
+        "bridge_rank": 4,
+        "n_inject_layers": 4,
+        "vq_loss_scale": 0.1
+    },
+    "tokenizer": { "name": "tiktoken-gpt2" },
+    "data":      { "dataset": "fineweb-edu", "path": "data/" },
+    "loss":      { "type": "lm_ce+lorn_vq" },
+    "training": {
+        "lr": 3e-4,
+        "weight_decay": 0.1,
+        "betas": [0.9, 0.95],
+        "grad_clip": 1.0,
+        "warmup_steps": 500,
+        "max_tokens": 100000000,
+        "batch_size": 4,
+        "seq_len": 1024,
+        "grad_accum_steps": 16,
+        "log_every_steps": 25,
+        "eval_every_steps": 200,
+        "generate_every_steps": 1000,
+        "checkpoint_every_tokens": 20000000,
+        "compile": true,
+        "mixed_precision": true
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "_description": "Pipeline smoke test. Tiny ORN V1 on a handful of batches. Runs in ~30s on CPU.",
+    "model": {
+        "arch": "orn_v1",
+        "d_model": 64,
+        "n_layers": 4,
+        "n_heads": 4,
+        "d_corr": 16,
+        "vocab_size": 50257,
+        "seq_len": 64
+    },
+    "tokenizer": { "name": "tiktoken-gpt2" },
+    "data":      { "dataset": "tinystories", "path": "data/" },
+    "loss":      { "type": "lm_ce" },
+    "training": {
+        "lr": 3e-4,
+        "weight_decay": 0.1,
+        "warmup_steps": 30,
+        "max_tokens": 100000,
+        "batch_size": 8,
+        "seq_len": 64,
+        "grad_accum_steps": 1,
+        "grad_clip": 1.0,
+        "log_every_steps": 10,
+        "eval_every_steps": 50,
+        "generate_every_steps": 100,
+        "checkpoint_every_tokens": 50000,
+        "compile": false,
+        "mixed_precision": false
+    }
+}
