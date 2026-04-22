@@ -36,7 +36,19 @@ orn diagnose --checkpoint output/checkpoints/final.pt
 # 5) The REAL motivating figure on pretrained GPT-2  (~2 min, first run downloads)
 pip install -e '.[data]'
 orn reproduce SPE-03 --slow --save-plots figs/
+
+# 6) Pull a published ORN checkpoint and generate text from it
+pip install -e '.[data]'
+orn pull-checkpoint --list
+orn predict --checkpoint orn-v2-108m --prompt "The key insight is" --max-tokens 40
+# →  "The key insight is that the problem of air pollution is not just …"
+orn diagnose --checkpoint orn-v3-605m     # spectral read-out of the 605M model's M
 ```
+
+The `predict` and `diagnose` commands accept either a local path or any name
+from `orn pull-checkpoint --list` — they resolve known names by hitting the
+HuggingFace repos in `orn/utils/checkpoints.py`. Legacy V2 state-dicts are
+remapped on load so the current architecture consumes them cleanly.
 
 ## Layout
 
@@ -84,7 +96,19 @@ orn eval --checkpoint PATH --tasks …          hellaswag, piqa, arc_easy
 orn reproduce [--list] [names…] [--save-plots DIR] [--slow]
 orn push --checkpoint PATH --repo USER/NAME   upload to HuggingFace
 orn pull --model NAME                         gpt2 | smollm2-135m | pythia-70m | pythia-410m
+orn pull-checkpoint [NAME | --list]           download a published ORN checkpoint
 ```
+
+### Published checkpoints
+
+| Name                       | Arch   | Repo                              | Notes                      |
+|----------------------------|--------|-----------------------------------|----------------------------|
+| `orn-v3-605m`              | orn_v3 | `mr-saoirse/orn-v3-605m`          | Largest ORN, 2B tokens     |
+| `orn-v3-605m-1B`           | orn_v3 | `mr-saoirse/orn-v3-605m`          | Mid-training branch at 1B  |
+| `orn-v2-108m`              | orn_v2 | `mr-saoirse/orn-v2-108m`          | 108M reference, 7B tokens  |
+| `orn-v2-108m-crystallised` | orn_v2 | `mr-saoirse/orn-v2-108m`          | At the crystallisation step |
+
+All public. `orn predict --checkpoint <name>` and `orn diagnose --checkpoint <name>` accept these names directly.
 
 Training presets:
 

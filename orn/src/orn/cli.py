@@ -131,24 +131,29 @@ def cmd_train(args):
 
 def cmd_predict(args):
     import torch
-    from orn.utils import load_checkpoint, pick_device
+    from orn.utils import load_checkpoint, pick_device, resolve_local, load_known
     from orn.utils.hf import get_tokenizer
     from orn.models import build_model
 
     device = pick_device(args.device)
-    ckpt = load_checkpoint(args.checkpoint, map_location=device)
-    model_cfg = ckpt.get("model_config") or ckpt.get("config", {}).get("model", {})
-    if isinstance(model_cfg, dict):
+
+    # Accept either a local path or a known-checkpoint name.
+    ckpt_path, spec = resolve_local(args.checkpoint)
+    if spec is not None:
+        # Known checkpoint: use registered arch + config, bypass model_config parsing.
+        model, _ = load_known(spec.name, device=device)
+    else:
+        ckpt = load_checkpoint(ckpt_path, map_location=device)
+        model_cfg = ckpt.get("model_config") or ckpt.get("config", {}).get("model", {})
+        if not isinstance(model_cfg, dict):
+            raise ValueError("Unsupported checkpoint: model_config is not a dict")
         arch = model_cfg.pop("arch", None)
         if arch is None:
             raise ValueError("Checkpoint has no model_config.arch — re-train with the new trainer "
-                             "or pass --arch explicitly")
+                             "or use a known checkpoint name (orn pull-checkpoint --list)")
         model = build_model(arch, model_cfg)
-    else:
-        raise ValueError("Unsupported checkpoint: model_config is not a dict")
-
-    model.load_state_dict(ckpt["model"])
-    model = model.to(device).eval()
+        model.load_state_dict(ckpt["model"])
+        model = model.to(device).eval()
 
     enc = get_tokenizer(args.tokenizer)
     prompt = args.prompt or "The"
@@ -163,11 +168,14 @@ def cmd_predict(args):
 def cmd_diagnose(args):
     import numpy as np
     import torch
-    from orn.utils import load_checkpoint
+    from orn.utils import load_checkpoint, resolve_local
     from orn.diagnostics.spectral import spectral_analysis
 
-    ckpt = load_checkpoint(args.checkpoint, map_location="cpu")
-    state = ckpt["model"]
+    ckpt_path, _ = resolve_local(args.checkpoint)
+    ckpt = load_checkpoint(ckpt_path, map_location="cpu")
+    state = ckpt.get("model", ckpt)   # legacy checkpoints may be raw state dicts
+    if "A" not in state or "B" not in state:
+        raise ValueError("Checkpoint doesn't carry SharedM (A, B). `orn diagnose` is ORN-only.")
     A = state["A"].double().numpy()
     B = state["B"].double().numpy()
     with np.errstate(all="ignore"):
@@ -215,6 +223,18 @@ def cmd_pull(args):
     from orn.utils.hf import pull_model
     mdl, tok = pull_model(args.model, cache_dir=args.cache)
     print(f"Pulled {args.model}: {type(mdl).__name__}, vocab={tok.vocab_size}")
+
+
+def cmd_pull_checkpoint(args):
+    from orn.utils import known_checkpoints, fetch_checkpoint
+    if args.list or not args.name:
+        print(f"{'NAME':<28s} {'ARCH':<12s} {'REPO':<34s} DESCRIPTION")
+        for s in known_checkpoints():
+            print(f"  {s.name:<26s} {s.arch:<12s} {s.repo_id:<34s} {s.description}")
+        print(f"\nUsage: orn pull-checkpoint <name>")
+        return
+    path = fetch_checkpoint(args.name, cache_dir=args.cache)
+    print(f"Cached at: {path}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -329,6 +349,14 @@ def main():
                     help="gpt2, smollm2-135m, pythia-70m, pythia-410m")
     sp.add_argument("--cache", default=None)
     sp.set_defaults(fn=cmd_pull)
+
+    sp = sub.add_parser("pull-checkpoint",
+                        help="Download a published ORN checkpoint from HuggingFace")
+    sp.add_argument("name", nargs="?", default=None,
+                    help="e.g. orn-v3-605m. Omit or pass --list to see options.")
+    sp.add_argument("--list", action="store_true")
+    sp.add_argument("--cache", default=None)
+    sp.set_defaults(fn=cmd_pull_checkpoint)
 
     # ── reproduce ──
     sp = sub.add_parser("reproduce", help="Run reproducible key results")
