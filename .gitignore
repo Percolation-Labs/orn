@@ -27,3 +27,9 @@ venv/
 .vscode/
 *.swp
 .DS_Store
+
+# Draft writing-style seed corpus (personal, not checked in)
+drafts/.seed/
+
+# Publish helpers (local only)
+scripts/
