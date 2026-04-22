@@ -49,16 +49,39 @@ def _register(s: CheckpointSpec):
     _SPECS[s.name] = s
 
 
+# 605M ORN V3 — four published checkpoints from the same training run.
+_V3_605M_CONFIG = dict(
+    d_model=2048, n_layers=32, n_q_heads=32, n_kv_heads=8, d_head=64,
+    d_corr=128, vocab_size=50304, seq_len=2048, ffn_width_mult=8,
+)
+
 _register(CheckpointSpec(
     name="orn-v3-605m",
     repo_id="mr-saoirse/orn-v3-605m",
     filename="checkpoints/v3_latest.pt",
     arch="orn_v3",
-    config=dict(
-        d_model=2048, n_layers=32, n_q_heads=32, n_kv_heads=8, d_head=64,
-        d_corr=128, vocab_size=50304, seq_len=2048, ffn_width_mult=8,
-    ),
-    description="605M ORN V3 on FineWeb-Edu, 8x wide shared FFN. Largest published ORN.",
+    config=dict(_V3_605M_CONFIG),
+    description="605M ORN V3, 8x wide shared FFN. Latest — at or past 2B training tokens.",
+    training_tokens=2_000_000_000,
+))
+
+_register(CheckpointSpec(
+    name="orn-v3-605m-2B",
+    repo_id="mr-saoirse/orn-v3-605m",
+    filename="checkpoints/v3_2B_tok.pt",
+    arch="orn_v3",
+    config=dict(_V3_605M_CONFIG),
+    description="605M ORN V3 at exactly 2B training tokens. Main training trajectory.",
+    training_tokens=2_000_000_000,
+))
+
+_register(CheckpointSpec(
+    name="orn-v3-605m-branch-2B",
+    repo_id="mr-saoirse/orn-v3-605m",
+    filename="checkpoints/v3_branch_2B.pt",
+    arch="orn_v3",
+    config=dict(_V3_605M_CONFIG),
+    description="605M ORN V3, branched experiment at the 2B-tokens checkpoint.",
     training_tokens=2_000_000_000,
 ))
 
@@ -67,11 +90,8 @@ _register(CheckpointSpec(
     repo_id="mr-saoirse/orn-v3-605m",
     filename="checkpoints/v3_1B_tok.pt",
     arch="orn_v3",
-    config=dict(
-        d_model=2048, n_layers=32, n_q_heads=32, n_kv_heads=8, d_head=64,
-        d_corr=128, vocab_size=50304, seq_len=2048, ffn_width_mult=8,
-    ),
-    description="Mid-training branch of orn-v3-605m at 1B tokens.",
+    config=dict(_V3_605M_CONFIG),
+    description="605M ORN V3 at 1B training tokens — mid-training snapshot.",
     training_tokens=1_000_000_000,
 ))
 

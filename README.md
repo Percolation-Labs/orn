@@ -101,12 +101,16 @@ orn pull-checkpoint [NAME | --list]           download a published ORN checkpoin
 
 ### Published checkpoints
 
-| Name                       | Arch   | Repo                              | Notes                      |
-|----------------------------|--------|-----------------------------------|----------------------------|
-| `orn-v3-605m`              | orn_v3 | `mr-saoirse/orn-v3-605m`          | Largest ORN, 2B tokens     |
-| `orn-v3-605m-1B`           | orn_v3 | `mr-saoirse/orn-v3-605m`          | Mid-training branch at 1B  |
-| `orn-v2-108m`              | orn_v2 | `mr-saoirse/orn-v2-108m`          | 108M reference, 7B tokens  |
-| `orn-v2-108m-crystallised` | orn_v2 | `mr-saoirse/orn-v2-108m`          | At the crystallisation step |
+| Name                         | Params | Tokens | Notes                                     |
+|------------------------------|--------|--------|-------------------------------------------|
+| `orn-v3-605m`                | 605M   | ≥2B    | Latest; alias of `v3_latest.pt`           |
+| `orn-v3-605m-2B`             | 605M   | 2B     | Main training trajectory, exact 2B marker |
+| `orn-v3-605m-branch-2B`      | 605M   | 2B     | Branched experiment at the 2B marker      |
+| `orn-v3-605m-1B`             | 605M   | 1B     | Mid-training snapshot                     |
+| `orn-v2-108m`                | 108M   | 7B     | Reference baseline                        |
+| `orn-v2-108m-crystallised`   | 108M   | —      | At the M-crystallisation step             |
+
+All public at `mr-saoirse/orn-v{2,3}-*`. The largest training run is 605M params on 2B tokens.
 
 All public. `orn predict --checkpoint <name>` and `orn diagnose --checkpoint <name>` accept these names directly.
 
