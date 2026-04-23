@@ -113,11 +113,17 @@ The Relaxed Recursive Transformer~\cite{relaxedrecursive2025} (RRT, ICLR 2025) i
 Xiao et al.~\cite{xiao2019sharing} share attention weights between adjacent layers.
 Takase and Kiyono~\cite{takase2021sharing} systematically explore sharing patterns, finding non-trivial interactions with depth.
 MASA~\cite{masa2025} decomposes $W_Q, W_K, W_V, W_O$ into shared dictionary atoms via matrix-based dictionary learning, achieving 66.7\% parameter reduction.
+MQA~\cite{shazeer2019mqa} and GQA~\cite{ainslie2023gqa} share keys and values across query heads rather than across layers, a different axis motivated by inference-time KV-cache size rather than coupling structure.
+Orthogonal to layer-wise attention sharing, Pires et al.~\cite{onewideffn2023} show that the per-layer FFN stack can be replaced by a single wide shared FFN at comparable or better quality, removing the other large per-layer parameter cost.
 
 The \orn{} differs from all of these: it shares \emph{only} the coupling geometry ($W_Q, W_K$), keeping response heads per-layer at full rank.
 This is a more principled decomposition than ALBERT (which shares too much and loses quality) or the RRT (which shares everything then patches with LoRA, not knowing \emph{which} variation matters).
 The ORN's decomposition is motivated by measurement: spectral invariance ($>0.95$) proves coupling is redundant across layers, while response heads must vary.
 A consequence of this principled decomposition is that the ORN creates a \emph{factored geometry} in the residual stream---syntax and structure are $60\times$ more accessible than in standard transformers---enabling inference-time steering, composition, and adaptation that architectures sharing the full block cannot support (Section~\ref{sec:discussion}).
+
+At small scale, sharing $W_Q, W_K$ alone is a minority of the parameter budget---$\sim$1\% at 108M, $d{=}576$, because the FFN dominates.
+To push parameter sharing further without the quality hit of full-block sharing, \orn{}-V3 combines shared coupling with a single wide shared FFN in the sense of~\cite{onewideffn2023}.
+This keeps 46\% of the 605M parameters in a shared backbone (M + SharedFFN), 36\% in per-layer response heads, and 17\% in embeddings (Section~\ref{sec:results}).
 
 \paragraph{Attention redundancy.}
 Reid et al.~\cite{reid2021reuse} observe that attention maps can be reused across layers with minimal quality loss.
@@ -782,9 +788,19 @@ J.~L.~McClelland et al.
 \newblock \emph{Psychological Review}, 102(3):419--457, 1995.
 
 \bibitem{onewideffn2023}
-A.~Pires, A.~Lopes et al.
+T.~Pires, A.~V.~Lopes et al.
 \newblock One Wide Feedforward is All You Need.
-\newblock \emph{WMT at EMNLP}, 2023.
+\newblock \emph{Proceedings of EMNLP / WMT}, arXiv:2309.01826, 2023.
+
+\bibitem{relaxedrecursive2025}
+S.~Bae et al.
+\newblock Relaxing Recursive Transformers with Per-Layer Low-Rank Adaptation.
+\newblock \emph{ICLR}, arXiv:2410.20672, 2025.
+
+\bibitem{shazeer2019mqa}
+N.~Shazeer.
+\newblock Fast Transformer Decoding: One Write-Head is All You Need.
+\newblock \emph{arXiv:1911.02150}, 2019.
 
 \end{thebibliography}
 
