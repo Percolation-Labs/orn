@@ -36,7 +36,11 @@ article hr { border: none; border-top: 1px solid var(--rule); margin: 2.4rem 0; 
 <p>Every transformer layer learns its own pair of coupling matrices <em>W_Q</em> and <em>W_K</em>. The object that actually determines which tokens attend to which is not either matrix alone but the product <em>M_l</em> = <em>W_Q</em>ᵀ <em>W_K</em>. If you look at the eigenvalue magnitudes of <em>M_l</em> at every layer of a trained transformer and plot them on top of each other, they line up.</p>
 <p><img alt="Per-layer coupling eigenspectra overlap; Spearman heatmap across layers" src="https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/COU-02_coupling_manifold_8d.png" /></p>
 <p>The raw matrices point in different directions. Cosine similarity between any two <em>M_l</em> matrices sits around 0.005. But the spectrum is the same everywhere. On a small trained transformer in the repo, the pairwise Spearman correlation of sorted eigenvalue magnitudes is 0.999 across layers. On real pretrained transformers (three GPT-2 sizes, SmolLM2-135M, Qwen2.5-0.5B), the correlation sits between 0.93 and 0.99.</p>
-<p><em>M</em> is a bilinear form. Its spectrum is invariant under orthogonal rotation. What the data is telling us is that every layer has learned the same bilinear form, up to rotation. The layers are not independent draws from a distribution of coupling rules. They are one rule, expressed in different coordinate frames, acting on a residual stream that rotates through those frames as depth increases.</p>
+<p><em>M</em> is a bilinear form. Its spectrum is invariant under orthogonal rotation.</p>
+<blockquote>
+<p>What the data is telling us is that every layer has learned the same bilinear form, up to rotation.</p>
+</blockquote>
+<p>The layers are not independent draws from a distribution of coupling rules. They are one rule, expressed in different coordinate frames, acting on a residual stream that rotates through those frames as depth increases.</p>
 <p>I spent a while checking whether this is an artefact of training, a quirk of one model, or a feature of one scale. It reproduces across model families, across seeds, and across training runs. Same thing showing up every time.</p>
 <p><img alt="Layer-averaged M across three independent seeds; curves lie on top of each other" src="https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/SPE-01_spectral_universality.png" /></p>
 <h2>Exploiting it</h2>
