@@ -7,8 +7,16 @@ import torch
 import torch.nn.functional as F
 
 
+# Default benchmarks quoted in the paper.
+DEFAULT_TASKS = [
+    "hellaswag", "piqa", "arc_easy", "arc_challenge",
+    "winogrande", "boolq", "openbookqa",
+]
+
+
 @torch.no_grad()
-def eval_perplexity(model: torch.nn.Module, batches: Iterable, device: str | torch.device = "cpu") -> dict:
+def eval_perplexity(model: torch.nn.Module, batches: Iterable,
+                     device: str | torch.device = "cpu") -> dict:
     """Compute token-averaged cross-entropy + perplexity over `batches`.
 
     Each batch must yield (x, targets) with shape (B, S). Works for any model
@@ -26,20 +34,34 @@ def eval_perplexity(model: torch.nn.Module, batches: Iterable, device: str | tor
     return {"loss": ce, "perplexity": float(torch.tensor(ce).exp()), "tokens": total_tokens}
 
 
-def eval_benchmarks(model, tokenizer, tasks: list[str] | None = None) -> dict:
-    """HF lm-eval harness wrapper. Requires `pip install lm-eval`.
+def eval_benchmarks(model, tokenizer, tasks: list[str] | None = None,
+                     limit: int | None = None, batch_size: int = 4,
+                     max_length: int | None = None,
+                     device: str | torch.device | None = None) -> dict:
+    """HF lm-eval-harness wrapper. Requires `pip install -e '.[eval]'`.
 
-    Default tasks: hellaswag, piqa, arc_easy — the three we quote vs Pythia.
+    Args:
+      tasks: defaults to DEFAULT_TASKS (the seven from the paper table).
+      limit: per-task example cap for fast runs. None runs the full task.
+      batch_size: forwarded to the adapter (ORN adapter does one request at
+                   a time today; this is a placeholder for future batching).
+      max_length: context window; defaults to the model's seq_len.
     """
-    tasks = tasks or ["hellaswag", "piqa", "arc_easy"]
+    tasks = tasks or DEFAULT_TASKS
     try:
-        from lm_eval import evaluator
-        from lm_eval.models.huggingface import HFLM  # noqa: F401
+        from lm_eval import evaluator  # noqa: F401
     except ImportError as e:
         raise ImportError("pip install lm-eval  (or `pip install -e '.[eval]'`)") from e
 
-    # ORN models aren't HF AutoModels; we evaluate via a thin HFLM-shaped adapter.
+    from lm_eval import evaluator
     from orn.eval._hflm_adapter import ORNHFLM
-    lm = ORNHFLM(model=model, tokenizer=tokenizer)
-    results = evaluator.simple_evaluate(model=lm, tasks=tasks)
-    return results.get("results", results)
+
+    seq_len = max_length or getattr(getattr(model, "config", None), "seq_len", None) \
+        or getattr(model, "seq_len", 2048)
+
+    lm = ORNHFLM(model=model, tokenizer=tokenizer, batch_size=batch_size,
+                  max_length=seq_len, device=device)
+
+    res = evaluator.simple_evaluate(model=lm, tasks=tasks, limit=limit,
+                                     bootstrap_iters=100)
+    return res.get("results", res)
