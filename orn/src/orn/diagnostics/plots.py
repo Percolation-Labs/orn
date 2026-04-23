@@ -464,3 +464,136 @@ def plot_rank_trajectory(trajectory: list[dict], d_model: int,
     if save_path:
         fig.savefig(save_path)
     return fig
+
+
+def plot_architecture_diagram(save_path=None):
+    """Side-by-side transformer vs ORN layer diagram, paper-architecture style.
+
+    Clean vertical flow per panel. No formulas stuffed into blocks, no
+    labels on arrow paths. Shared components carry a blue left rule; per-
+    layer components carry an orange left rule. A light border frames
+    each panel.
+    """
+    from matplotlib.patches import Rectangle, FancyArrowPatch
+    apply_style()
+
+    SHARED = PALETTE[0]       # blue
+    PERLAYER = PALETTE[1]     # orange
+    NEUTRAL = "#555"
+    TXT = "#1f2937"
+    SUBTXT = "#6b7280"
+    FRAME = "#d4d4d8"
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 8.2),
+                              gridspec_kw={"wspace": 0.1})
+    panels = (
+        (axes[0], "Standard transformer layer", False),
+        (axes[1], "Orbital Response Network layer", True),
+    )
+
+    for ax, title, is_orn in panels:
+        ax.set_xlim(0, 10); ax.set_ylim(0, 12)
+        ax.set_aspect("equal"); ax.axis("off")
+
+        # Panel frame
+        ax.add_patch(Rectangle((0.25, 0.25), 9.5, 11.5,
+                               facecolor="white", edgecolor=FRAME,
+                               linewidth=0.9, zorder=0))
+        ax.text(5, 11.35, title, ha="center", va="top",
+                fontsize=11.5, fontweight="semibold", color=TXT)
+
+        def block(y, h, label, *, rule=NEUTRAL, sub=None, bold=True):
+            x, w = 1.6, 6.8
+            ax.add_patch(Rectangle((x, y), w, h, facecolor="#f9fafb",
+                                   edgecolor=FRAME, linewidth=0.8, zorder=2))
+            ax.add_patch(Rectangle((x, y), 0.18, h, facecolor=rule,
+                                   edgecolor="none", zorder=3))
+            ax.text(x + w/2 + 0.09, y + h/2 + (0.05 if sub else 0),
+                    label, ha="center", va="center",
+                    fontsize=10.5, fontweight="semibold" if bold else "regular",
+                    color=TXT, zorder=4)
+            if sub:
+                ax.text(x + w/2 + 0.09, y + h/2 - 0.24, sub, ha="center", va="center",
+                        fontsize=8.5, color=SUBTXT, style="italic", zorder=4)
+
+        def arrow(y0, y1, lw=1.1):
+            a = FancyArrowPatch((5, y0), (5, y1),
+                                arrowstyle="-|>", mutation_scale=11,
+                                color=NEUTRAL, linewidth=lw, zorder=1,
+                                shrinkA=0, shrinkB=0)
+            ax.add_patch(a)
+
+        def side_note(y, text, color=SUBTXT):
+            ax.text(8.55, y, text, ha="left", va="center",
+                    fontsize=8.5, color=color, style="italic")
+
+        # Top input
+        ax.text(5, 10.85, "residual stream (from layer l-1)",
+                ha="center", va="center", fontsize=9, color=SUBTXT)
+        arrow(10.60, 10.15)
+
+        # RMSNorm
+        block(9.55, 0.6, "RMSNorm", rule=NEUTRAL, bold=False)
+        arrow(9.50, 9.00)
+
+        # Attention block
+        if is_orn:
+            attn_label = "Multi-head attention"
+            attn_sub = "Q = h · A     K = h · B     (A, B shared across all L layers)"
+            rule = SHARED
+        else:
+            attn_label = "Multi-head attention"
+            attn_sub = "Q = h · W_Q^(l)     K = h · W_K^(l)     (per-layer coupling)"
+            rule = PERLAYER
+        block(7.90, 1.1, attn_label, rule=rule, sub=attn_sub)
+        side_note(8.45, "shared A, B" if is_orn else "per-layer W_Q, W_K",
+                   color=SHARED if is_orn else PERLAYER)
+        side_note(8.05, "V, O: per-layer")
+
+        arrow(7.85, 7.35)
+        block(6.95, 0.5, "Add", rule=NEUTRAL, bold=False)
+        arrow(6.90, 6.40)
+
+        # Pre-FFN norm
+        block(5.95, 0.5, "RMSNorm", rule=NEUTRAL, bold=False)
+        arrow(5.90, 5.40)
+
+        # FFN
+        block(4.30, 1.1, "Feed-forward (SwiGLU)", rule=PERLAYER,
+              sub="per-layer FFN")
+        side_note(4.85, "per-layer FFN", color=PERLAYER)
+        arrow(4.25, 3.75)
+        block(3.30, 0.5, "Add", rule=NEUTRAL, bold=False)
+
+        if is_orn:
+            arrow(3.25, 2.75)
+            block(1.65, 1.1, "Perturbative correction",
+                  rule=PERLAYER, sub="gated residual, d_corr bottleneck")
+            side_note(2.20, "per-layer gate + MLP", color=PERLAYER)
+            arrow(1.60, 1.05)
+            bottom_y = 1.05
+        else:
+            arrow(3.25, 1.05)
+            bottom_y = 1.05
+
+        # Output arrow
+        ax.text(5, 0.70, "residual stream (to layer l+1)",
+                ha="center", va="center", fontsize=9, color=SUBTXT)
+
+    # Global legend
+    from matplotlib.patches import Patch
+    legend_handles = [
+        Patch(facecolor=SHARED, edgecolor="none",
+              label="shared across all L layers (coupling geometry)"),
+        Patch(facecolor=PERLAYER, edgecolor="none",
+              label="per-layer (response: V, O, FFN, correction)"),
+    ]
+    fig.legend(handles=legend_handles, loc="lower center", ncol=2,
+               bbox_to_anchor=(0.5, 0.02), frameon=False, fontsize=10)
+
+    fig.suptitle("Decomposing attention: what to share, what to keep per-layer",
+                 fontsize=13, fontweight="bold", y=0.97)
+    fig.subplots_adjust(top=0.92, bottom=0.09, left=0.02, right=0.98)
+    if save_path:
+        fig.savefig(save_path)
+    return fig
