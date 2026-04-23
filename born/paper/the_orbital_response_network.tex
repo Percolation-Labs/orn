@@ -55,12 +55,11 @@
 
 % ======================================================================
 \begin{abstract}
-We ask what happens if a transformer's per-layer query-key coupling is replaced by a single shared bilinear form, motivated by the observation that the coupling's eigenspectrum is nearly identical across layers of pretrained transformers (mean pairwise spectral correlation $0.94$--$0.99$ across GPT-2 Small/Medium/Large, SmolLM-135M, and Qwen-2.5 0.5B) even though the raw matrices are orthogonal (cosine $\sim 0.005$).
-The \textbf{Orbital Response Network} (\orn{}) replaces $2L$ per-layer $W_Q, W_K$ matrices with one shared $\M = AB^\top$ and keeps $W_V$, $W_O$, and the FFN per-layer.
-This paper's claim is narrow: the substitution does not hurt.
-At 108M parameters on 8B tokens of FineWeb-Edu (a single RTX 4090, \textasciitilde\$8), \orn{}-V2 comes within a point of GPT-2 Small and SmolLM-135M on average across eight zero-shot benchmarks despite 37--75$\times$ less training data, using 48$\times$ fewer coupling parameters; a frozen $\M$ transferred from one dataset to another recovers 98.6\% of from-scratch validation loss, and the emergent $\M$ crystallises to a 5--8 dimensional manifold matching our pretrained-model analysis.
-A larger \orn{}-V3 at 605M parameters ($d{=}2048$, $L{=}32$, $8\times$ wide shared FFN~\cite{onewideffn2023}) reached val loss 2.82 on 3B tokens of FineWeb-Edu on a single A100 (\textasciitilde40 hours, \textasciitilde\$394); benchmark evaluation of V3 is forthcoming.
-Code, published checkpoints (\texttt{mr-saoirse/orn-v2-108m} and \texttt{mr-saoirse/orn-v3-605m} on HuggingFace), and all experimental scripts are at the repository above; most diagnostics reproduce on a laptop in minutes.
+Prior work on transformer weight sharing has largely taken a blunt approach: tie whole blocks across layers (ALBERT, Universal Transformer), or tie everything and patch the gaps with LoRA (RRT). These trade quality for compression because they share what should not be shared.
+We argue for a different move. Pretrained transformer coupling matrices $W_Q^{(l)\top} W_K^{(l)}$ are spectrally correlated across layers even though their raw orientations are not, which isolates the coupling \emph{rule} as the piece that is genuinely shared by training; layer-specific variation lives in the response, not in the coupling.
+The \textbf{Orbital Response Network} (\orn{}) acts on this measurement surgically: replace $2L$ per-layer $W_Q, W_K$ with one shared $\M = AB^\top$, keep $W_V, W_O$, and the FFN per-layer, and let the per-layer rotation that used to sit inside $W_Q, W_K$ be absorbed into the response heads via a standard orthogonal-gauge argument.
+The narrow claim of this paper is that the surgical substitution does not hurt: at 108M parameters on 8B tokens of FineWeb-Edu an \orn{} tracks a standard transformer at equal parameters across 1M--108M scales, a frozen $\M$ transferred across datasets recovers 98.6\% of from-scratch quality, and the trained $\M$ crystallises to a 5--8 dimensional manifold consistent with what we measured on the pretrained transformers that motivated the architecture.
+A larger 605M variant combines shared $\M$ with a single wide shared FFN~\cite{onewideffn2023} and reaches val loss 2.82 on 3B tokens on a single A100. Published checkpoints, reproducible code, and a laptop-friendly diagnostics suite are at the repository.\footnote{\url{https://github.com/Percolation-Labs/orn}}
 \end{abstract}
 
 % ======================================================================
