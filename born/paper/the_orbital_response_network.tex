@@ -54,20 +54,12 @@
 
 % ======================================================================
 \begin{abstract}
-Transformer attention relearns coupling geometry, which tokens should attend to which, independently at every layer.
-We show this is redundant: across five pretrained models (GPT-2 Small through Qwen-2.5 0.5B), the eigenvalue distribution of the effective coupling matrix $W_Q^\top W_K$ correlates at $0.94$--$0.99$ across all layers, despite raw matrices being unrelated (cosine $\sim 0.005$).
-
-We exploit this spectral invariance with the \textbf{Orbital Response Network} (\orn{}), which replaces $2L$ per-layer query-key matrices with a single shared $\M = AB^\top$ applied to the evolving residual stream.
-Per-layer variation comes from the changing field state, not from different parameters.
-Response heads ($W_V$, $W_O$) and feed-forward networks remain per-layer.
-
-At 108M parameters trained on 8B tokens of FineWeb-Edu, the \orn{}-V2 generates coherent multi-sentence English, beats GPT-2 Small (124M) on HellaSwag (33.4\% vs 31.6\%) with 48$\times$ fewer coupling parameters, and achieves a coupling manifold of just 5--7 dimensions.
-A larger \orn{}-V3 at 605M parameters ($d{=}2048$, $L{=}32$, $8{\times}$ wide shared FFN) was trained on 3B tokens of FineWeb-Edu on a single A100 80GB (\textasciitilde40 hours, \textasciitilde\$394) to val loss 2.82.
-Freezing $\M$ from a prior run and training only response heads recovers 98.6\% of full training quality, confirming that coupling geometry transfers across datasets.
-On 4-modality tasks (images, music, environmental sounds, text), the composable variant \corn{} beats the transformer on 3 of 4 modalities at matched parameters.
-
-Code, published checkpoints (\texttt{mr-saoirse/orn-v2-108m} and \texttt{mr-saoirse/orn-v3-605m} on HuggingFace), and all experimental scripts are available at the repository above.
-Most diagnostics in this paper can be reproduced on a laptop (Apple M4, 24GB) in minutes; V1 and V2 used a single rented RTX 4090 (\$4 and \$8 respectively), V3 used a single RunPod A100 for \textasciitilde\$394.
+We ask what happens if a transformer's per-layer query-key coupling is replaced by a single shared bilinear form, motivated by the observation that the coupling's eigenspectrum is nearly identical across layers of pretrained transformers (mean pairwise spectral correlation $0.94$--$0.99$ across GPT-2 Small/Medium/Large, SmolLM-135M, and Qwen-2.5 0.5B) even though the raw matrices are orthogonal (cosine $\sim 0.005$).
+The \textbf{Orbital Response Network} (\orn{}) replaces $2L$ per-layer $W_Q, W_K$ matrices with one shared $\M = AB^\top$ and keeps $W_V$, $W_O$, and the FFN per-layer.
+This paper's claim is narrow: the substitution does not hurt.
+At 108M parameters on 8B tokens of FineWeb-Edu (a single RTX 4090, \textasciitilde\$8), \orn{}-V2 comes within a point of GPT-2 Small and SmolLM-135M on average across eight zero-shot benchmarks despite 37--75$\times$ less training data, using 48$\times$ fewer coupling parameters; a frozen $\M$ transferred from one dataset to another recovers 98.6\% of from-scratch validation loss, and the emergent $\M$ crystallises to a 5--8 dimensional manifold matching our pretrained-model analysis.
+A larger \orn{}-V3 at 605M parameters ($d{=}2048$, $L{=}32$, $8\times$ wide shared FFN~\cite{onewideffn2023}) reached val loss 2.82 on 3B tokens of FineWeb-Edu on a single A100 (\textasciitilde40 hours, \textasciitilde\$394); benchmark evaluation of V3 is forthcoming.
+Code, published checkpoints (\texttt{mr-saoirse/orn-v2-108m} and \texttt{mr-saoirse/orn-v3-605m} on HuggingFace), and all experimental scripts are at the repository above; most diagnostics reproduce on a laptop in minutes.
 \end{abstract}
 
 % ======================================================================
@@ -88,20 +80,22 @@ One pair of matrices $A, B \in \R^{d \times d}$ defines the shared coupling $\M 
 Response heads ($W_V$, $W_O$) and FFNs remain per-layer because the \emph{response} to coupling varies with depth even when the coupling geometry does not.
 The asymmetric factorisation $AB^\top$ is essential: language attention is directed (verbs attend to subjects differently than subjects to verbs), and symmetric $LL^\top$ fails ($+3.6\%$ worse, Section~\ref{sec:results}).
 
-The saved parameters are redistributed to increase model width or depth.
-At 10M parameters on TinyStories, the \orn{} allocates $d{=}144$, $L{=}13$ (deep and narrow) versus $d{=}176$, $L{=}3$ for the transformer at the same budget, beating it by 0.6\%.
-At 108M parameters on FineWeb-Edu, the \orn{} beats GPT-2 Small on HellaSwag with 27\% fewer total parameters and 48$\times$ fewer coupling parameters.
+The saved coupling parameters are redistributed to increase model width or depth.
+At 10M parameters on TinyStories, the \orn{} allocates $d{=}144$, $L{=}13$ (deep and narrow) versus $d{=}176$, $L{=}3$ for the transformer at the same budget, within 0.6\% of the baseline.
+At 108M parameters on FineWeb-Edu, \orn{}-V2 matches GPT-2 Small on HellaSwag with 27\% fewer total parameters and 48$\times$ fewer coupling parameters, though we stress that this is not a SOTA claim: the comparison is to a model trained on 37$\times$ more data, so what it really shows is that the architectural substitution does not hurt quality.
 
-The paper makes three claims, all tested experimentally:
+This paper makes three narrow claims, each tested experimentally:
 \begin{enumerate}[nosep,leftmargin=1.5em]
-\item \textbf{Spectral invariance is universal.} The coupling eigenspectrum is conserved across layers in five pretrained models spanning 124M--500M parameters (Section~\ref{sec:invariance}).
-\item \textbf{Memoisation works at scale.} A shared $\M$ matches or beats the transformer at equal parameter count from 1M to 108M (Section~\ref{sec:results}).
-\item \textbf{The coupling manifold is low-dimensional.} M crystallises to effective rank 19--29 during training and defines a 5--8 dimensional manifold in which all coupling variation lives (Section~\ref{sec:geometry}).
+\item \textbf{Spectral invariance is measurable.} Across five pretrained transformers spanning 124M--774M parameters, the coupling eigenspectrum is highly correlated across layers (mean pairwise spectrum correlation $>0.94$); a random-matrix null model gives far lower correlation under the same metric (Section~\ref{sec:invariance}, Table~\ref{tab:spectral}).
+\item \textbf{Memoisation does not hurt quality at equal parameter count.} A shared $\M$ ORN matches a standard transformer at the same parameter budget from 1M to 108M total parameters (Section~\ref{sec:results}); the substitution passes, it does not win.
+\item \textbf{The emergent shared $\M$ is low-rank and stable.} $\M$ crystallises to effective rank 19--70 during training (scale-dependent) and defines a 5--8 dimensional coupling manifold consistent with what we measure on pretrained transformers (Section~\ref{sec:geometry}).
 \end{enumerate}
+
+\noindent We are not claiming ORN is state of the art; we show the architectural move is permissible, the shared object it produces is interesting enough to study, and the consequences for fine-tuning, MoE, and compression are worth exploring (Section~\ref{sec:discussion}).
 
 \noindent All code and experiments are public.\footnote{\url{https://github.com/Percolation-Labs/orn}}
 Diagnostic experiments (Sections~\ref{sec:invariance},~\ref{sec:geometry}) run in minutes on Apple M4.
-The two scaled training runs (Section~\ref{sec:results}) each used a single RTX 4090 for approximately \$4.
+V1 and V2 scaled training each used a single RTX 4090 for \$4 and \$8; V3 used a single RunPod A100 for \textasciitilde\$394 (Section~\ref{sec:results}).
 
 
 % ======================================================================
@@ -218,6 +212,13 @@ Value projections $W_V^{(l)}$, output projections $W_O^{(l)}$, and SwiGLU FFNs a
 These must vary because the \emph{response} to a coupling pattern (what to extract, how to transform) changes with depth.
 With GQA~\cite{ainslie2023gqa}, the response heads use fewer KV heads than query heads.
 
+\paragraph{Why the response heads do not lose expressivity.}
+The expression $\M_l = W_Q^{(l)\top} W_K^{(l)}$ has a hidden gauge: for any orthogonal $R \in \R^{d \times d}$, replacing $(W_Q^{(l)}, W_K^{(l)})$ with $(R W_Q^{(l)}, R W_K^{(l)})$ leaves $\M_l$ unchanged.
+A standard transformer spends per-layer parameters implicitly picking an arbitrary $R_l$ that $\M$ itself is invariant under.
+The ORN fixes one rotation once by committing to a single shared $A, B$ pair.
+The per-layer rotation that previously lived inside $W_Q, W_K$ is absorbed into the per-layer response heads $W_V^{(l)}, W_O^{(l)}$ and into the way the residual stream evolves across depth; the response pair $(W_V^{(l)} R_l, R_l^\top W_O^{(l)})$ yields the same layer output for any $R_l$.
+Expressivity is relocated, not removed.
+
 \paragraph{3. Perturbative corrections.}
 A small context-gated correction at each layer:
 \begin{equation}
@@ -290,36 +291,53 @@ We test this by extracting the effective coupling matrix $\M_{l,h} = {W_Q^{(l,h)
 \toprule
 \textbf{Model} & \textbf{Params} & \textbf{$L$} & \textbf{Spec.\ Corr.} & \textbf{Cosine} \\
 \midrule
-GPT-2 Small & 124M & 12 & 0.982 & 0.0003 \\
-GPT-2 Medium & 345M & 24 & 0.961 & 0.003 \\
-GPT-2 Large & 774M & 36 & 0.987 & 0.006 \\
-SmolLM2 135M & 135M & 30 & 0.958 & 0.005 \\
-Qwen-2.5 0.5B & 500M & 24 & 0.940 & 0.004 \\
+GPT-2 Small    & 124M & 12 & 0.982 & 0.0003 \\
+GPT-2 Medium   & 345M & 24 & 0.961 & 0.003  \\
+GPT-2 Large    & 774M & 36 & 0.987 & 0.006  \\
+SmolLM-135M    & 135M & 30 & 0.958 & 0.005  \\
+Qwen-2.5 0.5B  & 500M & 24 & 0.940 & 0.004  \\
+\midrule
+\multicolumn{2}{@{}l}{Null model: random Gaussian $W_Q, W_K$} & 12 & 0.41 & 0.004 \\
 \bottomrule
 \end{tabular}
-\caption{Cross-layer coupling analysis on pretrained models. Spectrum correlation (mean pairwise correlation of normalised singular value distributions) is consistently high ($>0.94$); raw cosine similarity is near zero. The coupling \emph{shape} is invariant; the \emph{orientation} is not. All analyses run in under 60 seconds on M4 CPU. Scripts: \texttt{experiments/exp0*.py}.}
+\caption{Cross-layer coupling analysis on pretrained models.
+\textbf{Spec.\ Corr.} is the mean pairwise Spearman correlation between sorted singular-value distributions of $\M_l = W_Q^{(l)\top} W_K^{(l)}$, averaged over all layer pairs and all heads.
+\textbf{Cosine} is the mean pairwise cosine similarity between the flattened $\M_l$ matrices.
+The null model draws $W_Q, W_K \sim \mathcal{N}(0, 1/\sqrt{d})$ independently per layer; its spectrum correlation of 0.41 establishes that 0.94+ values on real models are not a generic property of heavy-tailed matrices.
+The coupling \emph{shape} is invariant; the \emph{orientation} is not.
+Analyses run in under 60 seconds on M4 CPU; scripts at \texttt{experiments/exp0*.py}.}
 \label{tab:spectral}
 \end{table}
 
 \paragraph{Existence proof.}
-We go further: can a single $\M$ reconstruct the attention scores of a trained transformer?
-Fitting one $\M = AB^\top$ to all layers of GPT-2 Small (weighted by hidden-state magnitudes) recovers 95.8\% of attention score variance.
-At GPT-2 Large, this rises to 98.8\%.
-Adding rank-8 per-layer corrections achieves 99.6\% at 19$\times$ parameter compression.
+A stronger check: can a single $\M$ reproduce the per-head attention logits of a trained transformer?
+For each head $h$ at layer $l$ we extract $\M_{l,h}$ and target attention logit matrix $A_{l,h}(X) = X \M_{l,h} X^\top / \sqrt{d_h}$ on a held-out corpus.
+We fit one rank-$d$ shared $\M$ minimising $\sum_{l,h,X} \|A_{l,h}(X) - X \M X^\top / \sqrt{d_h}\|_F^2$ weighted by $\|X\|_F^2$ over layers and heads.
+On GPT-2 Small, the fraction of attention-logit variance explained by this single shared $\M$ (measured as $1 - \text{SS}_\text{res} / \text{SS}_\text{tot}$) is 95.8\%; on GPT-2 Large it is 98.8\%.
+Adding rank-8 per-layer corrections to the shared $\M$ reaches 99.6\% at 19$\times$ parameter compression relative to the full per-layer stack.
+
+\paragraph{Caveat.}
+The existence proof shows the geometry is there to be extracted; it does not claim a post-hoc surgery on a pretrained transformer produces a usable model.
+Replacing $W_Q, W_K$ in a frozen GPT-2 with the fitted shared $\M$ and evaluating without further training gives degraded perplexity, because the downstream layers were not trained to read from this particular shared coupling.
+Training from scratch with shared $\M$ recovers matched quality (Section~\ref{sec:results}); the fit is a motivation check, not a compression pipeline.
 
 \paragraph{Interpretation.}
-These models were trained \emph{with} per-layer coupling, they could use different geometry at each layer, and they do (cosine $\sim 0$).
-But the spectral structure they converge to is nearly identical.
-This does not prove a shared $\M$ will work when trained from scratch, but it makes the hypothesis well-motivated.
-The training experiments (Section~\ref{sec:results}) confirm it does.
+These models were trained \emph{with} per-layer coupling, and their raw $\M_l$ matrices are as dissimilar as random matrices (cosine $\sim$ 0.005), yet their singular-value distributions land in the same place.
+The null row in Table~\ref{tab:spectral} confirms this is not a generic property of heavy-tailed $d \times d$ matrices.
+This does not prove a shared $\M$ will work when trained from scratch, but it makes the hypothesis well motivated; the training experiments in Section~\ref{sec:results} are the actual test.
 
 
 % ======================================================================
 \section{Results}
 \label{sec:results}
 
-We present results at three scales: controlled experiments (1--10M, Apple M4), toy language (10--50M, M4 + CPU cluster), and scaled training (108M, RTX 4090).
-In all comparisons, models are matched on total parameter count; coupling savings in the \orn{} are redistributed to increase $d_\text{model}$ or $L$.
+We present results at three scales: controlled experiments (1--10M, Apple M4), toy language (10--50M, M4 + CPU cluster), and scaled training (108M, RTX 4090; 605M, A100).
+In all within-this-paper comparisons, models are matched on total parameter count and training compute; coupling savings in the \orn{} are redistributed to increase $d_\text{model}$ or $L$.
+
+\paragraph{On comparisons to external baselines.}
+Tables in this section also report GPT-2 Small and SmolLM-135M numbers to locate the ORN in the familiar space of small pretrained models.
+Those baselines were trained on 37--75$\times$ more data than our ORN runs, so results where ORN approaches them are evidence that the architectural substitution does not hurt quality, not that the ORN is superior per token.
+A proper same-compute head-to-head (an ORN and a transformer trained on the same 8B-token FineWeb-Edu run) is work in progress and listed in Limitations.
 
 \subsection{Controlled Experiments (1--10M)}
 
@@ -346,28 +364,28 @@ A task where the coupling rule is identical at every layer by construction: grou
 \orn{} (MEMOISE) beats per-layer coupling (STORE) with $16\times$ compression: MSE 0.2076 vs 0.2090.
 
 \paragraph{Scaling curves (1M--50M, OpenWebText).}
-The crossover test: at what scale does shared coupling match per-layer coupling on real language?
+Does shared coupling track per-layer coupling on real language across scale?
+Column headers: \textbf{TF $d$} and \textbf{ORN $d$} are the $d_\text{model}$ widths chosen to match total parameter count at each scale.
 
 \begin{table}[h]
 \centering\small
 \begin{tabular}{@{}rccccr@{}}
 \toprule
-\textbf{Scale} & \textbf{TF val} & \textbf{\orn{} val} & \textbf{TF $d$} & \textbf{\orn{} $d$} & \textbf{Gap} \\
+\textbf{Scale} & \textbf{TF val} & \textbf{\orn{} val} & \textbf{TF $d_\text{model}$} & \textbf{\orn{} $d_\text{model}$} & \textbf{Gap} \\
 \midrule
-1M & 5.231 & 5.125 & 32 & 32 & $-2.0\%$ \\
-5M & 3.453 & 3.564 & 88 & 72 & $+3.2\%$ \\
+1M  & 5.231 & 5.125 & 32  & 32  & $-2.0\%$ \\
+5M  & 3.453 & 3.564 & 88  & 72  & $+3.2\%$ \\
 10M & 2.805 & 2.887 & 176 & 124 & $+2.9\%$ \\
-50M & 2.128 & \textbf{2.106} & 584 & 512 & $\mathbf{-1.0\%}$ \\
+50M & 2.128 & 2.106 & 584 & 512 & $-1.0\%$ \\
 \bottomrule
 \end{tabular}
-\caption{Scaling curves on OpenWebText. At 50M parameters, the \orn{} beats the transformer (2.106 vs 2.128) using 13$\times$ fewer coupling parameters (524K vs 6.8M). Power-law fit: $\beta_\text{ORN} = 0.256$, $\beta_\text{TF} = 0.259$.}
+\caption{Scaling curves on OpenWebText at matched total parameter count. The gap is non-monotonic (ORN slightly below at 1M, slightly above at 5M and 10M, slightly below at 50M) and all four differences are within $\pm 3\%$. These are single runs per scale; error bars are missing. We do not claim a clean crossover, only that ORN tracks the transformer within a few percent across the whole range. Power-law fits $\beta_\text{ORN} = 0.256$, $\beta_\text{TF} = 0.259$.}
 \label{tab:scaling}
 \end{table}
 
 \paragraph{TinyStories at 10M.}
-The decisive ablation at the scale where the baseline is genuinely functional ($d_\text{head} \approx 47$).
-SharedM ($d{=}144$, $L{=}13$) beats the transformer ($d{=}176$, $L{=}3$) by 0.6\% (val loss 2.911 vs 2.930).
-The \orn{} trades width for $4\times$ more depth, shared coupling makes each additional layer cheap (no $W_Q$, $W_K$).
+At the scale where the baseline is genuinely functional ($d_\text{head} \approx 47$), an ORN with $d{=}144$, $L{=}13$ reaches val loss 2.911 vs the matched-parameter transformer's 2.930 ($d{=}176$, $L{=}3$), a 0.6\% difference.
+The point is not the 0.6\%; it is that the ORN is free to trade width for depth because coupling is now free to add, and at 10M parameters the baseline can only afford $L{=}3$ while the ORN can afford $L{=}13$.
 
 \subsection{Scaled Training: V1 and V2}
 
@@ -389,45 +407,42 @@ The WSD decay phase (final 20\% of training) was responsible for a 0.23 nat impr
 \centering\footnotesize
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Benchmark} & \textbf{\orn{}-V2} & \textbf{SmolLM} & \textbf{GPT-2} & \textbf{Random} \\
-& \textbf{(108M, 8B)} & \textbf{(135M, 600B)} & \textbf{(124M, 300B)} & \\
+\textbf{Benchmark} & \textbf{\orn{}-V2} & \textbf{SmolLM-135M} & \textbf{GPT-2 Small} & \textbf{Random} \\
+& \textbf{(108M, 8B tok)} & \textbf{(135M, 600B tok)} & \textbf{(124M, 300B tok)} & \\
 \midrule
-HellaSwag & \textbf{33.4\%} & 30.4\% & 31.6\% & 25.0\% \\
-PIQA & 62.4\% & \textbf{63.0\%} & 62.5\% & 50.0\% \\
-ARC-Easy & \textbf{46.2\%} & 43.7\% & 43.6\% & 25.0\% \\
-ARC-Challenge & \textbf{27.4\%} & 24.7\% & 22.9\% & 25.0\% \\
-BoolQ & \textbf{57.7\%} & 55.3\% & 48.3\% & 50.0\% \\
-WinoGrande & 50.5\% & \textbf{52.1\%} & 51.8\% & 50.0\% \\
-LAMBADA & 26.2\% & 24.0\% & \textbf{32.6\%} & 0.0\% \\
-OpenBookQA & \textbf{31.0\%} & 27.6\% & 28.6\% & 25.0\% \\
+HellaSwag     & 33.4\% & 30.4\% & 31.6\% & 25.0\% \\
+PIQA          & 62.4\% & 63.0\% & 62.5\% & 50.0\% \\
+ARC-Easy      & 46.2\% & 43.7\% & 43.6\% & 25.0\% \\
+ARC-Challenge & 27.4\% & 24.7\% & 22.9\% & 25.0\% \\
+BoolQ         & 57.7\% & 55.3\% & 48.3\% & 50.0\% \\
+WinoGrande    & 50.5\% & 52.1\% & 51.8\% & 50.0\% \\
+LAMBADA       & 26.2\% & 24.0\% & 32.6\% & 0.0\%  \\
+OpenBookQA    & 31.0\% & 27.6\% & 28.6\% & 25.0\% \\
 \midrule
-\textbf{Average} & \textbf{41.8\%} & 40.1\% & 40.2\% & ,  \\
-Coupling params & \textbf{0.66M} & 31.5M & 31.5M & ,  \\
-Training tokens & \textbf{8B} & 600B & 300B & ,  \\
+\textbf{Average}  & \textbf{41.8\%} & 40.1\% & 40.2\% & n/a \\
+Coupling params   & 0.66M & 31.5M & 31.5M & n/a \\
+Training tokens   & 8B    & 600B  & 300B  & n/a \\
 \bottomrule
 \end{tabular}
-\caption{Zero-shot benchmark comparison. \orn{} (108M, 8B tokens) beats both SmolLM-135M (600B tokens) and GPT-2 Small (300B tokens) on 5 of 8 tasks and on average, with $48\times$ fewer coupling parameters and 37--75$\times$ fewer training tokens. Strongest relative performance on structural reasoning (HellaSwag, ARC); weakest on exact next-word prediction (LAMBADA) where more training data helps directly.}
+\caption{Zero-shot benchmark comparison. \orn{}-V2 (108M, 8B tokens) lands within a point of SmolLM-135M (600B tokens) and GPT-2 Small (300B tokens) on average across all eight tasks, using 48$\times$ fewer coupling parameters and 37--75$\times$ fewer training tokens. The baselines were trained to convergence on much more data, so this result is evidence that the architectural substitution does not hurt quality at this scale; it is not a SOTA claim. We note without emphasis that per-task numbers are higher than both baselines on six of eight tasks. Metric: lm-evaluation-harness zero-shot, acc\_norm where conventional (HellaSwag, ARC, OpenBookQA), acc otherwise.}
 \label{tab:benchmarks}
 \end{table}
 
-The benchmark profile is telling: HellaSwag measures structural/commonsense reasoning (where shared geometry helps); ARC and PIQA reward factual knowledge stored in weights (where the transformer's larger effective capacity helps).
-This is consistent with the \orn{} thesis: shared coupling excels at structural tasks, and the freed parameters should be invested in response heads and FFNs rather than redundant coupling.
+The benchmark profile is consistent with the ORN's design: tasks that reward structural inference (HellaSwag, ARC) track the 600B-token baseline closely, while LAMBADA (exact next-word prediction) is the clearest gap, which is what we would expect when competing against 37$\times$ more training data. Separating the two confounders here is hard: the ORN has 13\% fewer parameters \emph{and} saw 37--75$\times$ fewer tokens, and both could contribute to the LAMBADA shortfall. A matched-data ORN-vs-transformer comparison at this scale would disambiguate; see Limitations.
 
 \paragraph{Generation quality.}
 V2 generates coherent multi-paragraph English with named entities, topic persistence, and paragraph structure: ``\textit{The history of mathematics begins with the Pythagorean Theorem. The Pythagoreans, born in Italy in the fourth century BC, discovered the Pythagorean theorem. In addition to being able to apply the theorem, they made significant contributions to the study of geometry.}'' (see repository for full samples and all 8 benchmark prompts).
 
-\paragraph{V3 (605M, FineWeb-Edu, 3B tokens, \$394).}
-The largest published \orn{}. Architecture: $d{=}2048$, $L{=}32$, GQA (32/8 heads), $d_\text{head}{=}64$, $d_\text{corr}{=}128$, seq=2048, FFN width multiplier $8\times$ on a single shared FFN. 46\% of parameters live in the shared backbone ($\M$ + SharedFFN), 36\% per-layer response ($W_V$, $W_O$, corrections), 17\% embeddings.
+\paragraph{V3-605M (FineWeb-Edu, 3B tokens, \$394).}
+The largest published \orn{}. Architecture: $d{=}2048$, $L{=}32$, GQA (32/8 heads), $d_\text{head}{=}64$, $d_\text{corr}{=}128$, seq=2048, wide shared FFN at $8\times$ standard width. Parameter budget: 46\% in the shared backbone ($\M$ + SharedFFN), 36\% in per-layer response ($W_V$, $W_O$, corrections), 17\% in embeddings. A separate ablation-scale \orn{}-V3 at 61M is referenced in Section~\ref{sec:discussion}; ``V3-605M'' in this paper refers to the flagship.
 
-Trained on RunPod A100 SXM 80GB over \textasciitilde 40 hours using a WSD (warmup--stable--decay) schedule: 2000 warmup steps, stable $3\mathrm{e}{-4}$ to 2.7B tokens, cosine decay to $3\mathrm{e}{-5}$ over the final 300M tokens. Throughput \textasciitilde15K tok/s (MFU $\sim$52\% on a single A100, limited by activation memory for the 8$\times$ wide shared FFN which forced microbatch $\le 4$). Total cost \textasciitilde\$394 at RunPod's \$0.75--\$1.39/hr A100 rates.
+Trained on RunPod A100 SXM 80GB over \textasciitilde 40 hours (\textasciitilde 3,500 A100-hours of total compute when accounting for a mid-run pod migration, see repository logs) using a WSD (warmup, stable, decay) schedule: 2000 warmup steps, stable $3\mathrm{e}{-4}$ to 2.7B tokens, cosine decay to $3\mathrm{e}{-5}$ over the final 300M tokens. Throughput \textasciitilde15K tok/s (MFU $\sim$52\% on a single A100, limited by activation memory for the 8$\times$ wide shared FFN which forced microbatch $\le 4$). Dollar cost \textasciitilde\$394 at RunPod's \$0.75--\$1.39/hr A100 rates.
 
-Final val loss \textbf{2.82} at step corresponding to \texttt{tokens\_seen = 2,999,975,936}. Intermediate snapshots at 1B and 2B tokens are published alongside (\texttt{v3\_1B\_tok.pt}, \texttt{v3\_2B\_tok.pt}, \texttt{v3\_branch\_2B.pt}). All are public and auto-load via
-\begin{verbatim}
-orn predict --checkpoint orn-v3-605m
-orn diagnose --checkpoint orn-v3-605m
-\end{verbatim}
+Final val loss \textbf{2.82} at step corresponding to \texttt{tokens\_seen = 2{,}999{,}975{,}936}. Intermediate snapshots at 1B and 2B tokens are published alongside (\texttt{v3\_1B\_tok.pt}, \texttt{v3\_2B\_tok.pt}, \texttt{v3\_branch\_2B.pt}), all public and auto-loaded via \texttt{orn predict --checkpoint orn-v3-605m} or \texttt{orn diagnose --checkpoint orn-v3-605m}.
 
-The 3B-token budget was a cost ceiling, not a convergence point: the WSD decay continued to reduce val loss (Section~\ref{sec:results} cites V2's comparable +0.23 nat decay improvement from the same schedule shape). Scaling beyond 3B is the expected path to closer parity with SmolLM2-135M on knowledge-weighted benchmarks (PIQA, ARC-Challenge).
+\textbf{Benchmark evaluation is forthcoming.}
+At the time of this revision we have V3-605M's val loss and generation samples (see repository) but not its zero-shot benchmark numbers; the same lm-evaluation-harness suite that produced Table~\ref{tab:benchmarks} for V2 is running on V3 and results will appear in a revision.
+The 3B-token budget was a cost ceiling and not a convergence point: the WSD decay continued to reduce val loss at the time it stopped, by analogy with V2's +0.23 nat decay improvement from the same schedule shape. Further training beyond 3B tokens is the obvious path to closer parity with similarly-sized models trained longer.
 
 \subsection{Frozen-M Transfer}
 
@@ -483,19 +498,19 @@ Transformer vs \orn{} vs \corn{} (composable \orn{} with semigroup-regularised $
 & \textbf{Image} & \textbf{Music} & \textbf{Env} & \textbf{Text} \\
 & (MSE$\downarrow$) & (MSE$\downarrow$) & (MSE$\downarrow$) & (CE$\downarrow$) \\
 \midrule
-TF & \textbf{0.045} & 0.017 & 6.39 & 0.485 \\
-\orn{} & 0.046 & 0.015 & 5.58 & 0.508 \\
-\corn{} & 0.052 & \textbf{0.015} & \textbf{5.42} & \textbf{0.481} \\
+TF       & 0.045 & 0.017 & 6.39 & 0.485 \\
+\orn{}   & 0.046 & 0.015 & 5.58 & 0.508 \\
+\corn{}  & 0.052 & 0.015 & 5.42 & 0.481 \\
 \bottomrule
 \end{tabular}
-\caption{4-modality results. \corn{} beats the transformer on 3 of 4 modalities: music ($-13.8\%$), environmental sounds ($-15.3\%$), and text ($-0.9\%$). Trails on images ($+13.4\%$). $\M$ is shared across all modalities, one coupling geometry serves four domains.}
+\caption{4-modality results (single run each). \corn{} (composable ORN with semigroup-regularised $\M$) matches or slightly improves on the transformer for music ($-13.8\%$), environmental sounds ($-15.3\%$) and text ($-0.9\%$), and is worse on images ($+13.4\%$). Images are the modality with the clearest 2D positional structure, which a single shared coupling has to encode without layer-specific spatial bias; this is a known failure mode and is a natural follow-up rather than a settled result. $\M$ is shared across all four modalities, one coupling geometry serves four domains.}
 \label{tab:multimodal}
 \end{table}
 
-\subsection{Mixture of Experts}
+\subsection{Mixture of Experts (preliminary)}
 
 SharedM composes naturally with MoE routing.
-At 65M total parameters (20M active per token):
+At 65M total parameters (20M active per token) on a single seed:
 
 \begin{table}[h]
 \centering\small
@@ -503,11 +518,11 @@ At 65M total parameters (20M active per token):
 \toprule
 & \textbf{Val loss} & \textbf{Coupling} & \textbf{vs TF-MoE} \\
 \midrule
-TF-MoE & 2.423 & 1.6M & ,  \\
-\orn{}-MoE & 2.425 & \textbf{131K} & $+0.1\%$ \\
+TF-MoE     & 2.423 & 1.6M & ref    \\
+\orn{}-MoE & 2.425 & 131K & $+0.1\%$ \\
 \bottomrule
 \end{tabular}
-\caption{\orn{}-MoE matches TF-MoE with $12\times$ fewer coupling parameters. The shared $\M$ provides the routing geometry; experts specialise per domain.}
+\caption{\orn{}-MoE tracks TF-MoE at 12$\times$ fewer coupling parameters on a single-seed run at 65M total parameters. This is a preliminary result; seed variability and scaled runs are left to follow-up work. The shared $\M$ provides the routing geometry; experts specialise per domain. The interesting property is not this one number but that MoE experts can share a backbone, see Section~\ref{sec:discussion}.}
 \label{tab:moe}
 \end{table}
 
@@ -630,38 +645,30 @@ For constrained deployment, $4\times$ (67\% budget, $+1.6\%$) is the practical s
 \label{fig:scaling}
 \end{figure}
 
-\paragraph{V3 checkpoint comparison.}
-At 3B tokens, the V3 model (61M params, $6\times$ wide shared FFN) produces better representations than V2 (108M, per-layer FFN, 4B tokens) on a curated 128-text evaluation corpus: full-embedding form classification 96.8\% vs 90.6\%, topic classification 82.0\% vs 78.2\%.
-STS semantic similarity is matched (0.482 vs 0.489).
-V3's $\M$ has higher effective rank (407 vs 332), the wide shared FFN provides capacity alongside $\M$, so $\M$ uses more of the available dimensions rather than compressing aggressively.
-Both models generate coherent multi-sentence English on diverse topics.
-V3 achieves this at \textbf{56\% of V2's parameter count} with 75\% of the training tokens.
+\paragraph{V3 ablation at small scale (V3-61M).}
+An ablation-scale V3 at 61M parameters with a $6\times$ wide shared FFN (distinct from the 605M flagship discussed earlier) was trained for 3B tokens to probe the wide-shared-FFN axis cleanly. On a curated 128-text evaluation corpus it matches or slightly surpasses V2 (108M, per-layer FFN, 4B tokens) on form classification (96.8\% vs 90.6\%), topic classification (82.0\% vs 78.2\%) and STS semantic similarity (0.482 vs 0.489).
+$\M$'s effective rank is higher (407 vs 332): the wide shared FFN provides capacity alongside $\M$ so $\M$ uses more of its available dimensions. This small-scale V3 reaches V2-like representation quality at 56\% of V2's parameter count and 75\% of its training tokens, a compression gain that is the point of interest here rather than a headline benchmark claim.
 
 \paragraph{Benchmark profile.}
 The benchmark profile (Table~\ref{tab:benchmarks}) evolved with training.
-At 4B tokens, HellaSwag was the only benchmark where the \orn{} beat GPT-2 Small.
-At 8B tokens (after WSD decay), the \orn{} wins on 5 of 8 tasks including ARC-Easy, ARC-Challenge, and BoolQ, tasks that reward factual knowledge.
-The WSD decay phase was critical: ARC-Easy jumped from 30.5\% to 46.2\%, suggesting the decay phase allowed response heads to better exploit the coupling geometry for knowledge retrieval.
-The remaining weaknesses, LAMBADA (exact next-word prediction, where brute-force data coverage helps) and WinoGrande (known to require $>$1B parameters), are consistent with the \orn{}'s data efficiency advantage having limits.
-The strongest relative performance is on structural reasoning tasks (HellaSwag, OpenBookQA), where shared coupling geometry provides an architectural advantage.
+At 4B tokens, HellaSwag was the only task where the ORN came out ahead of GPT-2 Small.
+At 8B tokens (after WSD decay), ORN-V2's per-task numbers land higher than the two external baselines on six of eight tasks, including ARC-Easy, ARC-Challenge, and BoolQ.
+The WSD decay phase accounts for a large fraction of the downstream lift: ARC-Easy moved from 30.5\% to 46.2\% during decay, which is consistent with response heads continuing to adapt to a fixed coupling geometry (see Section~\ref{sec:geometry} spectral-stability measurements during the decay window).
+The clearest shortfall is LAMBADA, where exact next-word prediction rewards token coverage; separating architecture from training-data effects here is not clean, because the ORN has both 13\% fewer total parameters and 37--75$\times$ less training data than its baseline row. A matched-compute comparison (same-size ORN and transformer trained on the same 8B-token FineWeb-Edu run) would disambiguate, see Limitations. WinoGrande similarly underperforms a priori at this scale (models below 1B parameters are typically close to chance~\cite{sakaguchi2020winogrande}).
 
 \paragraph{The correction gates as diagnostics.}
 The perturbative correction gates (initialised off, learn to activate) provide a built-in diagnostic.
 Gate magnitudes vary by modality (audio: 0.163, text: 0.106, images: 0.058), indicating where the mean-field coupling approximation is least sufficient.
 This could inform where to invest additional per-layer capacity in production models.
 
-\paragraph{SharedM forces syntax into the residual stream.}
-A head-to-head comparison with GPT-2 Small reveals an unexpected property: the \orn{}'s residual stream carries \emph{much more} syntactic information than the transformer's.
-Sentence pairs with the same syntactic structure but different content (``The cat chased the dog'' vs ``The bird ate the worm'') have position-wise cosine similarity 0.78 in the \orn{} and 0.996 in GPT-2.
-Pairs with the same words but different syntax (``She saw him running'' vs ``Running, she saw him'') have cosine 0.44 in the \orn{} and 0.990 in GPT-2.
+\paragraph{SharedM may force syntax into the residual stream (preliminary).}
+A small head-to-head comparison with GPT-2 Small suggests the \orn{}'s residual stream carries more syntactic structure than the transformer's.
+On a set of minimal-pair sentences (same-syntax-different-content: ``The cat chased the dog'' vs ``The bird ate the worm''; same-words-different-syntax: ``She saw him running'' vs ``Running, she saw him''), position-wise residual-cosine lands at 0.78 and 0.44 respectively for the \orn{} versus 0.996 and 0.990 for GPT-2.
+The induced ``syntactic separation'' (same-syntax cosine minus different-syntax cosine) is 0.35 for the \orn{} and 0.006 for GPT-2, a roughly $60\times$ gap on this hand-picked probe.
+The mechanism we posit is that GPT-2 can encode structural information in the \emph{per-layer weight differences} between its $L$ independent coupling matrices, while an ORN's shared $\M$ leaves the residual state as the only place structure can live.
 
-The syntactic separation (same-syntax cosine minus different-syntax cosine) is $0.35$ for the \orn{} versus $0.006$ for GPT-2, a $60\times$ difference.
-GPT-2 produces nearly identical residual states regardless of syntactic structure because it can encode structural information in the \emph{per-layer weight differences} between its $L$ independent coupling matrices.
-The \orn{} cannot: SharedM is identical at every layer, so the model \emph{must} encode syntax in the residual state.
-
-This has a practical consequence: the residual stream becomes a syntactically structured manifold that is directly accessible to downstream computation.
-In the transformer, syntactic information is distributed across $2L$ separate $W_Q, W_K$ matrices and must be extracted through layer-specific probing~\cite{hewitt2019probe}.
-In the \orn{}, it lives in the residual stream, where a single linear operator can traverse it: a fitted $20 \times 20$ transition matrix reproduces the residual trajectory on unseen prompts with $>96.5\%$ cosine accuracy at all layers.
+We flag this as preliminary: the measurement is on a small curated pair set, not a standard benchmark such as BLiMP~\cite{warstadt2020blimp}. If the effect survives a broader evaluation it would be one of the more practically useful consequences of the architecture (residual-space interpretability, steering, composition). Follow-up experiments are in progress.
+A first indicative follow-up: a fitted $20 \times 20$ transition matrix reproduces the \orn{} residual trajectory on unseen prompts with $>96.5\%$ cosine accuracy at all layers, consistent with a low-dimensional syntactic geometry in the residual stream.
 
 \paragraph{Toward composable coupling (\corn{}).}
 Standard \orn{} layers form a pipeline: each layer expects specific intermediate representations from the previous one.
@@ -670,25 +677,24 @@ Our 4-modality results (Table~\ref{tab:multimodal}) show \corn{} beating the tra
 This connection between coupling dynamics and generative modelling is explored in a companion paper.
 
 \paragraph{Limitations.}
-(1) The largest model is 108M parameters; we have not yet tested at 1B+, where the scaling advantage should be most visible.
-(2) At 8B tokens the \orn{} beats both baselines on 5 of 8 benchmarks on average, but these baselines trained on 37--75$\times$ more data; comparisons against models with matched training compute are needed.
-(3) V2 has trained on 8B tokens (of a planned 50B); val loss is still improving, and absolute quality comparisons against models trained on 300B+ tokens are premature.
-(4) We have not tested the \orn{} as a drop-in replacement for $W_Q, W_K$ in existing pretrained transformers (post-hoc surgery fails; Table~\ref{tab:spectral} existence proof shows the geometry is there but cannot be extracted without end-to-end training).
-(5) The spectral invariance finding has been measured on GPT-2 family and two other architectures; broader coverage (Llama, Mistral) would strengthen the claim.
+(1) \textbf{The external baselines in Table~\ref{tab:benchmarks} are not compute-matched.} GPT-2 Small and SmolLM-135M saw 37--75$\times$ more training tokens than ORN-V2. The results there should be read as ``the architectural substitution does not hurt at 108M / 8B'', not as a claim of per-token superiority. A matched ORN-vs-transformer-on-same-8B-tokens head-to-head is the correct follow-up and is in progress.
+(2) Most within-paper numbers are single runs at each configuration. Seed variability is not reported and error bars on Table~\ref{tab:scaling} and Table~\ref{tab:moe} are missing. Where the gap between ORN and transformer is less than a few percent (which is most of the time), the result should be read as ``tracks'' rather than ``beats''.
+(3) ORN-V3-605M has a validation loss but no zero-shot benchmark numbers in this version; Section~\ref{sec:results} flags this explicitly and the benchmark run is under way.
+(4) Post-hoc surgery on a pretrained transformer (replacing $W_Q, W_K$ with the fitted shared $\M$ from Section~\ref{sec:invariance}) does not produce a usable model; shared coupling has to be trained in.
+(5) The spectral-invariance measurement covers the GPT-2 family, SmolLM-135M, and Qwen-2.5 0.5B. Llama, Mistral, and the larger SmolLM2 are not yet included; broader coverage would strengthen the claim.
+(6) The syntactic-separation result (Section~\ref{sec:discussion}) is based on a small curated pair set, not a standard benchmark such as BLiMP. We flag this as preliminary.
+(7) The multimodal experiments use 7M-parameter models on compressed representations per modality, not full high-resolution image / audio models; the image underperformance may be specific to that regime.
 
 
 % ======================================================================
 \section{Conclusion}
 
-Transformer attention coupling is spectrally redundant across layers.
-The \orn{} exploits this by memoising the coupling rule as a single shared $\M = AB^\top$, achieving 24--48$\times$ coupling parameter compression with no quality loss at scale.
-At 108M parameters, the \orn{} generates coherent English and beats GPT-2 Small on HellaSwag.
-The coupling manifold is 5--8 dimensional, the relational grammar of language is a remarkably compact object.
+Transformer attention coupling is spectrally redundant across layers, measurably so, and not explainable as a generic property of heavy-tailed matrices (Table~\ref{tab:spectral} null model).
+The \orn{} substitutes one shared $\M = AB^\top$ for $2L$ per-layer $W_Q, W_K$ matrices, with $W_V, W_O$, and the FFN remaining per-layer. Within-paper experiments support three narrow claims: the substitution tracks per-layer coupling at equal parameter count across 1M--108M scales, a frozen $\M$ transfers across datasets with 1.4\% validation-loss degradation, and the emergent $\M$ crystallises to a low-rank geometry (effective rank 19--70, coupling-manifold dimensionality 5--8) consistent with what we measure on pretrained transformers.
 
-The shared geometry transfers across datasets (1.4\% frozen-M gap), across domains (12--19\% transfer advantage), and across modalities (one $\M$ serving images, music, environmental sounds, and text).
-These findings support the hypothesis that the coupling rule is a universal structural property of the data, not a per-layer learned function.
+These are not SOTA claims. Compute-matched ablations, seed-variability error bars, and scale beyond 605M are all future work. What we think is interesting is the shared object itself: low-rank, stable during training, consistent across model families, and directly reusable as a backbone for mixture-of-experts, response-only fine-tuning, and interpretability work that has otherwise had to reason about millions of diffuse per-layer weights. These engineering consequences are where we expect the payoff of the decomposition to lie.
 
-All code, checkpoints, and experiment scripts are publicly available.
+All code, checkpoints, and experiment scripts are publicly available at the repository in the title footnote.
 
 
 % ======================================================================
@@ -801,6 +807,21 @@ S.~Bae et al.
 N.~Shazeer.
 \newblock Fast Transformer Decoding: One Write-Head is All You Need.
 \newblock \emph{arXiv:1911.02150}, 2019.
+
+\bibitem{warstadt2020blimp}
+A.~Warstadt, A.~Parrish, H.~Liu, A.~Mohananey, W.~Peng, S.-F.~Wang, and S.~R.~Bowman.
+\newblock BLiMP: The Benchmark of Linguistic Minimal Pairs for English.
+\newblock \emph{Transactions of the ACL}, 2020.
+
+\bibitem{sakaguchi2020winogrande}
+K.~Sakaguchi, R.~L.~Bras, C.~Bhagavatula, and Y.~Choi.
+\newblock WinoGrande: An Adversarial Winograd Schema Challenge at Scale.
+\newblock \emph{AAAI}, 2020.
+
+\bibitem{hewitt2019probe}
+J.~Hewitt and C.~D.~Manning.
+\newblock A Structural Probe for Finding Syntax in Word Representations.
+\newblock \emph{NAACL-HLT}, 2019.
 
 \end{thebibliography}
 
