@@ -33,15 +33,15 @@
     {\small Percolation Labs}\\
     {\small \url{https://github.com/Percolation-Labs/orn}}%
 }
-\date{April 2026 --- third canonical revision}
+\date{April 2026 ,  third canonical revision}
 
 \begin{document}
 \twocolumn[\maketitle
 \begin{abstract}
 \noindent
-\textbf{The claim.} A neural system can learn the \emph{structural skeleton} of language --- not its vocabulary or its surface order, but the relational architecture that gives a sentence its meaning --- in a self-supervised contrastive way, and can then \emph{compose} in that structural space and \emph{generate back into text}. We call this system LORN. Structural reasoning lives in the right hemisphere (R), articulation in the left (L), and the two co-evolve through a bandwidth-limited channel.
+\textbf{The claim.} A neural system can learn the \emph{structural skeleton} of language ,  not its vocabulary or its surface order, but the relational architecture that gives a sentence its meaning ,  in a self-supervised contrastive way, and can then \emph{compose} in that structural space and \emph{generate back into text}. We call this system LORN. Structural reasoning lives in the right hemisphere (R), articulation in the left (L), and the two co-evolve through a bandwidth-limited channel.
 
-\textbf{What we have.} A 605M ORN with a small attention-based R trained on permutation-contrastive pairs (the v17--v18 consolidated system, April 2026). R achieves 76\% 7-way genre 1-NN at deep layers, 73\% formality, 100\% historical register, and on a 15-sample perturbation battery correctly identifies rhetorical structure across topics 73.3\% of the time. Independent of R, L's own residual stream is 74--100\% order-independent at every layer, with an attractor-driven recovery from the order-sensitive minimum at layer 23 ($\cos=0.74$) back to $0.88$ at layer 27 --- the skew--dissipative dynamics predicted by the memoisation theorem, now empirically confirmed at 605M. Exp F (best-of-50 generation filtering by $\alpha$-distance) achieves 58\% structural steering at chance 33\% without any R-to-L injection, including 4/4 on argument structure.
+\textbf{What we have.} A 605M ORN with a small attention-based R trained on permutation-contrastive pairs (the v17--v18 consolidated system, April 2026). R achieves 76\% 7-way genre 1-NN at deep layers, 73\% formality, 100\% historical register, and on a 15-sample perturbation battery correctly identifies rhetorical structure across topics 73.3\% of the time. Independent of R, L's own residual stream is 74--100\% order-independent at every layer, with an attractor-driven recovery from the order-sensitive minimum at layer 23 ($\cos=0.74$) back to $0.88$ at layer 27 ,  the skew--dissipative dynamics predicted by the memoisation theorem, now empirically confirmed at 605M. Exp F (best-of-50 generation filtering by $\alpha$-distance) achieves 58\% structural steering at chance 33\% without any R-to-L injection, including 4/4 on argument structure.
 
 \textbf{What we have not.} A Phase 1 R. The working system is mean-pooled, reads L at one layer, trains on lexical (permutation) positives, and has been evaluated on class labels that are satisfied by a matched-compute bag-of-words baseline. It is a mechanism-validation fixture, not the R that LORN needs. Section~\ref{sec:checklist} defines Phase 1 non-negotiably.
 
@@ -57,9 +57,9 @@
 
 LORN proposes a language architecture with two co-evolving systems:
 
-\textbf{L (left hemisphere)} is an autoregressive predictor. It sees tokens in order and minimises next-token cross-entropy. Any deep autoregressive model --- transformer, ORN~\cite{orn}, SSM, hybrid.
+\textbf{L (left hemisphere)} is an autoregressive predictor. It sees tokens in order and minimises next-token cross-entropy. Any deep autoregressive model ,  transformer, ORN~\cite{orn}, SSM, hybrid.
 
-\textbf{R (right hemisphere)} is a structural observer. It sees L's internal computation --- hidden states, attention patterns, coupling dynamics across layers --- and discovers the \emph{relational architecture} of the input. R's view of a sentence is a point in a continuous structural manifold, not a classification.
+\textbf{R (right hemisphere)} is a structural observer. It sees L's internal computation ,  hidden states, attention patterns, coupling dynamics across layers ,  and discovers the \emph{relational architecture} of the input. R's view of a sentence is a point in a continuous structural manifold, not a classification.
 
 \textbf{A control piece} between them uses R's reading of structure to do something: steer L's generation at inference (Mode B), shape L's representation during training (Mode A), or both.
 
@@ -71,12 +71,12 @@ Four capabilities, none of which current language models possess:
 \item R discovers structural axes that are \emph{not} a bag of words. ``The dog chased the cat'' and ``The cat chased the dog'' occupy distinct points in R-space.
 \item The R-manifold is navigable and compositional. Adding a direction (``more argumentative'') to a sentence's structural encoding and generating under the shifted encoding produces text with that shifted structure, on the same content.
 \item Structural reasoning lives in R, not in generated tokens. A chain of relational inferences traverses R-space; L writes the final articulation only.
-\item R is unsupervised --- no labels, no annotated analogies. The structural axes emerge from the data under a contrastive-structural objective.
+\item R is unsupervised ,  no labels, no annotated analogies. The structural axes emerge from the data under a contrastive-structural objective.
 \end{itemize}
 
 \subsection*{What LORN is not}
 
-A classifier on top of a transformer. A steering-vector technique. A chain-of-thought prompting strategy. A prompt-engineered controllable generator. These exist in the vocabulary of existing paradigms. LORN is an architectural thesis: intelligence requires two distinct computational modes --- one sequential and literal, one holistic and relational --- and the second can be built, and must be of comparable scale, depth, and computational complexity to the first.
+A classifier on top of a transformer. A steering-vector technique. A chain-of-thought prompting strategy. A prompt-engineered controllable generator. These exist in the vocabulary of existing paradigms. LORN is an architectural thesis: intelligence requires two distinct computational modes ,  one sequential and literal, one holistic and relational ,  and the second can be built, and must be of comparable scale, depth, and computational complexity to the first.
 
 
 % ======================================================================
@@ -89,13 +89,13 @@ The fixed points. They do not depend on which architecture we ultimately build.
 
 The design of R reflects a convergent finding across psycholinguistics and neuroscience: meaning persists in an order-independent form; surface form decays.
 
-Sachs~\cite{sachs1967} showed that after only 80 syllables of intervening material, listeners cannot detect syntactic changes (active$\to$passive, word-order permutations) but easily detect semantic changes. Kintsch's Construction-Integration model~\cite{kintsch1988} formalises three levels: surface form (decays in seconds), textbase (propositions, minutes), situation model (persists). Free-word-order languages~\cite{hale1983,lambrecht1994} encode meaning through case morphology, not word order --- order is packaging.
+Sachs~\cite{sachs1967} showed that after only 80 syllables of intervening material, listeners cannot detect syntactic changes (active$\to$passive, word-order permutations) but easily detect semantic changes. Kintsch's Construction-Integration model~\cite{kintsch1988} formalises three levels: surface form (decays in seconds), textbase (propositions, minutes), situation model (persists). Free-word-order languages~\cite{hale1983,lambrecht1994} encode meaning through case morphology, not word order ,  order is packaging.
 
 Tuckute, Kanwisher \& Fedorenko~\cite{tuckute2024} show fMRI evidence that lexical-semantic content, not syntactic structure, dominates ANN-brain similarity. Caucheteux and King~\cite{caucheteux2022}, Goldstein et al.~\cite{goldstein2022}, Aw \& Toneva~\cite{aw-toneva2024} corroborate: semantic prediction, not syntactic computation, is what the brain's language network tracks. Ferreira et al.~\cite{ferreira2002} and Karimi \& Ferreira~\cite{karimi-ferreira2024} establish that comprehension uses a ``good enough'' heuristic route; Reyna \& Brainerd's Fuzzy-Trace Theory~\cite{reyna-brainerd2020} shows people default to the least precise gist sufficient for the task.
 
 \paragraph{The correction we owe the evidence.} Classical linguistics says ``gist persists; order decays.'' It does \emph{not} say gist is a bag of words. The structural content that persists includes argument roles, scope, propositional relationships. Paraphrases preserve these structural features; permutations of words often do not. R must reach order-independent \emph{structural} representation, not order-independent \emph{lexical} representation. Confusing the two has been the programme's central source of drift.
 
-McGilchrist~\cite{mcgilchrist2009master, mcgilchrist2021matter} argues that hemispheric lateralisation is not an accident but a fundamental requirement of intelligence. Each hemisphere sees the \emph{whole world} through its own lens --- not a subset. The right hemisphere sees the whole, the gestalt, the relationships, the context. The left hemisphere sees the parts, the categories, the sequential detail. Neither alone is sufficient.
+McGilchrist~\cite{mcgilchrist2009master, mcgilchrist2021matter} argues that hemispheric lateralisation is not an accident but a fundamental requirement of intelligence. Each hemisphere sees the \emph{whole world} through its own lens ,  not a subset. The right hemisphere sees the whole, the gestalt, the relationships, the context. The left hemisphere sees the parts, the categories, the sequential detail. Neither alone is sufficient.
 
 
 % ======================================================================
@@ -170,7 +170,7 @@ Non-negotiable requirements. They exist because we have repeatedly convinced our
 \item \textbf{R's parameter count $\geq 10\%$ of L's.} A 14M R next to 605M L is a linear probe, not a hemisphere.
 \item \textbf{R's depth $\geq 50\%$ of L's depth.} Shallow R cannot integrate multi-layer evolution of L's representations.
 \item \textbf{R reads L at $\geq 4$ observation points across depth.} Structure is built up over L's trajectory; reading only the output misses the computation.
-\item \textbf{R's output is not a simple mean-pool over token positions.} Mean-pool is order-invariance by construction --- it cannot represent order-sensitive relations. Valid readouts: attention over structural query tokens, graph attention on L's attention tensors, SSM accumulating coupling dynamics.
+\item \textbf{R's output is not a simple mean-pool over token positions.} Mean-pool is order-invariance by construction ,  it cannot represent order-sensitive relations. Valid readouts: attention over structural query tokens, graph attention on L's attention tensors, SSM accumulating coupling dynamics.
 \item \textbf{R's internal state represents order-sensitive relationships.} If the representation of ``dog bit man'' equals the representation of ``man bit dog'', R has failed by construction.
 \end{checklist}
 
@@ -178,7 +178,7 @@ Non-negotiable requirements. They exist because we have repeatedly convinced our
 
 \begin{checklist}
 \item \textbf{R is trained self-supervised and contrastively.} No classification auxiliary head. The contrastive objective is the sole signal.
-\item \textbf{Contrastive positives are structural, not lexical.} Permutations of the same multiset are \emph{lexical} positives --- they teach order-invariance, which is a floor, not the target. Structural positives are paraphrases preserving argument structure, active/passive pairs with matched content, or syntactic alternations.
+\item \textbf{Contrastive positives are structural, not lexical.} Permutations of the same multiset are \emph{lexical} positives ,  they teach order-invariance, which is a floor, not the target. Structural positives are paraphrases preserving argument structure, active/passive pairs with matched content, or syntactic alternations.
 \item \textbf{Contrastive training must include structural hard negatives.} Pairs with \emph{identical content-multiset and different structure} (argument-swap pairs, reversed-role pairs) must appear in training as explicit hard negatives, not only as held-out evaluation. Paraphrase-only positives cause R to collapse argswap variants into a single $\alpha$ region because the training signal does not separate them. Empirically (Section~\ref{sec:trajsmoke}): naive paraphrase-contrastive on GPT-2 delta trajectories gives argswap cos 0.95; adding argswap hard negatives drops it to 0.35 and achieves 100\% of pairs below 0.7.
 \item \textbf{Training corpus is real text at $\geq 1$B tokens.} Small curated corpora with class-identifiable vocabulary are adversarial for structural evaluation.
 \item \textbf{Gradient isolation between R and (bridge, L) is architectural, not soft.} Implemented as \texttt{alpha.detach()} at the R$\to$bridge boundary, with R on its own optimiser. Soft-isolation via loss weighting is a tuning hope, not a guarantee.
@@ -195,7 +195,7 @@ Non-negotiable requirements. They exist because we have repeatedly convinced our
 
 $S_n$-invariance guarantees the \emph{targets} are orthogonal; \texttt{detach} guarantees the \emph{parameter updates} are disjoint. Both are needed.
 
-\subsection*{Evaluation requirements --- the structural battery}
+\subsection*{Evaluation requirements ,  the structural battery}
 
 Until an R passes \emph{this}, no claim of structural capability is made.
 
@@ -233,15 +233,15 @@ Phase 2 capabilities are not Phase 1 evidence.
 
 \subsection*{The composition mechanism (open)}
 
-Phase 2 rests on a composition operation in R-space: given $\alpha_1, \alpha_2$, produce $\alpha_{12}$ that reflects their combined structure. \textbf{CC-4/4b falsified naive MLP composition} on $S_4$ pairs (train 1.0, val 0.0) --- memorisation without generalisation. \textbf{CC-9/11 established attention-based composition} on $\mathbb{Z}_{17}$: attention-only composer at $d{=}32$, $14$K params, reaches val 0.977 and is 99.3\% equivariant under cyclic shift without any explicit equivariance signal. The Phase 2 composition mechanism is therefore attention-based or bilinear by commitment; pure MLPs are ruled out. Whether attention-based composition generalises from symbolic groups to structural manifolds is the first post-Phase-1 question.
+Phase 2 rests on a composition operation in R-space: given $\alpha_1, \alpha_2$, produce $\alpha_{12}$ that reflects their combined structure. \textbf{CC-4/4b falsified naive MLP composition} on $S_4$ pairs (train 1.0, val 0.0) ,  memorisation without generalisation. \textbf{CC-9/11 established attention-based composition} on $\mathbb{Z}_{17}$: attention-only composer at $d{=}32$, $14$K params, reaches val 0.977 and is 99.3\% equivariant under cyclic shift without any explicit equivariance signal. The Phase 2 composition mechanism is therefore attention-based or bilinear by commitment; pure MLPs are ruled out. Whether attention-based composition generalises from symbolic groups to structural manifolds is the first post-Phase-1 question.
 
 \subsection*{R $\to$ L channel: two options}
 
-\paragraph{Option A --- $\alpha$ as virtual prefix tokens.} R's output $\alpha \in \R^{K \times d_R}$ projected to $d_L$ and prepended as $K$ virtual tokens. Native to L's attention. Costs $K$ positions of context. L must be trained (or fine-tuned) to respond to the prefix.
+\paragraph{Option A ,  $\alpha$ as virtual prefix tokens.} R's output $\alpha \in \R^{K \times d_R}$ projected to $d_L$ and prepended as $K$ virtual tokens. Native to L's attention. Costs $K$ positions of context. L must be trained (or fine-tuned) to respond to the prefix.
 
-\paragraph{Option B --- per-layer hypernet modulation.} $\alpha$ generates low-rank weight delta applied at multiple L-layers. No context cost; deeper intervention. CC-18 showed this closes an oracle gap to 0.009 at toy scale.
+\paragraph{Option B ,  per-layer hypernet modulation.} $\alpha$ generates low-rank weight delta applied at multiple L-layers. No context cost; deeper intervention. CC-18 showed this closes an oracle gap to 0.009 at toy scale.
 
-Both options preserve gradient isolation (\texttt{detach} before the bridge). Option A is the conservative first Phase 2 test --- transparent, compositional directly at the input. Option B is the target when context budget is a bottleneck.
+Both options preserve gradient isolation (\texttt{detach} before the bridge). Option A is the conservative first Phase 2 test ,  transparent, compositional directly at the input. Option B is the target when context budget is a bottleneck.
 
 
 % ======================================================================
@@ -258,7 +258,7 @@ What actually runs today, at 605M scale:
 
 \textbf{v17 path.} v17a--c (three parallel paths: K-sweep, joint M+FFN gauge, per-layer $R_l$) produced v17b as the cleanest win: within-cosine 0.969, between-cosine 0.053, gap 0.917 after 600 steps. v17f extended the probe battery (formality 73\%, historical 100\%, emotion 38\%, scientific domain 38\%). v17g showed gauge action improves val by $-0.031$ nat at small $\alpha_{\text{scale}}$. v18 consolidated into a three-component CLS system where the fingerprint is a trained artefact, not a hypothesis.
 
-\textbf{Chain 2 (April 21).} Pairs harder-contrastive R with AdaLN injection. 15-sample perturbation battery (5 topics $\times$ 3 rhetorical structures). \textbf{Perturbation accuracy: 11/15 (73.3\%)} --- R correctly identifies rhetorical structure (explanation / argument / narrative) independent of topic in 73\% of cases. This is the strongest Track-1 result to date.
+\textbf{Chain 2 (April 21).} Pairs harder-contrastive R with AdaLN injection. 15-sample perturbation battery (5 topics $\times$ 3 rhetorical structures). \textbf{Perturbation accuracy: 11/15 (73.3\%)} ,  R correctly identifies rhetorical structure (explanation / argument / narrative) independent of topic in 73\% of cases. This is the strongest Track-1 result to date.
 
 \textbf{Attractor dynamics confirmed.} At 605M: convergence cosine 0.945 across different orderings. Basin continuity: 1 edit $\to$ 0.938, 64 edits $\to$ 0.246. Nonlinear composition: learned MLP 0.625 vs linear 0.296. Convergence rate $\sim$64 tokens. This is the empirical signature of the memoisation-theorem attractor.
 
@@ -269,9 +269,9 @@ What actually runs today, at 605M scale:
 
 Three experiments completed on the v17--v18 system, with results interpreted honestly.
 
-\paragraph{Exp A --- depth profile of order-independence.} L's residual stream is 74--100\% order-invariant across depth; layer 23 minimum ($\cos=0.736$), layer 27 recovery ($\cos=0.876$). See Section~\ref{sec:checklist}. \emph{What it establishes:} the bag-of-words floor is real at scale; the skew--dissipative recovery is architecturally present. \emph{What it does not establish:} that R sees structure beyond bag-of-words.
+\paragraph{Exp A ,  depth profile of order-independence.} L's residual stream is 74--100\% order-invariant across depth; layer 23 minimum ($\cos=0.736$), layer 27 recovery ($\cos=0.876$). See Section~\ref{sec:checklist}. \emph{What it establishes:} the bag-of-words floor is real at scale; the skew--dissipative recovery is architecturally present. \emph{What it does not establish:} that R sees structure beyond bag-of-words.
 
-\paragraph{Exp F --- generation filtering (Mode B, no injection).} For each of 4 topics and 3 target structures, generate 50 completions from L, select the one whose $\alpha$ is closest to the target structural centroid.
+\paragraph{Exp F ,  generation filtering (Mode B, no injection).} For each of 4 topics and 3 target structures, generate 50 completions from L, select the one whose $\alpha$ is closest to the target structural centroid.
 \begin{center}\small
 \begin{tabular}{lr}
 \toprule
@@ -287,7 +287,7 @@ total       & \textbf{7 / 12 (58\%)} at chance 33\% \\
 \end{center}
 Score spread 0.5--0.9 cosine across the 50 generations means L's distribution \emph{contains} structurally diverse completions; R can find them. No bridge, no L modification: R filters L's natural output. This is the first concrete evidence that Mode B (inference-time selection) is viable.
 
-\paragraph{Exp B --- $\alpha$ partially predicts syntax.} Small MLP trained on $\alpha \to$ syntactic feature prediction (held-out $R^2$):
+\paragraph{Exp B ,  $\alpha$ partially predicts syntax.} Small MLP trained on $\alpha \to$ syntactic feature prediction (held-out $R^2$):
 \begin{center}\small
 \begin{tabular}{lrr}
 \toprule
@@ -300,25 +300,25 @@ has question marker      & 0.041 & dim 18 \\
 \bottomrule
 \end{tabular}
 \end{center}
-Modest $R^2$ values on 400 training samples. Different $\alpha$ dimensions track different features (inter-dim correlation $\approx 0.092$, max 0.394). \emph{Caveat:} avg word length, function-word ratio, and question-marker presence are all computable from a bag of words. Only the passive-voice proxy tests genuine syntax --- and its $R^2$ is 0.22, modest but nonzero. Exp B is \emph{suggestive} that $\alpha$ carries some syntactic information, but does not yet satisfy the Phase 1 structural-battery requirement (word-order minimal pairs, matched-content active/passive pairs).
+Modest $R^2$ values on 400 training samples. Different $\alpha$ dimensions track different features (inter-dim correlation $\approx 0.092$, max 0.394). \emph{Caveat:} avg word length, function-word ratio, and question-marker presence are all computable from a bag of words. Only the passive-voice proxy tests genuine syntax ,  and its $R^2$ is 0.22, modest but nonzero. Exp B is \emph{suggestive} that $\alpha$ carries some syntactic information, but does not yet satisfy the Phase 1 structural-battery requirement (word-order minimal pairs, matched-content active/passive pairs).
 
-\paragraph{Exp S --- direct structural battery across all 32 layers (April 22).} The first execution of the Phase 1 structural battery (Section~\ref{sec:checklist}) at production scale. A 32-layer depth sweep of the 605M ORN's \emph{mean-pooled} residual against a matched-compute BoW baseline, on three batteries defined by the checklist.
+\paragraph{Exp S ,  direct structural battery across all 32 layers (April 22).} The first execution of the Phase 1 structural battery (Section~\ref{sec:checklist}) at production scale. A 32-layer depth sweep of the 605M ORN's \emph{mean-pooled} residual against a matched-compute BoW baseline, on three batteries defined by the checklist.
 
-\emph{Battery 1 --- argument-swap multiset-identical pairs (23 pairs; BoW cos = 1.000 by construction):}
+\emph{Battery 1 ,  argument-swap multiset-identical pairs (23 pairs; BoW cos = 1.000 by construction):}
 
 \begin{center}\small
 \begin{tabular}{lrrr}
 \toprule
 metric & best layer & worst layer & extreme pair \\
 \midrule
-ORN cos mean & L31: 0.968 & L9--11: 1.000 & --- \\
+ORN cos mean & L31: 0.968 & L9--11: 1.000 & ,  \\
 min pair cos across all 32 layers & \multicolumn{3}{c}{L31, min = 0.907} \\
 frac below 0.7 (target $\geq 0.80$) & \multicolumn{3}{c}{\textbf{0.00 at every layer}} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\emph{Battery 2 --- active/passive matched content (gap $= $ pair cos $-$ cross cos; higher better):}
+\emph{Battery 2 ,  active/passive matched content (gap $= $ pair cos $-$ cross cos; higher better):}
 \begin{center}\small
 \begin{tabular}{lr}
 \toprule
@@ -330,7 +330,7 @@ ORN best (L31) & +0.124 \\
 \end{tabular}
 \end{center}
 
-\emph{Battery 3 --- cross-topic structural delta (same-structure-diff-topic minus same-topic-diff-structure; higher more structural):}
+\emph{Battery 3 ,  cross-topic structural delta (same-structure-diff-topic minus same-topic-diff-structure; higher more structural):}
 \begin{center}\small
 \begin{tabular}{lr}
 \toprule
@@ -342,13 +342,13 @@ ORN best (L24) & +0.009 \\
 \end{tabular}
 \end{center}
 
-\paragraph{What Exp S proves.} The 605M ORN's mean-pooled residual fails the Phase 1 structural battery at every depth. The argument-swap cosine stays above 0.968 at every layer (worst case 1.000, best case 0.968); no pair in the entire $32 \times 23 = 736$ measurements falls below 0.907. The checklist target (cos $< 0.7$ on $\geq 80\%$ of pairs) is not met by any single pair at any single layer. On batteries 2 and 3, BoW \emph{beats} ORN by $4\times$--$10\times$. The v3 paper's architectural critique of mean-pool readout --- that permutation-invariance by pooling is bag-of-words by construction and cannot recover structure no matter how well L is trained --- is now empirically confirmed. The Exp A 74\% invariance floor and Exp B partial-syntax-predictability are real, but the signal they carry does not survive a mean-pool readout on minimal pairs. Full depth-profile data and figure: \texttt{experiments/results/phase1\_sweep\_605m/}, \texttt{reports/figs/phase1\_depth\_profile.pdf}.
+\paragraph{What Exp S proves.} The 605M ORN's mean-pooled residual fails the Phase 1 structural battery at every depth. The argument-swap cosine stays above 0.968 at every layer (worst case 1.000, best case 0.968); no pair in the entire $32 \times 23 = 736$ measurements falls below 0.907. The checklist target (cos $< 0.7$ on $\geq 80\%$ of pairs) is not met by any single pair at any single layer. On batteries 2 and 3, BoW \emph{beats} ORN by $4\times$--$10\times$. The v3 paper's architectural critique of mean-pool readout ,  that permutation-invariance by pooling is bag-of-words by construction and cannot recover structure no matter how well L is trained ,  is now empirically confirmed. The Exp A 74\% invariance floor and Exp B partial-syntax-predictability are real, but the signal they carry does not survive a mean-pool readout on minimal pairs. Full depth-profile data and figure: \texttt{experiments/results/phase1\_sweep\_605m/}, \texttt{reports/figs/phase1\_depth\_profile.pdf}.
 
 % ======================================================================
 \section{Exp T: The Trajectory Reframe (first Phase 1 pass)}
 \label{sec:trajsmoke}
 
-Exp S's decisive failure forced a reframe (diary 2026-04-22): what R should model is not \emph{what L knows} at any single layer but \emph{what L does between layers}. Structure lives in the trajectory of the computation --- the per-layer updates $\Delta h_l = h_l - h_{l-1}$ --- not in any static snapshot. Each layer adds a computational capability the previous layer did not have; that emergence is the structural quantity. The reframe is scale-invariant (any autoregressive model with depth has layer-wise emergence) and orthogonal to bag-of-words by construction (the initial embedding is bag-of-words, but $\Delta h_l$ for $l \geq 1$ depends on attention patterns that are order-sensitive).
+Exp S's decisive failure forced a reframe (diary 2026-04-22): what R should model is not \emph{what L knows} at any single layer but \emph{what L does between layers}. Structure lives in the trajectory of the computation ,  the per-layer updates $\Delta h_l = h_l - h_{l-1}$ ,  not in any static snapshot. Each layer adds a computational capability the previous layer did not have; that emergence is the structural quantity. The reframe is scale-invariant (any autoregressive model with depth has layer-wise emergence) and orthogonal to bag-of-words by construction (the initial embedding is bag-of-words, but $\Delta h_l$ for $l \geq 1$ depends on attention patterns that are order-sensitive).
 
 \paragraph{Probe (same day).} On stock GPT-2 small (124M, 12 layers), we measured the per-layer divergence $\|h_l(s_1) - h_l(s_2)\|_2$ for three pair categories:
 
@@ -366,9 +366,9 @@ layer & argswap & paraphrase & random \\
 \end{tabular}
 \end{center}
 
-Argswap pairs diverge monotonically ($8.7\times$ from layer 1 to layer 12). Paraphrase and random diverge from the start. The static residual cosine on argswap at every layer was 1.000 (matching Exp S); the trajectory of deltas tells a different story. The same model, same forward pass --- the signal is present in the flow but not in the pooled snapshot.
+Argswap pairs diverge monotonically ($8.7\times$ from layer 1 to layer 12). Paraphrase and random diverge from the start. The static residual cosine on argswap at every layer was 1.000 (matching Exp S); the trajectory of deltas tells a different story. The same model, same forward pass ,  the signal is present in the flow but not in the pooled snapshot.
 
-\paragraph{Smoke test --- trajectory-R first Phase 1 pass.} Built two R architectures over the depth sequence: \texttt{TrajectorySSM} (state-space model whose state evolves along depth) and \texttt{TrajectoryAttn} (small transformer over the $L$-length depth sequence with $K=8$ learned structural query tokens cross-attending into it). Both satisfy the checklist's non-mean-pool readout requirement by construction --- they pool over \emph{depth} (order-sensitive) rather than over positions.
+\paragraph{Smoke test ,  trajectory-R first Phase 1 pass.} Built two R architectures over the depth sequence: \texttt{TrajectorySSM} (state-space model whose state evolves along depth) and \texttt{TrajectoryAttn} (small transformer over the $L$-length depth sequence with $K=8$ learned structural query tokens cross-attending into it). Both satisfy the checklist's non-mean-pool readout requirement by construction ,  they pool over \emph{depth} (order-sensitive) rather than over positions.
 
 Trained on 164 (anchor, paraphrase-positive, argswap-hard-negative) triples from GPT-2 delta trajectories. 500 steps, batch 32, $\sim$3 min on MPS. Evaluated on 10 held-out argswap minimal pairs.
 
@@ -383,9 +383,9 @@ SSM      & 0.15M & 0.451 & 0.70 & 0.077 \\
 \end{tabular}
 \end{center}
 
-\textbf{Attention-R achieves 10/10 argswap pairs with cos $< 0.7$ --- the first architecture in the programme to meet Phase 1 Battery 1's target.} 0.71M parameters against a frozen 124M GPT-2 L. Some pairs have negative cosine (min $-0.13$), meaning R can push argswap variants to opposite poles of $\alpha$-space.
+\textbf{Attention-R achieves 10/10 argswap pairs with cos $< 0.7$ ,  the first architecture in the programme to meet Phase 1 Battery 1's target.} 0.71M parameters against a frozen 124M GPT-2 L. Some pairs have negative cosine (min $-0.13$), meaning R can push argswap variants to opposite poles of $\alpha$-space.
 
-\paragraph{The training-signal correction.} An initial run with only paraphrase positives (no argswap hard negatives) gave argswap cos $0.95$--$0.97$ on the same eval --- R collapsed argswap pairs into a single region of $\alpha$-space because the training signal only said ``paraphrases should be close.'' Adding argswap-as-explicit-hard-negative dropped argswap cos by $\sim 0.6$. The Phase 1 checklist has been updated to require structural hard negatives alongside structural positives. Paraphrase-only training is a necessary but insufficient signal.
+\paragraph{The training-signal correction.} An initial run with only paraphrase positives (no argswap hard negatives) gave argswap cos $0.95$--$0.97$ on the same eval ,  R collapsed argswap pairs into a single region of $\alpha$-space because the training signal only said ``paraphrases should be close.'' Adding argswap-as-explicit-hard-negative dropped argswap cos by $\sim 0.6$. The Phase 1 checklist has been updated to require structural hard negatives alongside structural positives. Paraphrase-only training is a necessary but insufficient signal.
 
 \paragraph{What Exp T proves.}
 \begin{itemize}[nosep]
@@ -404,7 +404,7 @@ Artefacts: \texttt{orn/lorn\_v5\_trajectory.py}, \texttt{experiments/probe\_delt
 \section{Attention Shifts: Related Work and Transferable Methods}
 \label{sec:attn-shifts}
 
-We call the phenomenon R observes an \emph{attention shift}: the layer-to-layer reorganisation of attention patterns that occurs when a model processes structurally different inputs sharing the same surface form. ``The dog chased the cat'' and ``the cat chased the dog'' have near-identical embeddings ($h_0$) but diverge in how attention routes information at each subsequent layer --- the shift is what R reads. The term is convenient for the programme's external framing; internally we use \emph{delta trajectory} for the quantitative object $(\Delta h_1, \ldots, \Delta h_L)$.
+We call the phenomenon R observes an \emph{attention shift}: the layer-to-layer reorganisation of attention patterns that occurs when a model processes structurally different inputs sharing the same surface form. ``The dog chased the cat'' and ``the cat chased the dog'' have near-identical embeddings ($h_0$) but diverge in how attention routes information at each subsequent layer ,  the shift is what R reads. The term is convenient for the programme's external framing; internally we use \emph{delta trajectory} for the quantitative object $(\Delta h_1, \ldots, \Delta h_L)$.
 
 The field has developed adjacent ideas. Each of the following is doing something different from us, but each carries methodological tricks we should use.
 
@@ -412,7 +412,7 @@ The field has developed adjacent ideas. Each of the following is doing something
 
 Belrose et al.'s Tuned Lens~\cite{belrose2023tuned} trains per-layer affine probes that map each layer's residual state into the final layer's vocabulary space, producing a ``prediction trajectory'' across depth. Each lens $(A_\ell, b_\ell)$ is $d \times d$ (not $|V| \times d$, saving parameters), trained with distillation loss $\mathrm{KL}(f_{>\ell}(h_\ell) \| \mathrm{TunedLens}_\ell(h_\ell))$. Hyperparameters: SGD with Nesterov momentum (later Muon reported much better), initial LR 1.0, linear decay over 250 steps, batch 131{,}072 tokens, weight decay $10^{-3}$. Lenses are identity-initialised. Layer-norm and residual connections are preserved in the forward pass. Mean ablation (not zeroing) is used for causal interventions.
 
-\textbf{What we can steal:} (a) affine per-layer translators are cheap and effective at making cross-layer representations comparable --- useful preprocessing for R; (b) the Muon optimizer over AdamW gave ``dramatic'' improvements; (c) \emph{transfer penalty} --- testing whether a layer-$i$ lens degrades when evaluated at layer $j$ --- quantifies inter-layer similarity and could serve as a built-in consistency metric for R's observations; (d) mean-ablation rather than zero-ablation for intervention experiments.
+\textbf{What we can steal:} (a) affine per-layer translators are cheap and effective at making cross-layer representations comparable ,  useful preprocessing for R; (b) the Muon optimizer over AdamW gave ``dramatic'' improvements; (c) \emph{transfer penalty} ,  testing whether a layer-$i$ lens degrades when evaluated at layer $j$ ,  quantifies inter-layer similarity and could serve as a built-in consistency metric for R's observations; (d) mean-ablation rather than zero-ablation for intervention experiments.
 
 \textbf{What they don't do:} Their trajectory decodes to next-token distributions (still NTP-aligned). They measure divergence to the final output, not divergence between two structurally-different inputs. They don't train on a contrastive objective; there's no discrimination pressure. Our trajectory is the same measurable object pointed at a different target.
 
@@ -423,12 +423,12 @@ Skean et al.~\cite{skean2025layer} evaluate 32 MTEB downstream tasks layer-by-la
 \begin{itemize}[nosep]
 \item \textbf{Matrix-based entropy} $S_\alpha(Z) = \frac{1}{1-\alpha} \log \sum_i (\lambda_i(K)/\mathrm{tr}(K))^\alpha$ with $K = ZZ^\top$. Higher = less compressed.
 \item \textbf{Effective rank} from $\exp(S_1(Z))$. Detects dimensional collapse.
-\item \textbf{Curvature} $\bar C = \frac{1}{L-2} \sum \arccos(v_{k+1}^\top v_k / \|v_{k+1}\| \|v_k\|)$ --- average angle between consecutive token difference vectors. \emph{This is a direct geometric measurement of the trajectory we care about.}
+\item \textbf{Curvature} $\bar C = \frac{1}{L-2} \sum \arccos(v_{k+1}^\top v_k / \|v_{k+1}\| \|v_k\|)$ ,  average angle between consecutive token difference vectors. \emph{This is a direct geometric measurement of the trajectory we care about.}
 \item \textbf{InfoNCE / LiDAR / DiME} for invariance to synthetic augmentations (NLPAug at $p = 0.3$).
 \item Layer index normalised to depth percentage for cross-model comparison.
 \end{itemize}
 
-\textbf{What we can steal:} (a) the \emph{curvature metric} on the delta trajectory is an obvious addition to our probe --- it would tell us whether the trajectory's ``turning rate'' is a structural signal; (b) matrix-based entropy gives a per-layer compression diagnostic; (c) depth-percentage normalisation for comparing our 12-layer GPT-2 results to a future 32-layer ORN; (d) the NLPAug augmentation set is plug-and-play for generating positives at scale if back-translation proves expensive.
+\textbf{What we can steal:} (a) the \emph{curvature metric} on the delta trajectory is an obvious addition to our probe ,  it would tell us whether the trajectory's ``turning rate'' is a structural signal; (b) matrix-based entropy gives a per-layer compression diagnostic; (c) depth-percentage normalisation for comparing our 12-layer GPT-2 results to a future 32-layer ORN; (d) the NLPAug augmentation set is plug-and-play for generating positives at scale if back-translation proves expensive.
 
 \textbf{What they don't do:} They evaluate each layer in isolation as a downstream embedding. They don't propose a separate network that reads the trajectory and is trained on its own objective. The trajectory is a diagnostic for them; it's the input substrate for us.
 
@@ -436,7 +436,7 @@ Skean et al.~\cite{skean2025layer} evaluate 32 MTEB downstream tasks layer-by-la
 
 Merullo et al.~\cite{merullo2024talking} decompose attention-head weight matrices (OV and QK) by SVD into rank-1 components: $W = \sum s_i \cdot U_i \otimes V_i$. The top few singular components carry clean \emph{communication channels} between specific heads at different layers. Their \emph{Composition Score} $\mathrm{CS}(W_1, W_2) = \|W_1 W_2\|_F / (\|W_1\|_F \|W_2\|_F)$ measures inter-head coupling; applied to decomposed components it isolates the dominant pathway. Validation: model editing (zero singular values, measure task degradation), activation-scaling interventions, minimal-pair interchange (35\% accuracy on IOI). In GPT-2 small they find heads 3.0 (duplicate-token) $\to$ 7.9/8.6/8.10 (inhibition) over a 4--5 layer gap, and 8.10 $\to$ 9.9 (mover) over 1 layer. The inhibition signal is content-independent (a pure positional pointer) and lives in a 1-D subspace.
 
-\textbf{What we can steal:} (a) \emph{SVD-based isolation of low-rank communication subspaces} is the right tool for extracting the information a layer transmits to another layer --- R could take per-head SVD components as its input rather than (or in addition to) raw hidden states; (b) the Composition Score $\|W_1 W_2\|_F / (\|W_1\|\|W_2\|)$ gives us a cheap feature for each pair of layer-tensors that captures their coupling, without running the model at all; (c) the \emph{minimal-pair interchange} validation technique is exactly the right evaluation for whether R's discovered directions are causally meaningful, not just correlated --- we should adopt this wholesale.
+\textbf{What we can steal:} (a) \emph{SVD-based isolation of low-rank communication subspaces} is the right tool for extracting the information a layer transmits to another layer ,  R could take per-head SVD components as its input rather than (or in addition to) raw hidden states; (b) the Composition Score $\|W_1 W_2\|_F / (\|W_1\|\|W_2\|)$ gives us a cheap feature for each pair of layer-tensors that captures their coupling, without running the model at all; (c) the \emph{minimal-pair interchange} validation technique is exactly the right evaluation for whether R's discovered directions are causally meaningful, not just correlated ,  we should adopt this wholesale.
 
 \textbf{What they don't do:} They do mechanistic analysis on weights (static), we need a runtime reader. But their finding that cross-layer signals live in low-rank subspaces is directly load-bearing: R's architecture doesn't need to represent full $d$-dimensional inter-layer flow, only the rank-$k$ subspace where the signal concentrates. This should inform R's compression ratio.
 
@@ -444,7 +444,7 @@ Merullo et al.~\cite{merullo2024talking} decompose attention-head weight matrice
 
 Anthropic's Mathematical Framework for Transformer Circuits~\cite{elhage2021framework} formalises the residual stream as shared workspace: ``All components of a transformer (token embedding, attention heads, MLP layers, and unembedding) communicate with each other by reading and writing to different subspaces of the residual stream.'' They decompose attention into QK (where to attend) and OV (what to transmit), treat multi-layer paths as virtual attention heads (composition of layer-$k$ QK with layer-$j$ OV for $j < k$), and write model outputs as sums of interpretable path-wise contributions.
 
-\textbf{What we can steal:} (a) the \emph{path decomposition} --- R's input can be structured as a set of per-path summaries rather than per-layer summaries, which may be more compressed without losing the interesting cross-layer structure; (b) the QK/OV split gives R two distinct signals per layer; if R attends to these separately it may discover that QK (routing) carries structural information and OV (content) carries lexical information, consistent with our reframe; (c) \emph{virtual attention heads} from composition are exactly the objects R should detect --- a functionally-relevant computation spanning multiple layers.
+\textbf{What we can steal:} (a) the \emph{path decomposition} ,  R's input can be structured as a set of per-path summaries rather than per-layer summaries, which may be more compressed without losing the interesting cross-layer structure; (b) the QK/OV split gives R two distinct signals per layer; if R attends to these separately it may discover that QK (routing) carries structural information and OV (content) carries lexical information, consistent with our reframe; (c) \emph{virtual attention heads} from composition are exactly the objects R should detect ,  a functionally-relevant computation spanning multiple layers.
 
 \textbf{What they don't do:} They study weights; we observe activations. They extract circuits by hand-analysis; R learns to extract structural summaries by training.
 
@@ -452,7 +452,7 @@ Anthropic's Mathematical Framework for Transformer Circuits~\cite{elhage2021fram
 
 ResiDual~\cite{residual2024} takes a different path: rather than observing the trajectory externally, they \emph{modify L's residual aggregation}. They run PCA on each residual unit's activations and learn anisotropic per-component weights $\lambda_i$ that rescale the stream's basis before summation. The formulation: $\mathrm{RD}_{\Phi,\mu}(X, \lambda) = \Phi^{-1} \mathrm{diag}(\lambda) \Phi (X - \mu)^\top$. Parameter count is tiny (8--43K for CLIP/BLIP). They show task-relevant specialisation concentrates in early principal components. Attention Residuals~\cite{attn-residuals-2024} similarly replaces uniform-weight depth aggregation with learned softmax weights over earlier layer outputs.
 
-\textbf{What we can steal:} (a) \emph{PCA per layer on the hidden-state distribution across the training corpus} gives us a structured basis to read --- R could operate on the top-$k$ principal components of each layer's activations rather than raw $d$-dimensional vectors, drastically reducing R's input size without losing signal; (b) the ``specialisation concentrates in early PCs'' observation says R's depth-SSM or depth-attention can operate on rank-$k$ projections and still see the structural signal; (c) they demonstrate that a small number of learnable parameters on the PCA basis can unlock major downstream gains --- suggests R's compression doesn't need to be large.
+\textbf{What we can steal:} (a) \emph{PCA per layer on the hidden-state distribution across the training corpus} gives us a structured basis to read ,  R could operate on the top-$k$ principal components of each layer's activations rather than raw $d$-dimensional vectors, drastically reducing R's input size without losing signal; (b) the ``specialisation concentrates in early PCs'' observation says R's depth-SSM or depth-attention can operate on rank-$k$ projections and still see the structural signal; (c) they demonstrate that a small number of learnable parameters on the PCA basis can unlock major downstream gains ,  suggests R's compression doesn't need to be large.
 
 \textbf{What they don't do:} They modify L. We leave L alone. Their approach is a different engineering contract (interlock R's work with L's weights, requires fine-tuning L); ours is a composable external observer that can be bolted onto any frozen L.
 
@@ -461,13 +461,13 @@ ResiDual~\cite{residual2024} takes a different path: rather than observing the t
 The field has four existing approaches to layer-wise signal:
 
 \begin{enumerate}[nosep,leftmargin=*]
-\item \textbf{Interpretability lenses} (Tuned Lens, Logit Lens) --- read the trajectory to understand L's own prediction.
-\item \textbf{Per-layer quality probes} (Layer by Layer) --- treat each layer as an isolated downstream embedding.
-\item \textbf{Circuit mechanics} (Talking Heads, Mathematical Framework) --- decompose weights to find specific paths.
-\item \textbf{Residual reweighting} (ResiDual, Attention Residuals) --- modify L to rebalance which layers' contributions dominate.
+\item \textbf{Interpretability lenses} (Tuned Lens, Logit Lens) ,  read the trajectory to understand L's own prediction.
+\item \textbf{Per-layer quality probes} (Layer by Layer) ,  treat each layer as an isolated downstream embedding.
+\item \textbf{Circuit mechanics} (Talking Heads, Mathematical Framework) ,  decompose weights to find specific paths.
+\item \textbf{Residual reweighting} (ResiDual, Attention Residuals) ,  modify L to rebalance which layers' contributions dominate.
 \end{enumerate}
 
-None of these trains a \emph{separate network} on a \emph{structural-contrastive objective} orthogonal to NTP, reads the \emph{delta trajectory} as its primary observation channel, and targets \emph{compose-in-R-generate-in-L} as the downstream goal. The attention-shift programme is that specific combination. But the methodological tricks above --- affine cross-layer translators, curvature and matrix entropy as trajectory features, SVD isolation of inter-layer subspaces, PCA-basis compression of R's input, minimal-pair interchange as causal validation --- transfer directly.
+None of these trains a \emph{separate network} on a \emph{structural-contrastive objective} orthogonal to NTP, reads the \emph{delta trajectory} as its primary observation channel, and targets \emph{compose-in-R-generate-in-L} as the downstream goal. The attention-shift programme is that specific combination. But the methodological tricks above ,  affine cross-layer translators, curvature and matrix entropy as trajectory features, SVD isolation of inter-layer subspaces, PCA-basis compression of R's input, minimal-pair interchange as causal validation ,  transfer directly.
 
 Priority additions to R's design:
 \begin{itemize}[nosep]
@@ -523,7 +523,7 @@ Before arriving at $S_n$-invariance as R's target, the programme tested five gau
 
 \textbf{The common failure mode.} Each target lay in the subspace spanned by the NTP gradient. R's probe competed with L's CE loss for the same gradient directions, and lost.
 
-\textbf{The reframe.} Define structure as the $S_n$-invariant quotient: the sequence $x = (x_1, \ldots, x_n)$ under $S_n$ decomposes into ordered (arrangement) and invariant (multiset) components, and the Reynolds operator projects onto the invariant component. If $\alpha(\pi \cdot x) = \alpha(x)$ for all permutations $\pi$, then $\alpha$ is orthogonal to every ordered quantity including NTP --- \emph{by construction}. The gradient competition that caused five collapses is absent by this one architectural commitment.
+\textbf{The reframe.} Define structure as the $S_n$-invariant quotient: the sequence $x = (x_1, \ldots, x_n)$ under $S_n$ decomposes into ordered (arrangement) and invariant (multiset) components, and the Reynolds operator projects onto the invariant component. If $\alpha(\pi \cdot x) = \alpha(x)$ for all permutations $\pi$, then $\alpha$ is orthogonal to every ordered quantity including NTP ,  \emph{by construction}. The gradient competition that caused five collapses is absent by this one architectural commitment.
 
 This is what made v17b work in 37 seconds: same contrastive loss, but now with positives defined as permutations of the same multiset, so the target subspace is provably orthogonal to NTP.
 
@@ -593,7 +593,7 @@ Component & Variant & Result & Status \\
 \addlinespace[2pt]
 & Selection filter (Exp F, Mode B)
 & 58\% structural steering on 4$\times$3 perturbation battery at chance 33\%; 4/4 on argument
-& Candidate. Works without any injection --- dissolves Track 2 problem if scales. \\
+& Candidate. Works without any injection ,  dissolves Track 2 problem if scales. \\
 \midrule
 \multirow{2}{*}{\textbf{L}}
 & Standard transformer, SSM, Mamba, etc.
@@ -617,9 +617,9 @@ A recurring evaluation pattern that has driven programme drift:
 
 \textbf{The pattern.} We evaluate R on a class-labelled task. R scores well above chance. We write the result up as ``R captures structure.''
 
-\textbf{The problem.} The tasks on which we have reported positive results --- genre (82\% at 5M), formality (73\%), historical register (100\%), emotion, scientific domain --- are all satisfied by a bag-of-words classifier. Formal texts use ``committee, therefore, hereby''; casual texts use ``hey, dude, yeah''; Victorian texts use different vocabulary than modern ones. Any representation preserving content-word identity after aggregation can separate these classes.
+\textbf{The problem.} The tasks on which we have reported positive results ,  genre (82\% at 5M), formality (73\%), historical register (100\%), emotion, scientific domain ,  are all satisfied by a bag-of-words classifier. Formal texts use ``committee, therefore, hereby''; casual texts use ``hey, dude, yeah''; Victorian texts use different vocabulary than modern ones. Any representation preserving content-word identity after aggregation can separate these classes.
 
-\textbf{The test not run.} Matched-compute bag-of-words baseline on the same evaluations. If BoW matches R (it almost certainly does), R has not demonstrated structural capability --- it has demonstrated at best the bag-of-words floor.
+\textbf{The test not run.} Matched-compute bag-of-words baseline on the same evaluations. If BoW matches R (it almost certainly does), R has not demonstrated structural capability ,  it has demonstrated at best the bag-of-words floor.
 
 \textbf{What to do.} Retire the class-label probes. Run the structural battery (Section~\ref{sec:checklist}): word-order minimal pairs (BLiMP), active/passive matched-content, cross-topic structural controls. Until R beats matched-compute BoW on these, no structural claim is evidence.
 
@@ -651,7 +651,7 @@ Working back from the checklist to a concrete design.
 
 Both satisfy checklist items 1--5. Which is better on the structural battery is an open empirical question; the programme should run both.
 
-\paragraph{Training objective.} Structural contrastive, not $\Sn$-contrastive. Positives are paraphrases (back-translation via NLLB-200, or syntactic alternations) preserving argument structure. Negatives are same-topic-different-structure. The contrastive loss must be orthogonal to NTP --- gradient isolation architectural (see optimiser structure, Section~\ref{sec:checklist}).
+\paragraph{Training objective.} Structural contrastive, not $\Sn$-contrastive. Positives are paraphrases (back-translation via NLLB-200, or syntactic alternations) preserving argument structure. Negatives are same-topic-different-structure. The contrastive loss must be orthogonal to NTP ,  gradient isolation architectural (see optimiser structure, Section~\ref{sec:checklist}).
 
 \paragraph{Compute budget.} Realistic Phase 1 is R (60--100M) trained from scratch on 1B tokens of paraphrase pairs, reading a frozen 605M L. On A100 $\times$ 4, approximately 1 week end-to-end (including paraphrase pipeline on NLLB). Not a 4090-overnight fixture.
 
@@ -680,7 +680,7 @@ The current v17--v18 system trains on permutation positives (``lexical'' by the 
 % ======================================================================
 \section{Phase 1B: Co-evolution (deferred, specified if attempted)}
 
-Phase 1 trains R on a \emph{frozen} L. Phase 1B asks whether co-training L and R from scratch yields a better L alone --- the ambitious claim that structural pressure on L is productive, not overhead.
+Phase 1 trains R on a \emph{frozen} L. Phase 1B asks whether co-training L and R from scratch yields a better L alone ,  the ambitious claim that structural pressure on L is productive, not overhead.
 
 \textbf{Prerequisite.} Phase 1 must pass first. Co-training a Phase 1-failing R with L does not test co-evolution; it tests whether a broken R breaks L.
 
@@ -692,7 +692,7 @@ Phase 1 trains R on a \emph{frozen} L. Phase 1B asks whether co-training L and R
 \end{itemize}
 This is the same discipline as Phase 1 Mode A; the only difference is L is unfrozen and receives CE only.
 
-The experiment: two matched ORN-V3 runs to the same token budget, one with R+bridge active from step 0 (Mode A), one without. Compare final val CE, R's purity on structural battery, downstream benchmark accuracy. A third ablation --- the co-trained L evaluated with R+bridge deactivated at inference --- tests the ambitious claim that R as a training regulariser produces a better L alone.
+The experiment: two matched ORN-V3 runs to the same token budget, one with R+bridge active from step 0 (Mode A), one without. Compare final val CE, R's purity on structural battery, downstream benchmark accuracy. A third ablation ,  the co-trained L evaluated with R+bridge deactivated at inference ,  tests the ambitious claim that R as a training regulariser produces a better L alone.
 
 Estimated cost: $3\times$ a full ORN-V3 training run. Not runnable on current budget. Documented for future work.
 

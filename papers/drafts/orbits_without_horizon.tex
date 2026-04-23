@@ -43,7 +43,7 @@
     {\small Percolation Labs}\\
     {\small \url{https://github.com/Percolation-Labs/orn}}%
 }
-\date{March 2026 \quad{\small\textnormal{--- Early Draft}}}
+\date{March 2026 \quad{\small\textnormal{,  Early Draft}}}
 
 \begin{document}
 \maketitle
@@ -58,7 +58,7 @@ We develop a theory of \textbf{two-phase orbital computation} in autoregressive 
 The same network, with no parameter changes, operates in two sequential modes:
 a \textbf{compose phase} that iterates $\M$ to build a representation of the reachable state space (maintaining path consistency via the Chapman-Kolmogorov property of the coupling semigroup),
 and a \textbf{predict phase} that collapses this enriched landscape to a point estimate (standard next-token prediction).
-Composability and prediction pull in opposite directions---our semigroup experiments confirm that CK loss achieves 0.99 composability but hurts prediction---but sequencing them as phases resolves the contradiction: compose builds the map, predict reads it.
+Composability and prediction pull in opposite directions, our semigroup experiments confirm that CK loss achieves 0.99 composability but hurts prediction, but sequencing them as phases resolves the contradiction: compose builds the map, predict reads it.
 
 This formulation connects the Orbital Response Network to three converging lines of recent work:
 latent-space reasoning (COCONUT: continuous thoughts encoding multiple futures simultaneously),
@@ -77,15 +77,15 @@ The biological analogy is direct: recurrent cortical processing uses the same ci
 
 A transformer with $L$ layers performs exactly $L$ steps of computation per token, regardless of difficulty.
 A function word like ``the'' receives the same computational depth as a garden-path ambiguity or a long-distance coreference.
-This is an engineering convenience, not a cognitive principle---and it has formal consequences.
+This is an engineering convenience, not a cognitive principle, and it has formal consequences.
 
 P\'{e}rez et al.~\cite{perez2019turing} proved that standard fixed-depth transformers are \emph{not} Turing-complete: they can only recognise languages in a bounded complexity class determined by $L$.
-Bhatt et al.~\cite{bhatt2020turing} showed that even bounded-precision RNNs, given growing memory, can simulate a Universal Turing Machine---the key ingredient is not precision but \emph{unbounded iteration}.
+Bhatt et al.~\cite{bhatt2020turing} showed that even bounded-precision RNNs, given growing memory, can simulate a Universal Turing Machine, the key ingredient is not precision but \emph{unbounded iteration}.
 Dehghani et al.~\cite{dehghani2018universal} exploited this directly with the Universal Transformer (UT): share all weights, iterate until a learned halting probability triggers.
 This makes the architecture Turing-complete~\cite{perez2019turing} and allows variable-depth inference.
-P\'{e}rez et al.\ further showed that attention itself is Turing-complete when combined with unbounded computation steps~\cite{perez2021attention}---the limitation is not in the attention mechanism but in the fixed depth.
+P\'{e}rez et al.\ further showed that attention itself is Turing-complete when combined with unbounded computation steps~\cite{perez2021attention}, the limitation is not in the attention mechanism but in the fixed depth.
 
-UT shares \emph{everything}---attention coupling, response heads, and the FFN---which our prior work shows is too aggressive.
+UT shares \emph{everything}, attention coupling, response heads, and the FFN, which our prior work shows is too aggressive.
 Response heads benefit from per-layer specialisation (sharing costs ${\sim}4\%$ quality in controlled experiments), and the blanket sharing prevents architectural rebalancing.
 
 \subsection{What We Learned from Fixed-Depth SharedM}
@@ -119,14 +119,14 @@ $T$ & Val Loss & \\
 Loss degrades monotonically beyond $T{=}6$.
 The orbit does not converge to a useful fixed point.
 
-However, the KL divergence between consecutive iterations \emph{does} decrease (from ${\sim}15$ to ${\sim}0.3$)---the predictions stabilise, but to a degenerate distribution.
+However, the KL divergence between consecutive iterations \emph{does} decrease (from ${\sim}15$ to ${\sim}0.3$), the predictions stabilise, but to a degenerate distribution.
 The geometry is doing \emph{something} convergent; it is just not converging to the right place.
 
 \begin{remark}
 This is exactly what one expects from a system trained at fixed depth.
 Gradient signals never reached iterations $7$--$24$, so there is no pressure for those iterations to produce useful representations.
 The response heads are calibrated for exactly $T{=}6$ steps of residual stream evolution.
-Push further and the stream enters a region the heads cannot decode---not because the geometry is wrong, but because the decoder was never trained for that region.
+Push further and the stream enters a region the heads cannot decode, not because the geometry is wrong, but because the decoder was never trained for that region.
 \end{remark}
 
 % ======================================================================
@@ -144,16 +144,16 @@ Equivalently, the residual update $\Delta_t = \Phi(\x_t) - \x_t$ vanishes.
 \end{definition}
 
 In a residual network, $\Phi(\x) = \x + f(\x)$, so a fixed point requires $f(\x^*) = 0$: the attention and FFN contribute nothing.
-This is the state where the representation is ``done''---further iteration would not change it.
+This is the state where the representation is ``done'', further iteration would not change it.
 
 \subsection{Conditions for Convergence}
 
 \begin{theorem}[Banach fixed-point, applied]
-If $\Phi$ is a contraction mapping on a complete metric space---i.e., $\|\Phi(\x) - \Phi(\mathbf{y})\| \leq \gamma \|\x - \mathbf{y}\|$ for some $\gamma < 1$---then the orbit $\x_t$ converges to a unique fixed point $\x^*$ from any initialisation.
+If $\Phi$ is a contraction mapping on a complete metric space, i.e., $\|\Phi(\x) - \Phi(\mathbf{y})\| \leq \gamma \|\x - \mathbf{y}\|$ for some $\gamma < 1$, then the orbit $\x_t$ converges to a unique fixed point $\x^*$ from any initialisation.
 \end{theorem}
 
 For our architecture, $\Phi$ includes LayerNorm, softmax attention, GELU activations, and residual connections.
-It is \emph{not} globally contractive---softmax is not Lipschitz-bounded in general, and the residual connection preserves norm.
+It is \emph{not} globally contractive, softmax is not Lipschitz-bounded in general, and the residual connection preserves norm.
 But it may be \emph{locally} contractive near attractors, which suffices for practical convergence.
 
 Deep Equilibrium Models~\cite{bai2019deep} showed that this works in practice: a single weight-tied layer iterated to convergence achieves competitive performance with constant memory, using implicit differentiation to backpropagate through the fixed point.
@@ -162,12 +162,12 @@ Deep Equilibrium Models~\cite{bai2019deep} showed that this works in practice: a
 
 Cortical computation is recurrent.
 A visual scene is not processed in one feedforward pass; representations circulate through the thalamocortical loop, with each pass refining the interpretation~\cite{lamme2000distinct}.
-The ``depth'' of processing is not fixed---it depends on the stimulus, the task, and the available time.
+The ``depth'' of processing is not fixed, it depends on the stimulus, the task, and the available time.
 
 \begin{itemize}[nosep]
     \item \textbf{Fast responses} (reflexive, automatic) use few iterations. The orbit barely leaves the initial embedding.
     \item \textbf{Slow responses} (deliberative, complex) use many iterations. The orbit traverses a longer trajectory before converging.
-    \item \textbf{Rumination} is an orbit that fails to converge---the representation keeps cycling without settling.
+    \item \textbf{Rumination} is an orbit that fails to converge, the representation keeps cycling without settling.
 \end{itemize}
 
 The shared geometry (the cortical connectivity, the synaptic weight matrix) is the same in all cases.
@@ -177,11 +177,11 @@ This is precisely the variable-$T$ regime we propose.
 \subsection{Why This Differs from Universal Transformer}
 
 UT achieves variable depth through ACT: a learned scalar halting probability per token per iteration.
-The mechanism is a \emph{gate}---the model explicitly decides when to stop.
+The mechanism is a \emph{gate}, the model explicitly decides when to stop.
 This requires training the halting predictor alongside the computation, adding a regularisation term to avoid trivial solutions ($T{=}1$ always).
 
 We propose a different mechanism: \textbf{convergence-based halting}.
-The iteration stops when $\|\x_{t+1} - \x_t\| < \theta$---when the orbit has converged.
+The iteration stops when $\|\x_{t+1} - \x_t\| < \theta$, when the orbit has converged.
 No learned halting gate, no additional parameters, no regularisation.
 The halting criterion is a \emph{consequence} of the geometry, not a separate learned decision.
 
@@ -190,7 +190,7 @@ The training signal is: ``your representation should be useful at \emph{any} ite
 
 \paragraph{Turing completeness.}
 The formal results~\cite{perez2019turing, perez2021attention} establish that unbounded iteration over shared weights is \emph{sufficient} for Turing completeness.
-UT achieves this; our architecture, with convergence-based halting and shared $\M$, achieves it in principle for the same reason---iteration is unbounded, and the shared weights are a finite description of the transition function.
+UT achieves this; our architecture, with convergence-based halting and shared $\M$, achieves it in principle for the same reason, iteration is unbounded, and the shared weights are a finite description of the transition function.
 But Turing completeness is not our goal.
 We are interested in a narrower and more practical question: does variable-depth iteration \emph{improve language modelling quality} by allocating more computation to difficult tokens?
 The Turing completeness results tell us the architecture is not fundamentally limited; the experiments will tell us whether the geometry learns to use the extra computation productively.
@@ -253,7 +253,7 @@ There are two distinct iteration structures in autoregressive generation with sh
     \item[$R$-loops (outer iteration).]
     The model generates a token, appends it to the sequence, and runs a new forward pass on the extended input.
     Each $R$-step is a complete forward pass (with $T$ inner steps), and the output of one pass becomes part of the input to the next.
-    This is autoregressive generation---``continuing the conversation.''
+    This is autoregressive generation, ``continuing the conversation.''
 \end{description}
 
 $T$-loops iterate in \emph{representation space}: the same tokens, refined through the same geometry.
@@ -264,20 +264,20 @@ The variable-depth question is about $T$-loops: can the inner iteration be open-
 \subsection{The Field as Memory}
 
 In a standard transformer, the KV cache stores per-layer key and value projections for all previous tokens: $L \times N \times d$ entries.
-Each layer maintains its own cached projections---a lookup table of precomputed results, one per depth.
+Each layer maintains its own cached projections, a lookup table of precomputed results, one per depth.
 
 In ORN, there is only one $\M$.
 A token's coupling to other tokens is determined by where they sit in $\M$'s geometry \emph{at that moment}, not by stored per-layer projections.
-The ``cache'' is the residual stream states of all previous tokens after $T$ iterations---the field itself.
+The ``cache'' is the residual stream states of all previous tokens after $T$ iterations, the field itself.
 This is $N \times d$, not $2L \times N \times d$: a factor of $2L$ smaller.
 A standard KV cache stores keys \emph{and} values at \emph{every} layer; the ORN field stores only the residual state, once.
 At $L{=}13$ (the SharedM configuration from the companion paper), this is a $26\times$ reduction in context memory.
 
 But the difference is not just quantitative.
-In the standard transformer, the KV cache is an implementation optimisation---a way to avoid recomputing projections.
+In the standard transformer, the KV cache is an implementation optimisation, a way to avoid recomputing projections.
 In ORN, the residual stream \emph{is} the computational substrate.
 When a new token enters, it reads the field (the states of all previous tokens) through $\M$, and contributes back to the field.
-The ``cache'' is not a cache---it is the environment.
+The ``cache'' is not a cache, it is the environment.
 
 This is where the stigmergic analogy becomes precise rather than metaphorical.
 The field (residual states) persists.
@@ -293,12 +293,12 @@ Each $R$-step generates a token using $T$ inner iterations.
 If $T$ is variable, hard tokens get more inner iterations, producing better predictions that create better context for subsequent $R$-steps.
 
 A more speculative possibility: the $T$ and $R$ loops need not be strictly nested.
-A model could iterate, producing intermediate states that are themselves meaningful---like a draft progressively refined.
+A model could iterate, producing intermediate states that are themselves meaningful, like a draft progressively refined.
 Each inner iteration both refines the current representation \emph{and} implicitly prepares the field for the next token.
 In the limit, the boundary between ``thinking'' (inner $T$-loop) and ``generating'' (outer $R$-loop) dissolves: the orbit through the shared geometry is simultaneously a refinement of the current prediction and an evolution of the field state.
 
 This corresponds to the biological observation that thinking and acting are not strictly sequential.
-Speech production, for instance, involves simultaneous planning of upcoming words while articulating current ones---the cortical ``field'' is processing multiple timescales at once through the same geometry.
+Speech production, for instance, involves simultaneous planning of upcoming words while articulating current ones, the cortical ``field'' is processing multiple timescales at once through the same geometry.
 
 % ======================================================================
 \section{Context as Field Capacity, Not Memory}
@@ -306,16 +306,16 @@ Speech production, for instance, involves simultaneous planning of upcoming word
 \subsection{The Context Window Problem, Reframed}
 
 In a standard transformer, the context window is a \emph{memory} question: how many KV pairs can we store?
-Each previous token occupies $L \times d$ entries in the cache---its per-layer key and value projections, each one a specific lookup address.
+Each previous token occupies $L \times d$ entries in the cache, its per-layer key and value projections, each one a specific lookup address.
 A 128K context window means $128{,}000 \times L \times d$ entries sitting in memory.
 The model can directly address any of them through the attention mechanism.
 Context is storage.
 
-In ORN, context is \emph{field state}---the configuration of the residual stream across all previous tokens.
+In ORN, context is \emph{field state}, the configuration of the residual stream across all previous tokens.
 The ``context window'' is not a memory limit but a \textbf{field capacity} question: how many distinct token states can the field support before $\M$'s geometry can no longer distinguish them?
 
 This is related to the effective rank of $\M$.
-If $\M$ has effective rank $r$, the field geometry supports ${\sim}r$ distinguishable coupling dimensions---$r$ independent ``channels'' through which tokens can influence each other.
+If $\M$ has effective rank $r$, the field geometry supports ${\sim}r$ distinguishable coupling dimensions, $r$ independent ``channels'' through which tokens can influence each other.
 Two tokens that project to the same region of $\M$'s eigenspace are indistinguishable from the coupling perspective, regardless of how different their content is.
 The context capacity is set by the \emph{richness of the geometry}, not by the size of a cache.
 
@@ -324,7 +324,7 @@ The context capacity is set by the \emph{richness of the geometry}, not by the s
 This reframing reveals why open-ended $T$-iteration is hard.
 $\M$ is a single $d \times d$ matrix.
 It defines one geometry.
-That one geometry must support \emph{every possible context}---a conversation about physics, a story about a dog, a code snippet.
+That one geometry must support \emph{every possible context}, a conversation about physics, a story about a dog, a code snippet.
 At $T{=}6$ this works: the response heads and FFNs read the field state and extract context-appropriate information.
 The field carries the context; $\M$ provides the coupling rule; the response heads do the context-dependent extraction.
 
@@ -333,12 +333,12 @@ Without context-dependent correction, representations drift toward $\M$'s domina
 This is exactly what Experiment~10 showed: the orbit converges to a degenerate attractor that has lost the contextual information.
 The structural geometry dominates; the specific details wash out.
 
-The problem is not that $\M$ is too simple---it is that $\M$ captures what is \emph{context-invariant} (structural coupling rules), and long iteration amplifies the invariant at the expense of the particular.
+The problem is not that $\M$ is too simple, it is that $\M$ captures what is \emph{context-invariant} (structural coupling rules), and long iteration amplifies the invariant at the expense of the particular.
 ``Verbs attend to subjects'' is the same in every conversation; after enough iterations under this rule, the field forgets \emph{which} verb and \emph{which} subject.
 
 \subsection{The Ontological Pathway as Contextual Anchor}
 
-This is where the ontological pathway---introduced in the companion paper as a tiny identity-routing mechanism---becomes essential rather than optional.
+This is where the ontological pathway, introduced in the companion paper as a tiny identity-routing mechanism, becomes essential rather than optional.
 
 \begin{description}[nosep, leftmargin=1.5em]
     \item[$\M$ (orbital pathway)] captures structural coupling: ``what kinds of things attend to what kinds of things.''
@@ -349,16 +349,16 @@ This is where the ontological pathway---introduced in the companion paper as a t
     These are the details that distinguish one orbit from another given the same geometry.
 \end{description}
 
-For open-ended $T$-iteration, the ontological pathway must \emph{actively re-inject} contextual specifics at each iteration---not as a static per-token correction (which washes out under repeated application of $\M$) but through its own attention mechanism that reads the current field state and re-grounds the representation in the specific context.
+For open-ended $T$-iteration, the ontological pathway must \emph{actively re-inject} contextual specifics at each iteration, not as a static per-token correction (which washes out under repeated application of $\M$) but through its own attention mechanism that reads the current field state and re-grounds the representation in the specific context.
 
 Each $T$-step, $\M$ evolves the structural representation (the orbit advances).
 Each $T$-step, the ontological pathway re-anchors it in the particular context (the orbit stays on the right trajectory).
-Without the anchor, long orbits lose specificity---the structural geometry pulls all contexts toward the same attractors.
+Without the anchor, long orbits lose specificity, the structural geometry pulls all contexts toward the same attractors.
 With it, the orbit can continue indefinitely because the contextual bindings are refreshed at every step.
 
 \begin{conjecture}[Ontological anchoring enables convergent orbits]
 A model with shared $\M$ alone will diverge or collapse under extended iteration (Experiment~10 confirms this).
-A model with shared $\M$ plus an active ontological pathway---refreshing context-specific bindings at each iteration---can support convergent orbits of arbitrary length, because the ontological corrections prevent drift toward degenerate attractors.
+A model with shared $\M$ plus an active ontological pathway, refreshing context-specific bindings at each iteration, can support convergent orbits of arbitrary length, because the ontological corrections prevent drift toward degenerate attractors.
 \end{conjecture}
 
 This is directly testable: run Experiment~10 with the dual-pathway architecture from Experiment~4d, and compare convergence behaviour.
@@ -367,10 +367,10 @@ Prediction: the dual-pathway model will show slower divergence or outright conve
 \subsection{The Biological Parallel}
 
 The cortex--hippocampus division maps precisely onto this analysis.
-The cortex ($\M$) provides general-purpose dynamics---structural coupling rules that are the same across all contexts.
+The cortex ($\M$) provides general-purpose dynamics, structural coupling rules that are the same across all contexts.
 The hippocampus (ontological pathway) provides episodic bindings that keep the current train of thought grounded in \emph{this specific} context.
 
-Rumination---when thinking goes in circles without resolving---may be what happens when the ontological grounding is too weak to steer the orbital dynamics.
+Rumination, when thinking goes in circles without resolving, may be what happens when the ontological grounding is too weak to steer the orbital dynamics.
 The structural geometry cycles through its attractors, but without strong enough contextual anchoring, the orbit never settles on a resolution.
 In this framing, the ``ontological pathway'' is not just a parameter-efficiency trick; it is the mechanism that makes open-ended computation \emph{useful} rather than merely open-ended.
 
@@ -382,7 +382,7 @@ Since the initial draft of this paper, two experimental programmes have produced
 \subsection{Exp 10b: Variable-Depth Training Works}
 
 We ran all four variants proposed in Section~3.1 on character-level Shakespeare ($d{=}64$, $L{=}6$, 3{,}000 steps).
-All four converge---the orbit stabilises rather than diverging:
+All four converge, the orbit stabilises rather than diverging:
 
 \begin{table}[h]
 \centering\small
@@ -414,7 +414,7 @@ The finding directly explains both why convergent orbits work and why they have 
 \paragraph{Consensus formation.}
 Mean pairwise token cosine rises from 0.21 (embedding layer) to 0.91 (layer~9).
 Tokens converge toward a shared representation as they absorb relational context through $\M$.
-This is not signal loss---it is consensus.
+This is not signal loss, it is consensus.
 Each iteration, the response heads write back what they learned from $\M$'s coupling pattern, building a shared representation of the relational structure.
 
 \paragraph{Selective preservation in M's coupling subspace.}
@@ -424,7 +424,7 @@ This is the mechanism that makes convergent orbits possible: even as the overall
 
 \paragraph{The decay sets a depth horizon.}
 The selective preservation ratio decays: $3.4\times$ at layer~1, $1.8\times$ at layer~9.
-The response heads maintain coupling-relevant contrast, but not indefinitely---the homogenisation encroaches on the coupling subspace too, just more slowly.
+The response heads maintain coupling-relevant contrast, but not indefinitely, the homogenisation encroaches on the coupling subspace too, just more slowly.
 This explains why fixed-depth models diverge beyond training depth (the coupling signal eventually degrades below usefulness) and predicts that even variable-depth models will have a practical depth limit.
 
 \subsection{K-Vector Phase Transitions Support Variable Depth}
@@ -443,14 +443,14 @@ Variable-$T$ inference would naturally allocate more iterations to tokens with s
 The semigroup analysis showed that coreference (``Lily'' $=$ ``She'') emerges in K-space without supervision: co-referent tokens develop more similar key representations than non-co-referent tokens at deeper layers.
 
 This is exactly the kind of signal that extended iteration threatens to destroy.
-The coreference signal lives in per-token contrast within $\M$'s coupling subspace---the same contrast that the selective preservation measurement shows decaying from $3.4\times$ to $1.8\times$ over 9 layers.
+The coreference signal lives in per-token contrast within $\M$'s coupling subspace, the same contrast that the selective preservation measurement shows decaying from $3.4\times$ to $1.8\times$ over 9 layers.
 Extended iteration beyond 9 layers would push this ratio below the threshold needed for coreference resolution.
 
 This strengthens the ontological anchoring conjecture (Section~4.3): the ontological pathway's role is to \textbf{re-inject per-entity contrast at each iteration}, counteracting the homogenisation that $\M$ naturally produces.
 We can now be specific about what must be preserved: it is the per-token variance in $\M$'s top singular vectors.
 The ontological pathway must maintain this variance above the coupling threshold, even as the overall field converges.
 
-The measurement also gives us a diagnostic: if the ontological pathway is working, the selective preservation ratio should \emph{not} decay with depth---it should stabilise or even grow.
+The measurement also gives us a diagnostic: if the ontological pathway is working, the selective preservation ratio should \emph{not} decay with depth, it should stabilise or even grow.
 The ratio $\text{Var}_{\text{projected}} / \text{Var}_{\text{overall}}$ is a direct measurement of whether the entity-level contrast is being maintained where it matters.
 
 \subsection{Variable Depth at 50M: The Full Picture}
@@ -464,7 +464,7 @@ This is the Experiment~10 analysis at a scale where $\M$ has genuine spectral ri
 \toprule
 $T$ & Val Loss & vs $T{=}9$ & KL vs prev & Residual norm \\
 \midrule
-1 & 6.004 & & --- & 6.9 \\
+1 & 6.004 & & ,  & 6.9 \\
 5 & 3.398 & & 0.246 & 9.9 \\
 8 & 2.209 & & 0.171 & 13.5 \\
 \textbf{9} & \textbf{2.145} & \textbf{training depth} & 0.198 & 16.7 \\
@@ -482,12 +482,12 @@ $T$ & Val Loss & vs $T{=}9$ & KL vs prev & Residual norm \\
 Two findings update the picture from Experiment~10:
 
 \paragraph{1. Graceful degradation near training depth.}
-$T{=}10$ is only $3.7\%$ worse than $T{=}9$---the model has approximately one layer of ``slack'' where the geometry still produces useful coupling.
+$T{=}10$ is only $3.7\%$ worse than $T{=}9$, the model has approximately one layer of ``slack'' where the geometry still produces useful coupling.
 For comparison, the Shakespeare model (Exp~10, $d{=}64$) degraded by $8\%$ at $T{+}2$.
 The 50M model degrades half as fast initially, consistent with the richer $\M$ geometry (effective rank~51 vs much lower for the toy model) providing more room before per-token contrast drops below the coupling threshold.
 
 \paragraph{2. KL drops then plateaus; loss keeps rising.}
-The KL divergence between consecutive layers drops from ${\sim}0.20$ to ${\sim}0.06$ by $T{=}16$---the predictions stabilise, each additional layer making smaller changes.
+The KL divergence between consecutive layers drops from ${\sim}0.20$ to ${\sim}0.06$ by $T{=}16$, the predictions stabilise, each additional layer making smaller changes.
 But they stabilise to the wrong distribution (loss rises from 2.15 to 3.60).
 The residual norm plateaus at ${\sim}20$--$21$ for $T{=}11$--$16$, then jumps at $T{=}18$.
 The orbit is converging to a degenerate attractor, exactly as predicted in Section~4.2.
@@ -496,12 +496,12 @@ This confirms the core thesis of this paper: \textbf{the geometry supports conve
 The fix must come from training: variable-$T$ training (Exp~10b, confirmed at small scale) or ontological anchoring (conjectured, supported by the selective preservation analysis showing coupling-subspace contrast decaying from $3.4\times$ to $1.8\times$ over 9 layers).
 
 The practical implication: a 50M ORN model can safely run at $T{=}10$ (one extra layer beyond training) with only $3.7\%$ quality loss.
-This is a modest but real form of adaptive compute---easy tokens could use $T{=}7$ or $T{=}8$ while hard tokens get $T{=}10$---even without variable-depth training.
+This is a modest but real form of adaptive compute, easy tokens could use $T{=}7$ or $T{=}8$ while hard tokens get $T{=}10$, even without variable-depth training.
 
 \subsection{Multi-Horizon Training: A Stronger Path to Adaptive Compute}
 
 A complementary approach to variable-$T$ training has been tested on TinyStories (companion technical report: \textit{Path Integrals and the ORN}).
-Instead of training with variable depth on next-token prediction, we train depth $L$ to predict the token $L$ steps ahead---the ``path integral'' training objective.
+Instead of training with variable depth on next-token prediction, we train depth $L$ to predict the token $L$ steps ahead, the ``path integral'' training objective.
 
 Three models on the same SharedM architecture ($d{=}64$, $L{=}4$):
 
@@ -510,32 +510,32 @@ Three models on the same SharedM architecture ($d{=}64$, $L{=}4$):
 \toprule
 \textbf{Model} & \textbf{Next-token} & \textbf{L=1} & \textbf{L=2} & \textbf{Adaptive?} \\
 \midrule
-Standard ORN & \textbf{3.94} & 6.33 & 7.75 & No --- needs all layers \\
-PI-ORN (multi-horizon only) & 6.12 & 4.47 & \textbf{5.03} & Yes --- but poor next-token \\
-Hybrid (70/30) & 4.05 & \textbf{4.24} & 5.21 & \textbf{Yes --- with good next-token} \\
+Standard ORN & \textbf{3.94} & 6.33 & 7.75 & No ,  needs all layers \\
+PI-ORN (multi-horizon only) & 6.12 & 4.47 & \textbf{5.03} & Yes ,  but poor next-token \\
+Hybrid (70/30) & 4.05 & \textbf{4.24} & 5.21 & \textbf{Yes ,  with good next-token} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The key finding: the Standard ORN's single-layer prediction is 6.33 (near random)---it needs all 4 layers for anything useful.
-The Hybrid's single-layer prediction is 4.24---a competent prediction from depth~1 alone, with further depth available for hard tokens.
+The key finding: the Standard ORN's single-layer prediction is 6.33 (near random), it needs all 4 layers for anything useful.
+The Hybrid's single-layer prediction is 4.24, a competent prediction from depth~1 alone, with further depth available for hard tokens.
 The cost: only 0.11 nats worse on next-token (4.05 vs 3.94).
 
 This enables a \textbf{practical form of adaptive compute}: run one layer, check confidence, stop if sufficient, continue if not.
-The multi-horizon objective teaches the model that each depth should produce a useful prediction---not just contribute to a final refinement.
+The multi-horizon objective teaches the model that each depth should produce a useful prediction, not just contribute to a final refinement.
 
 \paragraph{The role of perturbative corrections.}
 The 0.11 nat gap between Hybrid and Standard suggests a tension: the orbital path is shared between multi-horizon structure and next-token accuracy.
 The perturbative corrections are designed precisely for this: the orbital core handles the multi-horizon geometry (which tokens relate at different time scales), while the corrections sharpen the immediate prediction (which specific token comes next, given this context).
-A Hybrid ORN \emph{with} perturbative corrections would use the orbital path for planning and the corrections for execution---separating the ``what could happen'' (multi-horizon) from the ``what will happen'' (next-token).
+A Hybrid ORN \emph{with} perturbative corrections would use the orbital path for planning and the corrections for execution, separating the ``what could happen'' (multi-horizon) from the ``what will happen'' (next-token).
 This experiment is designed and ready to run (Exp PI-ORN+Corr).
 
-The deeper question is whether the ORN's three-component decomposition---$\M$ for structure, response heads for perception, corrections for action---can support \emph{simultaneous} planning and execution.
+The deeper question is whether the ORN's three-component decomposition, $\M$ for structure, response heads for perception, corrections for action, can support \emph{simultaneous} planning and execution.
 Standard training makes all components serve one prediction (execution only).
 Multi-horizon training makes the orbital path serve planning (at a cost to execution).
 The corrections are the mechanism for recovering execution quality without destroying the planning capability, because they target the \emph{immediate} output without altering the orbital trajectory that encodes multi-horizon structure.
 
-If this works, the ORN is not just an efficient transformer variant---it is an architecture with a principled separation between world-modelling (the orbital path plans ahead through the semigroup) and token-level prediction (the corrections sharpen the plan into a specific next token).
+If this works, the ORN is not just an efficient transformer variant, it is an architecture with a principled separation between world-modelling (the orbital path plans ahead through the semigroup) and token-level prediction (the corrections sharpen the plan into a specific next token).
 The response heads mediate between the two: they read the multi-horizon field state and extract what is needed for the current depth's prediction.
 This is the ``adaptive compute'' vision of this paper made concrete: not just ``think longer on hard tokens'' but ``plan at every depth and execute at the final depth, with the gate controlling how much execution refinement to apply.''
 
@@ -559,15 +559,15 @@ The advantage is simplicity and interpretability (we can inspect the orbit); the
 LeCun's JEPA programme~\cite{lecun2022jepa} proposes world models that predict in representation space rather than observation space.
 V-JEPA~\cite{bardes2024vjepa} applies this to video: a latent dynamics model predicts future frame representations without generating pixels.
 
-The $T$-loop in ORN is structurally analogous: iterate a shared operator in latent space (the residual field) to refine representations---``imagination'' without observation-level decoding.
+The $T$-loop in ORN is structurally analogous: iterate a shared operator in latent space (the residual field) to refine representations, ``imagination'' without observation-level decoding.
 The key difference is that JEPA's predictor is a directional function (context $\to$ target), while $\M$ is a relational metric (all-to-all coupling).
 JEPA iterates forward in time; ORN iterates in depth.
 But both are running dynamics in a learned geometry without generating raw observations at each step.
 
-V-JEPA's success on video prediction---learning useful representations through pure latent dynamics---is indirect evidence that our variable-$T$ programme should work.
+V-JEPA's success on video prediction, learning useful representations through pure latent dynamics, is indirect evidence that our variable-$T$ programme should work.
 If latent iteration can capture temporal dynamics in video, it should capture computational depth dynamics in language.
 LLM-JEPA~\cite{llmjepa2025} recently confirmed that embedding-space prediction improves language models when used as a hybrid objective alongside autoregressive training, without degrading generation quality.
-This validates the principle that latent-space dynamics and token-level generation are complementary, not competing---the same relationship between our $T$-loop (latent iteration) and $R$-loop (token generation).
+This validates the principle that latent-space dynamics and token-level generation are complementary, not competing, the same relationship between our $T$-loop (latent iteration) and $R$-loop (token generation).
 
 LeCun's full architecture includes a ``configurator'' for binding specific identities, paralleling our ontological pathway.
 The convergence crossover at step 2800 in our Experiment~3 (shared geometry starts slow, then overtakes) may reflect the same developmental asymmetry that JEPA exhibits: the geometric structure must crystallise before identity binding becomes useful.
@@ -589,7 +589,7 @@ The answer is surprisingly simple: there is no architectural change.
 
 \subsection{Chain-of-Thought as Token Generation}
 
-Models such as OpenAI's o1/o3 and DeepSeek-R1 ``think'' by generating a long chain of reasoning tokens---actual text like ``Let me consider\ldots\ Wait, that contradicts\ldots\ So the answer must be\ldots''---before producing the final answer.
+Models such as OpenAI's o1/o3 and DeepSeek-R1 ``think'' by generating a long chain of reasoning tokens, actual text like ``Let me consider\ldots\ Wait, that contradicts\ldots\ So the answer must be\ldots'', before producing the final answer.
 Each thinking token is generated by the \emph{same} $L$-layer forward pass as any other token.
 There is no recurrence, no extra iterations, no latent-space computation.
 The model is literally talking to itself in token space.
@@ -601,7 +601,7 @@ The model learns to produce useful thoughts by trial and error, not by any struc
 
 \begin{itemize}[nosep]
     \item Each thinking token requires a full forward pass ($L$ layers, full attention over the growing context).
-    \item Reasoning must be serialised into language---the model cannot think in parallel or in non-linguistic representations.
+    \item Reasoning must be serialised into language, the model cannot think in parallel or in non-linguistic representations.
     \item The context window limits how long the model can think.
     \item The thinking is confined to the vocabulary's expressiveness: each step carries at most $\log_2 V$ bits of information (a token choice), whereas a latent representation carries $d$ continuous dimensions.
 \end{itemize}
@@ -611,10 +611,10 @@ The model learns to produce useful thoughts by trial and error, not by any struc
 COCONUT~\cite{coconut2024} and MARCOS~\cite{marcos2025} propose latent-space reasoning: instead of generating text tokens, feed the hidden state back through the network.
 Each ``thought'' is a $d$-dimensional vector, not a vocabulary-sized distribution.
 This is cheaper (no token sampling or embedding lookup), richer ($d$ dimensions vs $\log_2 V$ bits per step), and can represent multiple possibilities simultaneously (COCONUT's BFS-like behaviour).
-But it is not inspectable---you cannot read a hidden state.
+But it is not inspectable, you cannot read a hidden state.
 
 Looped transformers (Ouro/LoopLM~\cite{ouro2025}, Mixture-of-Recursions~\cite{mor2025}) share parameters across iterations, giving the recurrence a principled structure: each pass through the shared layers is an iteration of the same operator.
-At 1.4B--2.6B parameters, Ouro matches models 2--3$\times$ larger, with the advantage concentrated on multi-hop reasoning tasks---exactly where ``thinking longer'' should help.
+At 1.4B--2.6B parameters, Ouro matches models 2--3$\times$ larger, with the advantage concentrated on multi-hop reasoning tasks, exactly where ``thinking longer'' should help.
 
 \subsection{What the ORN Adds}
 
@@ -630,7 +630,7 @@ This is a mathematical guarantee about the structure of the reasoning trajectory
 The spectral partition conjecture (Section~\ref{sec:orbit-context}) goes further: prediction and reasoning could live in different spectral regions of the same $\M$.
 Fast prediction uses the top eigenvectors (high energy, convergent).
 Slow reasoning uses the lower eigenvectors (low energy, composable, divergent).
-One network, one $\M$, two capabilities addressed through different spectral channels---with no mode switching, no special tokens, and no architectural changes.
+One network, one $\M$, two capabilities addressed through different spectral channels, with no mode switching, no special tokens, and no architectural changes.
 
 % ======================================================================
 \section{Two Computational Modes: Prediction and Integration}\label{sec:two-modes}
@@ -641,7 +641,7 @@ The experiments in this paper and the companion path integral paper reveal a ten
 
 Standard next-token training optimises each layer to refine a single trajectory through representation space toward the most likely continuation.
 The layers homogenise: each applies the same coupling rule $\M$ to a progressively smoother field, and the response heads at each depth sharpen the prediction.
-This is convergent computation---the orbit contracts toward a fixed point (the predicted token).
+This is convergent computation, the orbit contracts toward a fixed point (the predicted token).
 
 This is what the ORN does well.
 Val loss 3.35 at 91M params.
@@ -652,10 +652,10 @@ Fast, automatic, System~1.
 The semigroup and path integral analysis showed a different kind of computation.
 Chapman-Kolmogorov composability asks: does $P(A \to C) = \sum_B P(A \to B) \cdot P(B \to C)$?
 This requires maintaining awareness of \emph{all} intermediate states $B$, not collapsing to the most likely one.
-Our experiments showed that CK loss achieves composability (0.99 correlation) but the network doesn't \emph{use} composition for language---because prediction training rewards convergence, not exploration.
+Our experiments showed that CK loss achieves composability (0.99 correlation) but the network doesn't \emph{use} composition for language, because prediction training rewards convergence, not exploration.
 
 Multi-horizon training (predicting 1, 2, 4, 8 steps ahead simultaneously) pushes toward integration: the model must represent not just ``what comes next'' but ``what the space of futures looks like.''
-Our results showed this doesn't help with perturbative corrections at current scale---the planning/execution tension cannot be resolved by additive corrections to a convergent backbone.
+Our results showed this doesn't help with perturbative corrections at current scale, the planning/execution tension cannot be resolved by additive corrections to a convergent backbone.
 
 The path integral network (G6) \emph{can} compute exact physics (Ising thermodynamics to 3--4 significant figures) when trained with an integration objective.
 But it requires a different architecture from the one optimised for prediction.
@@ -679,14 +679,14 @@ Analogy & Perception, fluent speech & Planning, reasoning, creativity \\
 \end{center}
 
 Prediction asks ``what's most likely?''  Integration asks ``what does the full landscape look like?''
-Both use the same coupling geometry $\M$---the rules of the game don't change.
+Both use the same coupling geometry $\M$, the rules of the game don't change.
 What changes is how the network traverses $\M$'s geometry: convergent (collapse to attractor) vs divergent (explore the basin structure).
 
 \subsection{Where Integration Would Help in AI}
 
 \paragraph{Planning and search.}
 Current LLMs plan by predicting one token at a time.
-They cannot natively evaluate ``if I say $X$, they respond $Y$, then I need $Z$''---that requires composing transitions, which is exactly what the CK property formalises.
+They cannot natively evaluate ``if I say $X$, they respond $Y$, then I need $Z$'', that requires composing transitions, which is exactly what the CK property formalises.
 An integration mode would maintain the tree of possibilities and weight them, replacing the external hack of tree-of-thought prompting with a native architectural capability.
 
 \paragraph{Reasoning under uncertainty.}
@@ -700,7 +700,7 @@ The prediction network knows only the path it is on.
 An integrator maintains awareness of paths not taken and can evaluate them.
 
 \paragraph{Creative and divergent generation.}
-A prediction network converges to the most likely continuation---useful for fluent text, not for novel ideas.
+A prediction network converges to the most likely continuation, useful for fluent text, not for novel ideas.
 An integration network maintains multiple continuations and can select based on criteria other than likelihood: novelty, coherence with a distant goal, emotional arc, or structural balance (like a musical resolution arriving at the right moment).
 
 \subsection{The Compose-Then-Predict Conjecture}\label{sec:compose-predict}
@@ -735,8 +735,8 @@ Preliminary experiments (Exp I-1 dry run) showed this is catastrophic: CK loss w
 The fix: \textbf{CK gradients update only $A$ and $B$ (the coupling geometry).  CE gradients update everything.}
 Composability is a property of the coupling geometry: ``transitions compose correctly'' is a statement about $\M$, not about what the response heads do with the coupled information.
 Response heads must be free to specialise for prediction without interference from the CK objective.
-$\M$ receives both CE and CK gradients---the coupling geometry must support both phases.
-Response heads receive only CE gradients---they remain optimised for prediction.
+$\M$ receives both CE and CK gradients, the coupling geometry must support both phases.
+Response heads receive only CE gradients, they remain optimised for prediction.
 
 This is a separation of concerns that mirrors the ORN's architecture: $\M$ defines the relational rules (shared across phases), response heads define the content response (prediction-specific).
 
@@ -745,7 +745,7 @@ Our CK loss is the discrete-layer analogue of the consistency condition in Song 
 Consistency models train a diffusion process so that $f(x_t) = f(x_{t'})$ for any two points on the same trajectory; our CK loss trains $\M$'s semigroup so that $T \circ T$ matches $T^2$.
 
 The connection to diffusion is deeper than technical.
-Diffusion models start with noise (a fuzzy, unstructured image) and progressively refine detail through iterative denoising---each step sharpens the picture while maintaining consistency with the global structure.
+Diffusion models start with noise (a fuzzy, unstructured image) and progressively refine detail through iterative denoising, each step sharpens the picture while maintaining consistency with the global structure.
 The compose phase of compose-then-predict is analogous: start with a fuzzy representation of possible futures (the initial residual field), iterate through $\M$ to build consistent path structure, then the predict phase reads the clarified landscape and makes a decision.
 Slow thinking IS denoising: starting with a vague sense of the answer and progressively refining it through deliberation, where each refinement step must be consistent with the relational structure ($\M$) of the problem.
 
@@ -753,7 +753,7 @@ Slow thinking IS denoising: starting with a vague sense of the answer and progre
 Our semigroup experiments (Section~\ref{sec:semigroup}) showed that CK loss achieves 0.99 composability but hurts prediction when applied to all parameters.
 Selective gradient routing resolves this: the compose phase shapes $\M$'s geometry for path consistency (via CK loss on $A, B$), while the predict phase uses that geometry for convergent prediction (via CE loss on everything).
 The response heads never see CK gradients, so they remain prediction-optimised.
-$\M$ sees both, so it learns a geometry that supports both composability and prediction---the universal coupling rule that is the ORN's central claim.
+$\M$ sees both, so it learns a geometry that supports both composability and prediction, the universal coupling rule that is the ORN's central claim.
 
 \paragraph{Connection to COCONUT and latent reasoning.}
 Meta's Chain of Continuous Thought (COCONUT)~\cite{coconut2024} feeds the last hidden state back as the next input embedding, iterating in continuous latent space rather than decoding to tokens.
@@ -783,22 +783,22 @@ The two-phase structure maps onto two well-documented modes of cortical processi
 \end{itemize}
 
 In all three biological cases, the same neural substrate supports both fast convergent processing and slow integrative processing.
-The mode switch is not architectural---it is dynamical.
+The mode switch is not architectural, it is dynamical.
 This is exactly the compose-then-predict conjecture: same $\M$, different phases.
 
 \subsection{Key Insight: Composition, Not Adaptation}
 
 The compose-then-predict architecture adds no parameters and changes no weights.
-It is pure \emph{composition}---the ORN composed with itself.
+It is pure \emph{composition}, the ORN composed with itself.
 This is a design principle: when you have a good component, duplicate and reuse it rather than modifying it.
 Evolution works this way (gene duplication, not redesign).
 The ribosome doesn't have a ``think harder'' mode; the cell runs more ribosomes on the same mRNA.
 
-Alternative approaches---adaptive halting (Architecture B), mode tokens, separate integration heads---all require new parameters or training objectives that change the base ORN.
+Alternative approaches, adaptive halting (Architecture B), mode tokens, separate integration heads, all require new parameters or training objectives that change the base ORN.
 Compose-then-predict preserves the ORN exactly as trained and asks: does the computation it already performs, when iterated, produce richer representations?
 
 If yes, the ORN's orbit through $\M$'s geometry has a natural multi-scale structure: short orbits for fast prediction, long orbits for deep reasoning, with no architectural distinction between the two.
-The ``horizon'' in ``orbits without horizon'' is not a design parameter---it is an emergent property of the input difficulty and the time available for computation.
+The ``horizon'' in ``orbits without horizon'' is not a design parameter, it is an emergent property of the input difficulty and the time available for computation.
 
 \subsection{Proposed Experiments}\label{sec:compose-experiments}
 
@@ -825,18 +825,18 @@ The correction gates during compose are the diagnostic: if they activate strongl
 \paragraph{Exp I-3: Does compose help hard tokens?}
 Partition tokens by prediction difficulty (high cross-entropy under the baseline model).
 Measure the improvement from compose iterations on easy vs hard tokens.
-If compose selectively helps hard tokens, the architecture naturally implements adaptive compute without an explicit halting mechanism---you simply give more compose iterations to hard inputs.
+If compose selectively helps hard tokens, the architecture naturally implements adaptive compute without an explicit halting mechanism, you simply give more compose iterations to hard inputs.
 
 % ======================================================================
 \section{Orbit-Conditioned Prediction}\label{sec:orbit-context}
 
 The compose-then-predict architecture treats the two phases as sequential: compose enriches the representation, predict reads it.
-But the compose phase produces more than a single enriched state---it produces an \textbf{orbit}: a trajectory of states $\{T(k)h_0 : k = 1, \ldots, K\}$ through the representation space defined by $\M$'s semigroup.
+But the compose phase produces more than a single enriched state, it produces an \textbf{orbit}: a trajectory of states $\{T(k)h_0 : k = 1, \ldots, K\}$ through the representation space defined by $\M$'s semigroup.
 This orbit encodes the \emph{space of reachable states from $h_0$}, not a single prediction.
 
 \begin{conjecture}[Orbit-conditioned prediction]
 A prediction network can use semigroup orbit points as context, alongside or instead of token embeddings.
-The orbit points serve as a ``structural prompt''---they tell the prediction network what relational patterns are active, what transitions are available, and what states are reachable, without committing to a specific sequence of tokens.
+The orbit points serve as a ``structural prompt'', they tell the prediction network what relational patterns are active, what transitions are available, and what states are reachable, without committing to a specific sequence of tokens.
 
 Formally: let $\mathcal{O}(h_0, K) = \{T(1)h_0, T(2)h_0, \ldots, T(K)h_0\}$ be the $K$-step orbit of $h_0$ under the semigroup generated by $\M$.
 The prediction network receives as context:
@@ -848,12 +848,12 @@ and predicts the next token conditioned on both the explicit history (token prom
 
 \paragraph{Why orbit points work as context.}
 The orbit points are $d$-dimensional vectors in the same residual stream space as token embeddings.
-The prediction network already knows how to attend to things in this space---it was trained on token embeddings that live there.
+The prediction network already knows how to attend to things in this space, it was trained on token embeddings that live there.
 An orbit point $T(k)h_0$ is not a token; it is a representation of ``what the coupling geometry looks like $k$ steps from here.''
 The prediction network attends to orbit points just as it attends to tokens, but extracts relational structure rather than lexical content.
 
 If the orbit is CK-consistent ($T(s{+}t) = T(s) \circ T(t)$), the orbit points have coherent structure: the jump from $T(2)h$ to $T(5)h$ is the same transition as $T(3)$ applied to $T(2)h$.
-This consistency means the prediction network sees a lawful trajectory, not random points---it can interpolate and extrapolate within the orbit.
+This consistency means the prediction network sees a lawful trajectory, not random points, it can interpolate and extrapolate within the orbit.
 
 \paragraph{Prompt vs orbit: two kinds of context.}
 A token prompt is a specific path through language: ``The cat sat on the...''
@@ -875,24 +875,24 @@ The orbit-conditioned architecture separates them cleanly:
     \item A \textbf{compose network} (own response heads, possibly own $\M_C$) trained with CK loss produces orbit points.
     \item A \textbf{predict network} (own response heads, own $\M_P$, or shared $\M$) trained with CE loss reads orbit points as context and predicts.
     \item The predict network also works on raw prompts without orbit context (fast mode).
-    \item The interface between them is the residual stream space---orbit points and token embeddings are the same dimensionality.
+    \item The interface between them is the residual stream space, orbit points and token embeddings are the same dimensionality.
 \end{itemize}
 
 Whether $\M_C = \M_P$ (shared geometry) or $\M_C \neq \M_P$ (separate geometries) is an empirical question.
 Our results suggest that CK and CE require different geometries when applied to the same M.
-But if compose produces orbit points that are useful as context for a CE-trained predictor, the two geometries need not be identical---they just need to produce representations in the same space.
+But if compose produces orbit points that are useful as context for a CE-trained predictor, the two geometries need not be identical, they just need to produce representations in the same space.
 
 \paragraph{Connection to diffusion and denoising.}
 The orbit is a discretised trajectory through $\M$'s vector field.
 In the denoising analogy, the orbit starts from a noisy (high-entropy) state and each step refines it.
 The predict network reads the refined state and produces a sharp output.
-But unlike diffusion, the orbit is produced by a CK-consistent semigroup, so the trajectory has lawful structure that the predict network can exploit---it is not random noise being progressively removed, but a structured exploration of the reachable state space being progressively resolved.
+But unlike diffusion, the orbit is produced by a CK-consistent semigroup, so the trajectory has lawful structure that the predict network can exploit, it is not random noise being progressively removed, but a structured exploration of the reachable state space being progressively resolved.
 
 \paragraph{What would confirm this.}
 \begin{enumerate}[nosep]
     \item CK diagnostics (Exp I-4, queued) show that CK-trained orbits preserve information and maintain non-trivial structure (not collapsed, not chaotic).
     \item A predict network trained on orbit context achieves lower val loss than one trained on token context alone.
-    \item More orbit points (longer orbits) improve prediction, then plateau---the plateau defines the natural ``thinking depth.''
+    \item More orbit points (longer orbits) improve prediction, then plateau, the plateau defines the natural ``thinking depth.''
     \item The orbit-conditioned predictor handles ambiguous or difficult inputs better than the baseline, because the orbit provides structural context that a token prompt does not.
 \end{enumerate}
 
@@ -903,41 +903,41 @@ The outcome determines whether orbit-conditioned prediction is viable and what m
 
 \paragraph{1. Collapse} (variance $\to 0$, all inputs map to same state).
 CK is trivially satisfied by forgetting.
-The semigroup contracts to a fixed point---composable but useless.
+The semigroup contracts to a fixed point, composable but useless.
 \textbf{Action:} CK loss needs an information-preservation regulariser (contrastive loss or entropy maximisation) to prevent trivial solutions.
 Alternatively, abandon CK and seek a different composability objective.
 
 \paragraph{2. Information preserved, orbits converge} (inputs distinguishable but similarity increases with iteration).
-CK has learned a well-behaved contractive semigroup---composable transitions that converge to an attractor.
-This is ``composable prediction''---not the divergent thinking we wanted, but still potentially useful.
+CK has learned a well-behaved contractive semigroup, composable transitions that converge to an attractor.
+This is ``composable prediction'', not the divergent thinking we wanted, but still potentially useful.
 \textbf{Action:} Orbit points encode a smooth convergence trajectory.
 The prediction network could exploit ``how far along the convergence path'' each point is.
 Useful for the orbit-conditioned architecture but does not provide divergent structural context.
 
 \paragraph{3. Information preserved, orbits parallel} (different inputs stay different, similarity constant across iterations).
 The best case.
-CK has learned volume-preserving (isometric) dynamics---the semigroup maps different starting points to different regions without convergence or divergence.
+CK has learned volume-preserving (isometric) dynamics, the semigroup maps different starting points to different regions without convergence or divergence.
 \textbf{Action:} These orbit points ARE the structural landscape we want.
 Each point represents a different reachable state from the same seed.
 Feed them as context to the prediction network.
 This directly enables the orbit-conditioned prediction conjecture.
 
 \paragraph{4. Orbits diverge} (similarity decreases, entropy increases with iteration).
-CK has learned expansive dynamics---the semigroup amplifies differences.
+CK has learned expansive dynamics, the semigroup amplifies differences.
 Orbit points become noisy and hard for the prediction network to use.
 \textbf{Action:} Add a mild contraction penalty alongside CK to keep orbits bounded.
 The goal: composable dynamics that explore without exploding.
 
 \paragraph{5. Approximately linear} ($T(h_1 + h_2) \approx T(h_1) + T(h_2)$).
 CK is trivially satisfied by a linear map.
-The semigroup is matrix exponentiation---composable but geometrically uninteresting.
+The semigroup is matrix exponentiation, composable but geometrically uninteresting.
 The nonlinearity of the response heads is being suppressed.
 \textbf{Action:} Increase CK training or add a nonlinearity encouragement loss.
-Linear orbits are just rotated/scaled inputs---they provide no structural enrichment.
+Linear orbits are just rotated/scaled inputs, they provide no structural enrichment.
 
 \paragraph{6. Structured basins} (entropy stable, orbits form clusters or attractors corresponding to data categories).
 The most interesting outcome.
-CK dynamics create a landscape of basins---regions of representation space that correspond to meaningful structure in the data.
+CK dynamics create a landscape of basins, regions of representation space that correspond to meaningful structure in the data.
 \textbf{Action:} The orbit structure IS the relational landscape.
 Orbit points from different basins provide the prediction network with awareness of alternatives.
 This most directly supports the ``thinking as exploring the landscape'' interpretation.
@@ -954,10 +954,10 @@ The diagnostics returned clear answers (see semigroup companion paper for full t
 \begin{itemize}[nosep]
     \item \textbf{CK-only:} Perfect composability (error ${\approx}0$) but information destroyed (dist\_ratio 0.04).
     All inputs converge to the same max-entropy trajectory. \emph{Composable but useless.}
-    \item \textbf{CK(M)+Predict:} Information preserved (0.73), orbits diverge (cosine 0.81$\to$0.50), entropy increases (0.49$\to$0.71). \emph{Divergent, information-preserving --- the qualitative behaviour we want.}
+    \item \textbf{CK(M)+Predict:} Information preserved (0.73), orbits diverge (cosine 0.81$\to$0.50), entropy increases (0.49$\to$0.71). \emph{Divergent, information-preserving ,  the qualitative behaviour we want.}
 \end{itemize}
 
-\paragraph{Consistency does not create meaning --- it preserves it.}
+\paragraph{Consistency does not create meaning ,  it preserves it.}
 CK-only found the trivial solution because nothing anchored the representations to meaningful structure.
 This parallels consistency model distillation~\cite{song2023consistency}: you do not train a diffusion process from scratch with consistency loss; you distill a pre-trained model into a consistent version.
 
@@ -971,7 +971,7 @@ Five configurations at $d{=}128$, 8000 steps:
 \toprule
 \textbf{Config} & \textbf{Val} & \textbf{vs base} & \textbf{CK err} & \textbf{Ent $\Delta$} & \textbf{Orbit $\Delta$} \\
 \midrule
-A: Predict-only & 0.478 & --- & 0.814 & $-0.07$ & $-0.14$ \\
+A: Predict-only & 0.478 & ,  & 0.814 & $-0.07$ & $-0.14$ \\
 B: Curriculum $\lambda{\to}0.1$ & 0.491 & $+2.6\%$ & \textbf{0.693} & $\mathbf{+0.15}$ & $-0.11$ \\
 E: Curriculum $\lambda{\to}0.01$ & 0.481 & $+0.5\%$ & 0.814 & $-0.03$ & $-0.08$ \\
 D: CK from start & 0.483 & $+0.9\%$ & 0.835 & $+0.11$ & $-0.18$ \\
@@ -984,19 +984,19 @@ Config~B reduced CK error by 15\% with entropy increasing ($+0.15$), but predict
 
 \paragraph{Reframing: the tension IS the value.}
 Treating the 2.6\% prediction cost as a failure misses the point.
-You cannot think fast and slow simultaneously---this is given.
+You cannot think fast and slow simultaneously, this is given.
 The prediction cost IS the slow thinking: the network maintains awareness of possibilities (entropy $+0.15$) rather than collapsing to the most likely token (entropy $-0.07$ for predict-only).
 Different inputs stay more distinguishable (orbits $-0.11$ vs $-0.14$).
 The representations are richer, more divergent, and structurally more lawful (CK error $-15\%$).
 
 Obsessing over prediction loss is precisely what prevents the field from building world models that can reason.
-A model that loses 2.6\% on next-token prediction but gains 15\% in transition consistency and maintains higher representational entropy is not worse---it is \emph{differently capable}.
+A model that loses 2.6\% on next-token prediction but gains 15\% in transition consistency and maintains higher representational entropy is not worse, it is \emph{differently capable}.
 
 \paragraph{The scaling argument.}
 At toy scale ($d{=}128$, 8000 steps), the 2.6\% cost is measurable.
 At V2 scale ($d{=}512$, millions of steps), three factors reduce it:
 \begin{enumerate}[nosep]
-    \item $\M$ has more spectral capacity---composability and prediction can occupy different eigenvectors without competing.
+    \item $\M$ has more spectral capacity, composability and prediction can occupy different eigenvectors without competing.
     \item More training steps mean the curriculum's Phase~2 is a smaller fraction of total training.
     \item Fine-tuning with CE-only after curriculum training can recover the prediction loss while keeping the composable geometry.
     Response heads adapt to the richer $\M$; the geometry stays.
@@ -1301,7 +1301,7 @@ In-Place Test-Time Training.
 \newblock \emph{ICLR}, 2026.
 
 \bibitem{lact2025}
-LaCT: TTT Done Right---Large Chunk Test-Time Training.
+LaCT: TTT Done Right, Large Chunk Test-Time Training.
 \newblock \emph{arXiv:2505.23884}, 2025.
 
 \end{thebibliography}
@@ -1312,7 +1312,7 @@ LaCT: TTT Done Right---Large Chunk Test-Time Training.
 \label{sec:corn}
 % ======================================================================
 
-CORN (Composable Orbital Response Network) is \textbf{not an architecture}---it is a post-training recipe that adds a semigroup consistency loss to an existing ORN checkpoint.
+CORN (Composable Orbital Response Network) is \textbf{not an architecture}, it is a post-training recipe that adds a semigroup consistency loss to an existing ORN checkpoint.
 The goal: make $\M$'s coupling \emph{composable}, so that iterating the dynamics for $s+t$ steps is equivalent to iterating for $s$ steps then $t$ steps: $T(s+t) \approx T(s) \circ T(t)$.
 
 Standard ORN layers are a pipeline, not a semigroup.
@@ -1340,7 +1340,7 @@ CORN-trained models stay stable: loss 3.37--3.39 across all depths, $10\times$ b
 Extra iterations don't help (yet), but they don't hurt.
 
 \paragraph{Composition on the coupling space is architectural.}
-Realisation \#101: shared $\M$ gives semigroup composition on the coupling space for free---99.6\% fidelity without any semigroup loss.
+Realisation \#101: shared $\M$ gives semigroup composition on the coupling space for free, 99.6\% fidelity without any semigroup loss.
 The CORN loss helps composition on the \emph{hidden state} space, which is harder because the response heads introduce nonlinearity.
 
 \subsection{What CORN Has NOT Delivered}
@@ -1363,22 +1363,22 @@ The semigroup dynamics can refine existing structure but cannot create structure
 \subsection{The Imagination Hypothesis}
 
 If CORN's composition property does more than compress the spectrum, what is it for?
-We propose: \textbf{imagination}---the ability to evaluate counterfactual trajectories by running the coupling dynamics beyond the standard depth.
+We propose: \textbf{imagination}, the ability to evaluate counterfactual trajectories by running the coupling dynamics beyond the standard depth.
 
 \paragraph{The mechanism.}
 In a standard ORN at $T{=}L$ layers, each token's representation is the endpoint of its orbit through $\M$'s coupling geometry.
 If the dynamics compose, running to $T{=}2L$ is meaningful: the orbit continues through the same geometry, exploring further in coupling space.
-The orbit at $T{>}L$ represents ``what would happen if I kept thinking''---a counterfactual trajectory that standard fixed-depth models cannot access.
+The orbit at $T{>}L$ represents ``what would happen if I kept thinking'', a counterfactual trajectory that standard fixed-depth models cannot access.
 
 $\M$'s eigenspectrum determines what these extended orbits explore:
 \begin{itemize}[nosep]
-    \item \textbf{Real eigenvalues (dominant):} contracting modes that converge to fixed points. Extended iteration refines the prediction---same answer, higher confidence.
-    \item \textbf{Complex eigenvalues (82\% in V1):} oscillatory modes that rotate through coupling space. Extended iteration explores \emph{alternative coupling configurations}---the orbit visits different relational structures, each a different way the tokens could relate.
+    \item \textbf{Real eigenvalues (dominant):} contracting modes that converge to fixed points. Extended iteration refines the prediction, same answer, higher confidence.
+    \item \textbf{Complex eigenvalues (82\% in V1):} oscillatory modes that rotate through coupling space. Extended iteration explores \emph{alternative coupling configurations}, the orbit visits different relational structures, each a different way the tokens could relate.
 \end{itemize}
 
 The complex modes are the imagination modes.
 At $T{=}L$, the model has explored one full rotation of the dominant oscillatory mode.
-At $T{=}2L$, it has explored two---potentially discovering secondary coupling patterns that the first rotation missed.
+At $T{=}2L$, it has explored two, potentially discovering secondary coupling patterns that the first rotation missed.
 
 \paragraph{Connection to diffusion.}
 The diffusion connection (Section~\ref{sec:imagination}) reinforces this: if $t = \sigma$ (realisation \#74), then extended iteration at decreasing $t$ is iterative refinement from coarse to fine.
@@ -1409,7 +1409,7 @@ If CORN at $T{=}2L$ beats $T{=}L$ on compositional tasks but not on simple tasks
 \paragraph{Experiment C3: Imagination diversity.}
 Generate continuations at different depths $T$.
 Measure: diversity (distinct $n$-grams), coherence (perplexity under a reference model), and novelty (distance from training data).
-If $T{=}2L$ produces more diverse but coherent continuations than $T{=}L$, the extra iterations explore the coupling manifold---imagination.
+If $T{=}2L$ produces more diverse but coherent continuations than $T{=}L$, the extra iterations explore the coupling manifold, imagination.
 
 \paragraph{Experiment C4: Implicit vs explicit chain-of-thought.}
 Same question, two paths: (A) CORN at $T{=}2L$ (implicit thinking, no intermediate text), (B) standard at $T{=}L$ with chain-of-thought prompting (explicit thinking, intermediate text generated).
@@ -1422,7 +1422,7 @@ All CORN results are from $d{=}128$--$256$, $L{=}6$--$8$ on TinyStories.
 The imagination hypothesis is untested.
 
 The plan: after V3 base training completes ($\sim$17 April 2026), apply CORN post-training (\$5, 1~day), then run experiments C1--C4 on the resulting checkpoint (zero cost, just evaluation).
-If the experiments confirm that extra depth $=$ better thinking, CORN becomes the ``thinking mode'' of the ORN---a free upgrade that requires no architectural changes, only post-training.
+If the experiments confirm that extra depth $=$ better thinking, CORN becomes the ``thinking mode'' of the ORN, a free upgrade that requires no architectural changes, only post-training.
 
 
 % ======================================================================
@@ -1433,7 +1433,7 @@ If the experiments confirm that extra depth $=$ better thinking, CORN becomes th
 
 Language has recursive structure.
 ``The cat ate'' is a sentence.
-``The cat that the dog chased ate'' is also a sentence---the same outer frame with a relative clause inserted.
+``The cat that the dog chased ate'' is also a sentence, the same outer frame with a relative clause inserted.
 The insertion can recurse arbitrarily: ``the cat that the dog that the bird saw chased ate.''
 This is the defining property of context-free grammars (CFGs): a symbol can expand into a structure containing the same symbol.
 
@@ -1445,7 +1445,7 @@ In Chomsky normal form, every production is either $A \to BC$ or $A \to a$, and 
 
 The question for the ORN is: \textbf{does SharedM's semigroup structure help the model learn recursive substitution from next-token prediction alone?}
 
-This is not asking whether the ORN is Turing-complete (it isn't---no fixed-depth network is~\cite{perez2019turing}).
+This is not asking whether the ORN is Turing-complete (it isn't, no fixed-depth network is~\cite{perez2019turing}).
 It is asking whether the architectural constraint of sharing $\M$ across depth gives the model a structural advantage on recursive tasks, compared to a transformer that must independently learn the coupling rule at each depth level.
 
 \subsection{What the Literature Shows}
@@ -1458,7 +1458,7 @@ Lake \& Baroni~\cite{lake2018scan} showed that sequence-to-sequence models achie
 \paragraph{Stack mechanisms can be bolted on.}
 Murty et al.~\cite{murty2023pushdown} introduced pushdown layers: attention heads augmented with an explicit stack tape tracking parse depth, improving Dyck string modelling by over 25\%.
 Stack Attention~\cite{yao2024stack} incorporated pushdown automata directly into the attention operator, with a nondeterministic variant that can recognise arbitrary context-free languages.
-These approaches work, but they break the homogeneous architecture---the stack is an external module.
+These approaches work, but they break the homogeneous architecture, the stack is an external module.
 
 \paragraph{But implicit stack structure does emerge.}
 Recent probing work~\cite{emergent2025stack} finds that standard transformers trained on counter languages develop implicit stack-like representations \emph{without} explicit stack mechanisms.
@@ -1472,7 +1472,7 @@ Pin's syntactic monoid theory~\cite{pin1986} establishes an exact correspondence
 \paragraph{Next-token prediction implicitly learns hierarchical structure.}
 Rhee~\cite{rhee2025csg} argues that autoregressive prediction approximates left context-sensitive grammar derivations.
 A recent circuit analysis~\cite{circuit2025hierarchy} finds that LLMs learn induction heads implementing implicit hierarchical parsing.
-The critical insight from Lake \& Baroni~\cite{lake2023meta} (Nature 2023): the compositional gap closes with meta-learning that forces compositional reuse---the fix is the training procedure, not the architecture alone.
+The critical insight from Lake \& Baroni~\cite{lake2023meta} (Nature 2023): the compositional gap closes with meta-learning that forces compositional reuse, the fix is the training procedure, not the architecture alone.
 
 \subsection{Why SharedM Might Help (and Why It Might Not)}
 
@@ -1480,14 +1480,14 @@ The critical insight from Lake \& Baroni~\cite{lake2023meta} (Nature 2023): the 
 In a recursive grammar, the same production rule applies at every depth.
 $\text{NP} \to \text{Det}~\text{N}~\text{RC}$ is the same rule whether the NP is the subject, the object, or embedded inside a relative clause.
 SharedM enforces exactly this: the same coupling geometry at every layer.
-If layers correspond to depth levels in a parse tree, then SharedM architecturally constrains the model to use the \emph{same coupling rule at every depth}---which is precisely what a recursive grammar does.
+If layers correspond to depth levels in a parse tree, then SharedM architecturally constrains the model to use the \emph{same coupling rule at every depth}, which is precisely what a recursive grammar does.
 
 The residual stream carries the context (``where am I in the parse''), and M's coupling rule tells the model how to process tokens at that position regardless of depth.
 Perturbative corrections handle the depth-specific adjustments that the shared rule can't.
 
 \paragraph{The argument against.}
 A flat semigroup $\{\Phi^0, \Phi^1, \Phi^2, \ldots\}$ generated by iterating $\M$ is regular, not context-free.
-To handle CFGs, you need a pushdown automaton---which requires a \emph{stack}: unbounded memory that grows with nesting depth.
+To handle CFGs, you need a pushdown automaton, which requires a \emph{stack}: unbounded memory that grows with nesting depth.
 The residual stream has fixed dimension $d$.
 It can encode a finite amount of parse state, but for recursion depth $> d$, it must lose information.
 The ORN may share $\M$ across depth, but if it can't maintain the stack, sharing is irrelevant.
@@ -1522,7 +1522,7 @@ Three levels of evidence, from weakest to strongest:
 \subsection{Experimental Protocol: Recursive Orbits}
 \label{sec:recursive-protocol}
 
-All experiments train on next-token prediction only---no auxiliary grammar supervision.
+All experiments train on next-token prediction only, no auxiliary grammar supervision.
 The question is whether the model \emph{discovers} recursive structure from the prediction signal alone.
 4-hour total budget on Apple M4 (MPS).
 
@@ -1533,7 +1533,7 @@ It is the prototypical context-free language and the simplest recursion test.
 \begin{itemize}[nosep]
 \item \textbf{Data.} Generate Dyck-2 strings (brackets \texttt{()} and \texttt{[]}) at depths 1--4 (train) and 5--6 (test). 500K train tokens, 50K test tokens per depth.
 \item \textbf{Models.} Three architectures at matched $\sim$2M params: ORN (SharedM), Transformer (per-layer QK), LSTM (sequential baseline). Sweep $d \in \{64, 128\}$, $L \in \{4, 8\}$.
-\item \textbf{Measure.} Next-token accuracy \emph{at closing brackets} as a function of nesting depth. Closing brackets are where the model must ``pop'' the stack---this is where recursive structure matters.
+\item \textbf{Measure.} Next-token accuracy \emph{at closing brackets} as a function of nesting depth. Closing brackets are where the model must ``pop'' the stack, this is where recursive structure matters.
 \item \textbf{Kill criterion.} If ORN $\leq$ Transformer on depth 5--6 accuracy, SharedM does not help with recursion.
 \end{itemize}
 
@@ -1550,7 +1550,7 @@ A more realistic test using a simple recursive English-like grammar.
 \item \textbf{Depth control.} Train on depth $\leq 2$ (at most one level of embedding). Test on depth 3 (``the cat that the dog that the bird saw chased ate'').
 \item \textbf{Models.} Same three architectures at $\sim$2M params.
 \item \textbf{Measure.} (a) Perplexity on held-out depth 3 sentences. (b) Subject-verb agreement accuracy across the embedding (does the model predict the correct verb for the matrix clause after processing the relative clause?).
-\item \textbf{This is the hard test.} Subject-verb agreement across recursive embeddings requires tracking which NP is the subject of which VP---precisely the stack discipline that CFGs enforce.
+\item \textbf{This is the hard test.} Subject-verb agreement across recursive embeddings requires tracking which NP is the subject of which VP, precisely the stack discipline that CFGs enforce.
 \end{itemize}
 
 \paragraph{Task 3: Residual stream probing (1 hour).}
@@ -1562,7 +1562,7 @@ Applied to the models trained in Tasks 1 and 2.
 \item \textbf{Return-address probe.} After processing a relative clause, does the residual stream return to a state similar to the pre-clause state? Measure cosine distance between the residual at the start of the RC and at its end, in the orbit's PCA basis.
 \end{itemize}
 
-\paragraph{Task 4: Ablation --- is it M or the corrections? (30 min).}
+\paragraph{Task 4: Ablation ,  is it M or the corrections? (30 min).}
 Disable perturbative corrections and re-evaluate Tasks 1--2.
 If performance drops catastrophically, the corrections are essential for recursion (they implement the ``stack push/pop'').
 If performance drops mildly, M's semigroup structure carries the recursive computation and corrections are refinement.
@@ -1590,7 +1590,7 @@ Depth is linearly encoded in ORN but not Transformer & SharedM creates a ``recur
 % ======================================================================
 
 The ORN's weight-sharing structure creates a natural hierarchy that maps onto a long-standing programme in neural network research: Schmidhuber's fast-weight/slow-weight dichotomy~\cite{schmidhuber1992fast}.
-We argue that the ORN is uniquely positioned to host \emph{test-time training} (TTT)---gradient-based adaptation during inference---because its architecture already separates invariant geometry from context-dependent response.
+We argue that the ORN is uniquely positioned to host \emph{test-time training} (TTT), gradient-based adaptation during inference, because its architecture already separates invariant geometry from context-dependent response.
 
 \subsection{Background: Learning at Inference Time}
 
@@ -1603,7 +1603,7 @@ The key insight: a single set of slow weights can generate context-dependent fas
 
 \paragraph{Linear attention as fast weights.}
 Schlag et al.~\cite{schlag2021linear} proved that linearised self-attention is \emph{formally equivalent} to Schmidhuber's fast-weight programmer.
-The fast weight matrix accumulates as $W_{\mathrm{fast}}^{(i)} = \sum_{j=1}^{i} \mathbf{v}_j \phi(\mathbf{k}_j)^\top$---keys and values are the programming instructions.
+The fast weight matrix accumulates as $W_{\mathrm{fast}}^{(i)} = \sum_{j=1}^{i} \mathbf{v}_j \phi(\mathbf{k}_j)^\top$, keys and values are the programming instructions.
 DeltaNet~\cite{yang2024deltanet} adds error-corrected updates: $W^{(i)} = W^{(i-1)} + \beta_i (\mathbf{v}_i - \bar{\mathbf{v}}_i) \phi(\mathbf{k}_i)^\top$, where $\bar{\mathbf{v}}_i$ is the retrieved value, so only the prediction error updates memory.
 Gated DeltaNet~\cite{gateddeltanet2025} adds a forgetting gate, achieving rapid erasure alongside targeted updates.
 
@@ -1618,7 +1618,7 @@ Output is produced by a separate query view: $z_t = f(\theta_Q x_t;\, W_t)$.
 TTT-Linear with batch gradient descent recovers linear attention exactly; TTT-MLP breaks out of the linear regime.
 
 \paragraph{TITANS~\cite{behrouz2025titans}.}
-A neural memory module---a deep MLP whose weights update during inference---is added alongside short-term attention.
+A neural memory module, a deep MLP whose weights update during inference, is added alongside short-term attention.
 The update combines gradient descent with momentum and adaptive forgetting:
 \begin{align}
 S_t &= \eta_t S_{t-1} - \theta_t \nabla \ell(M_{t-1};\, x_t), \\
@@ -1629,7 +1629,7 @@ The gradient magnitude measures \emph{surprise}: unexpected tokens drive stronge
 TITANS outperforms GPT-4 on BABILong despite far fewer parameters.
 
 \paragraph{The unification.}
-Liu et al.~\cite{liu2026tttla} proved that a broad class of TTT architectures with KV binding can be expressed as \emph{learned linear attention operators}---TTT is not test-time memorisation but a principled linear attention mechanism.
+Liu et al.~\cite{liu2026tttla} proved that a broad class of TTT architectures with KV binding can be expressed as \emph{learned linear attention operators}, TTT is not test-time memorisation but a principled linear attention mechanism.
 This collapses the apparent gap between fast-weight and attention-based approaches.
 
 \subsection{The Schmidhuber Dichotomy in ORN}
@@ -1644,13 +1644,13 @@ The ORN, by construction, separates three levels:
 \textbf{Timescale} & \textbf{Schmidhuber} & \textbf{Transformer} & \textbf{ORN} \\
 \midrule
 Geological (frozen) & Slow weights & All weights equally & $\M = AB^\top$ \\
-Training (SGD) & --- & --- & $W_V, W_O$, SharedFFN \\
+Training (SGD) & ,  & ,  & $W_V, W_O$, SharedFFN \\
 Inference (per-context) & Fast weights & Attention patterns & Corrections (gated) \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The critical observation: the ORN \emph{already has} Schmidhuber's dichotomy, but the fast channel (perturbative corrections) is currently \textbf{passive}---a deterministic function of the residual stream.
+The critical observation: the ORN \emph{already has} Schmidhuber's dichotomy, but the fast channel (perturbative corrections) is currently \textbf{passive}, a deterministic function of the residual stream.
 The proposal is to make it \textbf{active} via test-time training.
 
 \subsection{The Three-Timescale Architecture}
@@ -1664,9 +1664,9 @@ We propose extending the ORN with TTT on the perturbative corrections, yielding 
       This is slower than any weight in a standard transformer.
 
 \item \textbf{Trained response heads} (training time). $W_V$, $W_O$, and the shared wide FFN are trained by standard SGD.
-      These encode what to \emph{do} with the coupling pattern at each depth---the response varies with layer position even though the coupling rule does not.
+      These encode what to \emph{do} with the coupling pattern at each depth, the response varies with layer position even though the coupling rule does not.
 
-\item \textbf{TTT corrections} (inference time). The perturbative correction MLP---currently $d \to d_{\mathrm{corr}} \to d$ with a learned gate---becomes a fast-weight module updated per-context via gradient descent:
+\item \textbf{TTT corrections} (inference time). The perturbative correction MLP, currently $d \to d_{\mathrm{corr}} \to d$ with a learned gate, becomes a fast-weight module updated per-context via gradient descent:
 \end{enumerate}
 
 \begin{equation}
@@ -1692,10 +1692,10 @@ Here is the concrete procedure for processing a new document:
 \item Project $\mathbf{h}_t$ into key and value views: $k_t = \theta_K \mathbf{h}_t$, $v_t = \theta_V \mathbf{h}_t$.
 \item Forward the correction MLP using \emph{current} weights: $\hat{v}_t = \mathrm{corr}(k_t;\, W_{\mathrm{corr}})$.
 \item Compute the self-supervised loss: $\ell_t = \|\hat{v}_t - v_t\|^2$.
-      This measures how well the correction predicts the value stream from the key stream---essentially, how well it ``understands'' the local context.
+      This measures how well the correction predicts the value stream from the key stream, essentially, how well it ``understands'' the local context.
 \item \textbf{Update the correction weights} via one gradient step:
       $W_{\mathrm{corr}} \leftarrow W_{\mathrm{corr}} - \eta_{\mathrm{fast}} \nabla_{W_{\mathrm{corr}}} \ell_t$.
-      This is a real backward pass through the correction MLP---the weights change before the next token.
+      This is a real backward pass through the correction MLP, the weights change before the next token.
 \item Apply the updated correction to the output: $\Delta\mathbf{h}_t = \sigma(g(\mathbf{h}_t)) \cdot \mathrm{corr}(\mathbf{h}_t;\, W_{\mathrm{corr}})$.
 \end{enumerate}
 
@@ -1708,23 +1708,23 @@ The correction MLP at token 500 has \emph{different weight values} than at token
 It is literally training a tiny neural network while reading the input.
 The loss is self-supervised: it requires no labels, only the model's own residual stream.
 Early in a document, the corrections are near their trained initialisation and contribute little.
-As the model reads more tokens, the corrections specialise to the document's patterns---its vocabulary, syntactic style, topic structure, coreference chains.
+As the model reads more tokens, the corrections specialise to the document's patterns, its vocabulary, syntactic style, topic structure, coreference chains.
 By token 200+, the correction has ``learned'' this specific context in a way that the frozen components cannot.
 
 \paragraph{Cost.}
 One extra backward pass through the correction MLP per token.
-For $d_{\mathrm{corr}} = 32$ and $d = 288$, the correction has $\sim$18K parameters---roughly 0.1\% of the full model.
+For $d_{\mathrm{corr}} = 32$ and $d = 288$, the correction has $\sim$18K parameters, roughly 0.1\% of the full model.
 The backward pass through this MLP costs approximately 2\% of the compute of the full forward pass.
 TITANS and TTT-Linear demonstrate that this overhead is manageable in practice.
 
 \paragraph{The key analogy.}
 TTT corrections are equivalent to fine-tuning a tiny adapter on each document at inference time, then throwing it away.
 The adapter is small enough that it cannot overfit to a single token but large enough to capture document-level patterns.
-$\M$ already solved the hard problem (which tokens attend to which); the correction only needs to learn the \emph{residual}---what is different about \emph{this specific context} from the training distribution.
+$\M$ already solved the hard problem (which tokens attend to which); the correction only needs to learn the \emph{residual}, what is different about \emph{this specific context} from the training distribution.
 
 \paragraph{Why corrections are the right target.}
 \begin{itemize}[nosep]
-\item \textbf{Small.} The correction MLP is $d \to 32 \to d$ ($\sim$2$d \cdot d_{\mathrm{corr}}$ parameters). Updating a compact model is cheap and resists overfitting---the same regime where CAVIA~\cite{zintgraf2019cavia} showed meta-learning works best with separated context parameters.
+\item \textbf{Small.} The correction MLP is $d \to 32 \to d$ ($\sim$2$d \cdot d_{\mathrm{corr}}$ parameters). Updating a compact model is cheap and resists overfitting, the same regime where CAVIA~\cite{zintgraf2019cavia} showed meta-learning works best with separated context parameters.
 \item \textbf{Gated.} The correction gate already anticorrelates with attention entropy ($r = -0.95$). It knows \emph{when} corrections matter: when context is rich and coupling is sharp. This is the ORN's native ``surprise'' signal, analogous to TITANS' gradient-magnitude gating.
 \item \textbf{Zero-initialised.} Corrections start as identity (gate bias $= -3$). TTT can update from a near-zero baseline without destroying pre-trained behaviour.
 \item \textbf{Per-layer.} Each layer has its own correction MLP, providing depth-dependent adaptation while $\M$ and the shared FFN remain invariant.
@@ -1738,16 +1738,16 @@ $\M$ already solved the hard problem (which tokens attend to which); the correct
 
 \textsc{Geological} (frozen after training)\\[2pt]
 \hspace*{1em}%
-\fbox{$\M = AB^\top$ --- coupling grammar}
+\fbox{$\M = AB^\top$ ,  coupling grammar}
 \hfill
-\fbox{Shared Wide FFN ($6\times$) --- world model}
+\fbox{Shared Wide FFN ($6\times$) ,  world model}
 \hspace*{1em}\\[2pt]
 \hspace*{1em}\hfill$\downarrow$\hfill$\downarrow$\hfill\hspace*{1em}
 
 \vspace{2pt}
 \textsc{Trained} (SGD)\\[2pt]
 \hspace*{1em}%
-\fbox{Per-layer $W_V, W_O$ --- response heads}
+\fbox{Per-layer $W_V, W_O$ ,  response heads}
 \hfill
 \fbox{Per-layer LayerNorm}
 \hspace*{1em}\\[2pt]
@@ -1758,7 +1758,7 @@ $\M$ already solved the hard problem (which tokens attend to which); the correct
 \hspace*{1em}%
 \fbox{\parbox{0.82\textwidth}{%
 Correction MLP ($d \to 32 \to d$), updated per-context via $\nabla\ell$\\
-Gate: $\sigma(g(\mathbf{x}))$ controls when --- $\ell = \|\mathrm{corr}(k) - v\|^2$%
+Gate: $\sigma(g(\mathbf{x}))$ controls when ,  $\ell = \|\mathrm{corr}(k) - v\|^2$%
 }}
 \hspace*{1em}\\[4pt]
 \hspace*{1em}\hfill$\downarrow$\hfill\hspace*{1em}\\[2pt]
@@ -1798,7 +1798,7 @@ Making the corrections TTT-adaptive turns the ORN into a \emph{native} MAG archi
 
 During training, we observe a characteristic trajectory in the commutator $[\M, W_V W_O]$: rank traces $3 \to 150 \to 65$.
 The system liberates (explores a high-rank manifold), then crystallises (settles into a lower-rank equilibrium).
-Spectral kurtosis spikes at the same step---two independent diagnostics converging on a single phase transition.
+Spectral kurtosis spikes at the same step, two independent diagnostics converging on a single phase transition.
 
 TTT on corrections would create a \emph{micro} version of this dynamics at inference:
 \begin{enumerate}[nosep]
@@ -1820,9 +1820,9 @@ Existing architectures blur at least two of the three levels:
 \toprule
 \textbf{Architecture} & \textbf{Geological} & \textbf{Training} & \textbf{Inference} \\
 \midrule
-Standard transformer & \multicolumn{2}{c}{--- all weights equal ---} & attention patterns (soft) \\
-ALBERT~\cite{dehghani2018universal} & \multicolumn{2}{c}{--- shared but not separated ---} & attention patterns (soft) \\
-TTT layers~\cite{sun2024ttt} & --- & \multicolumn{2}{c}{--- same weights serve both ---} \\
+Standard transformer & \multicolumn{2}{c}{,  all weights equal , } & attention patterns (soft) \\
+ALBERT~\cite{dehghani2018universal} & \multicolumn{2}{c}{,  shared but not separated , } & attention patterns (soft) \\
+TTT layers~\cite{sun2024ttt} & ,  & \multicolumn{2}{c}{,  same weights serve both , } \\
 TITANS~\cite{behrouz2025titans} & persistent memory & attention & neural memory (TTT) \\
 \textbf{ORN + TTT corrections} & $\M$ + SharedFFN & $W_V, W_O$ & corrections (TTT) \\
 \bottomrule
@@ -1831,7 +1831,7 @@ TITANS~\cite{behrouz2025titans} & persistent memory & attention & neural memory 
 
 TITANS comes closest, but its ``persistent memory'' is a set of learnable tokens (soft prompts), not a shared geometric operator.
 The ORN's frozen $\M$ is richer: it encodes a full coupling geometry whose spectral structure (rank 69--71, condition number $> 10$) carries relational grammar.
-The frozen-$\M$ experiment proves this is genuinely task-general---not a soft prompt that works well on the training distribution, but a coupling invariant that transfers.
+The frozen-$\M$ experiment proves this is genuinely task-general, not a soft prompt that works well on the training distribution, but a coupling invariant that transfers.
 
 The critical asset of the ORN for test-time training is therefore:
 
@@ -1850,20 +1850,20 @@ TTT on corrections adds a fourth axis: \emph{Adaptation} $=$ gradient-based refi
 \label{sec:frozen-counterpoint}
 
 The three-timescale architecture as presented above freezes $\M$ and SharedFFN at inference, updating only the corrections.
-This section argues that this may be wrong, and that the right design updates $\M$ and SharedFFN too---just slowly.
+This section argues that this may be wrong, and that the right design updates $\M$ and SharedFFN too, just slowly.
 
 \paragraph{The grammar hypothesis (for freezing).}
-$\M$ encodes structural rules of how things relate---a \emph{grammar} of coupling.
+$\M$ encodes structural rules of how things relate, a \emph{grammar} of coupling.
 Grammar does not change when you read a new document.
 You do not relearn syntax when you pick up a legal brief after reading a novel.
 The frozen-$\M$ experiment ($+0.73\%$ transfer gap) supports this: the same coupling geometry works across held-out contexts.
 
 \paragraph{The experience hypothesis (against freezing).}
 $\M$ and SharedFFN are not just grammar.
-They are accumulated \emph{understanding} of how the world works---what co-occurs with what, what causes what, what patterns recur.
+They are accumulated \emph{understanding} of how the world works, what co-occurs with what, what causes what, what patterns recur.
 Experience updates.
 A doctor who has been reading oncology papers for a week attends to different relationships in a patient chart than one coming from paediatrics.
-The coupling geometry---\emph{which things relate to which}---genuinely shifts with extended context.
+The coupling geometry, \emph{which things relate to which}, genuinely shifts with extended context.
 
 The frozen-$\M$ experiment does not distinguish these hypotheses because it tested transfer across \emph{similar} tasks (TinyStories $\to$ TinyStories validation).
 The $+0.73\%$ gap might become $+10\%$ on a truly out-of-distribution context: a different language, a different domain, a different modality.
@@ -1875,10 +1875,10 @@ On a legal corpus, the important coupling directions might emphasise hierarchica
 On code, scope and type relationships.
 On narrative, character--action--consequence.
 The rank may stay similar but the \emph{subspace rotates}.
-$\M$ is not grammar or experience---it is a \textbf{compressed basis for coupling}, and the basis should adapt to the domain.
+$\M$ is not grammar or experience, it is a \textbf{compressed basis for coupling}, and the basis should adapt to the domain.
 
 \paragraph{The biological argument cuts both ways.}
-The thalamocortical geometry is \emph{relatively} stable---but it is not frozen.
+The thalamocortical geometry is \emph{relatively} stable, but it is not frozen.
 Synaptic weights change on multiple timescales: long-term potentiation (hours), neuromodulatory state (minutes), and homeostatic plasticity (days).
 The geometry drifts toward the current regime.
 Freezing $\M$ completely is more rigid than biology.
@@ -1892,13 +1892,13 @@ This suggests replacing the frozen-$\M$ design with a two-speed system:
 \textbf{Component} & \textbf{What it encodes} & \textbf{Adapts when} & \textbf{Rate} \\
 \midrule
 $\M$ + SharedFFN & Coupling basis + world model & Per-session & Slow ($\eta_{\mathrm{slow}} \ll \eta_{\mathrm{fast}}$) \\
-Response heads ($W_V, W_O$) & Depth-dependent transform & Never (trained) & --- \\
+Response heads ($W_V, W_O$) & Depth-dependent transform & Never (trained) & ,  \\
 Corrections & Token-level surprise & Per-token & Fast ($\eta_{\mathrm{fast}}$) \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-$\M$ drifts slowly as a document unfolds---not abandoning its coupling grammar but \emph{bending} it toward the current domain.
+$\M$ drifts slowly as a document unfolds, not abandoning its coupling grammar but \emph{bending} it toward the current domain.
 The corrections handle token-level surprises.
 $\M$ handles document-level adaptation.
 TITANS supports this design: their memory update has adaptive forgetting, $M_t = (1 - \alpha_t) M_{t-1} + S_t$, where the forgetting rate $\alpha_t$ is data-dependent.
@@ -1913,14 +1913,14 @@ This is like changing the coordinate system while someone navigates with a map d
 The counter-argument: the perturbative corrections exist precisely to absorb the gap between $\M$'s current state and what the response heads expect.
 In the frozen-$\M$ picture, corrections compensate for \emph{context-specific deviations from a universal grammar}.
 In the slow-adapting-$\M$ picture, corrections compensate for \emph{the lag between $\M$'s current state and where it needs to be}.
-The corrections are doing shock absorption either way, but the second framing is more dynamic---the corrections act as a buffer that allows $\M$ to drift without catastrophic misalignment.
+The corrections are doing shock absorption either way, but the second framing is more dynamic, the corrections act as a buffer that allows $\M$ to drift without catastrophic misalignment.
 
 \paragraph{This is an empirical question.}
 Both hypotheses are plausible.
 The experiment that settles it is Exp~T5 below: apply slow TTT to $\M$+SharedFFN alongside fast TTT to corrections, and compare against frozen-$\M$ with TTT corrections only.
 If slow-$\M$ TTT helps on out-of-distribution contexts (domain shift, language shift, novel tasks), the experience hypothesis wins.
 If it hurts or does not help, the grammar hypothesis wins.
-If it helps on distant domains but hurts on in-distribution data, both hypotheses are right at different timescales---and the system needs a mechanism to detect which regime it is in.
+If it helps on distant domains but hurts on in-distribution data, both hypotheses are right at different timescales, and the system needs a mechanism to detect which regime it is in.
 
 \subsection{Experimental Results: TTT Corrections at 20M Scale}
 \label{sec:ttt-results}
@@ -1935,7 +1935,7 @@ We then evaluated three inference regimes:
 \toprule
 \textbf{Regime} & \textbf{Description} & \textbf{Val (256)} & \textbf{Val (512)} & \textbf{$\Delta_{256}$} \\
 \midrule
-A: Passive     & Standard inference (all weights frozen)     & 1.956 & 3.221 & --- \\
+A: Passive     & Standard inference (all weights frozen)     & 1.956 & 3.221 & ,  \\
 B: TTT fast    & Correction MLP updated per-token ($\eta{=}10^{-3}$)  & 1.953 & 3.154 & $-$0.004 \\
 C: TTT + slow $\M$ & Fast corrections + slow $\M$ drift ($\eta_{\mathrm{slow}}{=}10^{-5}$) & \textbf{1.817} & \textbf{3.159} & $-$0.139 \\
 \bottomrule
@@ -1954,10 +1954,10 @@ Higher rates degrade quality and increase weight drift without benefit.
       This is consistent with the V2 finding ($r = -0.95$), though weaker at this smaller scale.
       The gate is a native surprise detector, confirming the TITANS analogy.
 \item \textbf{Weight drift is negligible}: $\sim$0.0002 across 256 tokens.
-      Corrections adapt without catastrophic drift---the zero-initialised gate and small $d_{\mathrm{corr}}$ provide inherent regularisation.
+      Corrections adapt without catastrophic drift, the zero-initialised gate and small $d_{\mathrm{corr}}$ provide inherent regularisation.
 \item \textbf{Surprise trajectory is flat}: 0.068 $\to$ 0.069 across token positions.
       TTT corrections do not accumulate surprise over the sequence.
-      This suggests they correct local mismatches rather than building long-range context---a limitation at this scale.
+      This suggests they correct local mismatches rather than building long-range context, a limitation at this scale.
 \end{itemize}
 
 \paragraph{Interpretation.}
@@ -1967,26 +1967,26 @@ The results present a nuanced picture:
 \item \textbf{TTT corrections alone (Regime B) provide modest gains.}
       At trained length, the improvement is negligible ($-$0.004 nats, within noise).
       At $2\times$ length, the gain is real but small ($-$0.068 nats, $\sim$2\%).
-      Against the kill criterion of $<2\%$ improvement, Regime B is borderline---it survives on length generalisation but not on in-distribution quality.
+      Against the kill criterion of $<2\%$ improvement, Regime B is borderline, it survives on length generalisation but not on in-distribution quality.
 
 \item \textbf{Slow $\M$ drift (Regime C) is the clear winner at trained length} ($-$0.139 nats, $\sim$7\%), but this comes at a conceptual cost: it violates the frozen-$\M$ principle.
-      The grammar hypothesis---that $\M$ encodes a universal coupling rule that should never change---predicts Regime A $\geq$ Regime C.
+      The grammar hypothesis, that $\M$ encodes a universal coupling rule that should never change, predicts Regime A $\geq$ Regime C.
       Instead, Regime C wins decisively.
       However, the gain concentrates at trained length (256) and does not transfer to length generalisation (512), where Regimes B and C are equivalent ($\Delta < 0.01$).
       This suggests $\M$ drift helps by fine-tuning the coupling to the specific validation distribution, not by enabling genuinely new capabilities.
 
 \item \textbf{The grammar hypothesis is not refuted.}
-      Regime C's advantage at trained length could reflect distributional fine-tuning rather than architectural necessity---the model trained on TinyStories and was evaluated on TinyStories.
+      Regime C's advantage at trained length could reflect distributional fine-tuning rather than architectural necessity, the model trained on TinyStories and was evaluated on TinyStories.
       The critical test (Exp T5 below) would evaluate on domain-shifted data: if $\M$ drift helps on TinyStories but hurts on Python code, the grammar hypothesis holds and slow $\M$ TTT is overfitting to the training domain.
       At 20M scale with $d{=}224$, $\M$ has limited capacity; at 605M with $d{=}2048$, the frozen-$\M$ might already capture enough structure that drift becomes unnecessary.
 \end{enumerate}
 
 \paragraph{Verdict: nice-to-have, not essential.}
-TTT corrections are architecturally natural in the ORN---the three-timescale separation exists by construction, the gate provides a native surprise signal, and the correction MLP is small enough for cheap per-token updates.
+TTT corrections are architecturally natural in the ORN, the three-timescale separation exists by construction, the gate provides a native surprise signal, and the correction MLP is small enough for cheap per-token updates.
 But the experimental evidence does not support making TTT an essential feature of the core architecture.
 The gains are modest ($\leq$7\%), concentrate at trained length rather than enabling new capabilities, and the best regime (C) requires compromising the frozen-$\M$ principle that is one of the ORN's defining properties.
 
-The recommendation is to keep TTT corrections as an \emph{optional inference mode}---available when context adaptation matters (domain shift, personalisation, long documents) but not part of the default forward pass.
+The recommendation is to keep TTT corrections as an \emph{optional inference mode}, available when context adaptation matters (domain shift, personalisation, long documents) but not part of the default forward pass.
 This is analogous to how LoRA adapters are available but not required: the base model works without them, and they add value in specific deployment scenarios.
 
 \subsection{Remaining Experiments}
@@ -1999,7 +1999,7 @@ Run TTT-ORN on 100 passages of varying difficulty.
 Track correction weight norm per layer per token, gate activation, and gradient magnitude (surprise).
 \begin{itemize}[nosep]
 \item \textbf{Predict}: weight norm should increase (liberation) on surprising tokens and plateau (crystallisation) on predictable continuations.
-\item \textbf{Predict}: the gate should correlate with gradient magnitude---the current experiment confirms $r = -0.56$ at the aggregate level, but per-token dynamics would reveal whether liberation--crystallisation operates at inference time as it does during training.
+\item \textbf{Predict}: the gate should correlate with gradient magnitude, the current experiment confirms $r = -0.56$ at the aggregate level, but per-token dynamics would reveal whether liberation--crystallisation operates at inference time as it does during training.
 \end{itemize}
 
 \paragraph{Exp T4: Freeze-thaw test.}

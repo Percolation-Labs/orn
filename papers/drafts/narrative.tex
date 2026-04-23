@@ -164,7 +164,7 @@ ALBERT~\cite{lan2020albert} & Shared & Shared & No & $-1.5\%$ \\
 Univ.\ Transformer & Shared & Shared & No & Comp.\ gain \\
 MoEUT~\cite{moeut2024} & Shared & Shared+MoE & No & Matches \\
 Relaxed Rec.~\cite{mol2025} & +LoRA & +LoRA & No & Matches \\
-MASA~\cite{masa2025} & Dict. & Dict. / --- & No & $-0.8\%$ \\
+MASA~\cite{masa2025} & Dict. & Dict. / ,  & No & $-0.8\%$ \\
 \textbf{ORN (ours)} & \textbf{Shared} & \textbf{Per-layer} & \textbf{Yes} & \textbf{Matches+} \\
 \bottomrule
 \end{tabular}
@@ -324,7 +324,7 @@ Mixture-of-experts composes orthogonally with the ORN (tested at 66M parameters 
 \toprule
 & \textbf{Params} & \textbf{Coupling} & \textbf{Val Loss} & \textbf{vs TF Dense} \\
 \midrule
-Transformer Dense & 22.4M & 1,573K & 2.586 & --- \\
+Transformer Dense & 22.4M & 1,573K & 2.586 & ,  \\
 ORN Dense & 20.9M & 131K & 2.576 & $-0.4\%$ \\
 Transformer + MoE & 66.4M & 1,573K & 2.423 & $-6.3\%$ \\
 ORN + MoE & 65.0M & 131K & 2.425 & $-6.2\%$ \\
@@ -525,7 +525,7 @@ The perturbative ablation (0.449 nats gap) tests level 3: removing the correctio
     The key question, whether the scaling advantage grows with model size, requires runs at 350M+ parameters.
     \item \textbf{CORN is early.} The semigroup loss reduces composition error by 33\%, but we have not yet demonstrated downstream reasoning improvements.
     The complex-$t$ hypothesis is mathematically grounded but experimentally untested.
-    \item \textbf{Benchmarks.} ORN V1 (91M params, 0.6\% coupling) beats GPT-2 Small on HellaSwag (33.0\% vs 31.6\%) and scores 57.5\% on PIQA---the first downstream benchmark win for the architecture.
+    \item \textbf{Benchmarks.} ORN V1 (91M params, 0.6\% coupling) beats GPT-2 Small on HellaSwag (33.0\% vs 31.6\%) and scores 57.5\% on PIQA, the first downstream benchmark win for the architecture.
     Further benchmark evaluation across more tasks is ongoing.
     \item \textbf{Long context.} The ORN's coupling geometry is independent of sequence length, but we have not tested beyond 1024 tokens.
     \item \textbf{Multimodal scale.} Sub-linear rank scaling at toy scale is promising; whether it holds at production scale with real vision encoders is unknown.

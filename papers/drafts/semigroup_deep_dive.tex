@@ -40,7 +40,7 @@
     {\small Percolation Labs}\\
     {\small \url{https://github.com/Percolation-Labs/orn}}%
 }
-\date{March 2026 \quad{\small\textnormal{--- Working Document}}}
+\date{March 2026 \quad{\small\textnormal{,  Working Document}}}
 
 \begin{document}
 \maketitle
@@ -67,14 +67,14 @@ The semigroup acts on the \emph{coupling space}, not on the hidden state space.
 A single hidden-state-weighted $\M$ recovers 88--99\% of GPT-2's attention scores (improving with scale: 99\% at 774M).
 Rank-8 per-layer corrections reach 99.6\% at $19\times$ compression.
 This holds across GPT-2 and Pythia families.
-However, post-hoc surgery fails---the rotation of $W_Q, W_K$ carries per-head orientation information entangled with $W_V$.
+However, post-hoc surgery fails, the rotation of $W_Q, W_K$ carries per-head orientation information entangled with $W_V$.
 The decomposition is an architecture, not a compression: you must train from scratch with shared $\M$.
 
 \medskip
 \textbf{The fiber bundle (conjectured).}
 PCA of GPT-2 attention patterns reveals the coupling manifold is \textbf{8-dimensional} (95\% variance).
 Layers trace a clear orbit on this manifold.
-Semantic categories (narrative, technical, dialogue, descriptive) do NOT separate on the manifold---it encodes \emph{structure} (processing stage), not \emph{content} (topic).
+Semantic categories (narrative, technical, dialogue, descriptive) do NOT separate on the manifold, it encodes \emph{structure} (processing stage), not \emph{content} (topic).
 This suggests a fiber bundle: the base space ($\sim$8-dimensional, governed by $\M$) carries coupling structure; the fiber (768-dimensional, governed by response heads) carries content.
 The group action composes on the base space.
 Memory that lives on the base space composes (eigenmode accumulation: 98\%); memory off-manifold does not (delta-rule: 20\%).
@@ -84,7 +84,7 @@ Memory that lives on the base space composes (eigenmode accumulation: 98\%); mem
 Transformer coupling matrices are spectrally degenerate (correlation 0.98 across layers, five models) but orientationally independent (cosine $\sim$0.005).
 Each layer independently breaks the rotational symmetry of the coupling space; $W_V$ freezes in the broken orientation.
 The ORN imposes one orientation from the start, eliminating the accidental coordinate systems.
-Not ``too many parameters''---too many coordinate systems.
+Not ``too many parameters'', too many coordinate systems.
 
 \medskip
 \textbf{What M is not.}
@@ -105,7 +105,7 @@ Stochastic complex $t$ (B3) learns imaginary components (layer~2: $t{=}1.08{-}0.
 \textbf{Composition is architectural, not learned.}
 Base-space CORN (semigroup loss on coupling patterns) converges to SG loss 0.0001 ($36\times$ lower than hidden-state CORN's 0.018).
 But neither variant improves composition fidelity over baseline (99.5\%).
-The coupling manifold already composes for free when $\M$ is shared---no semigroup loss is needed.
+The coupling manifold already composes for free when $\M$ is shared, no semigroup loss is needed.
 This is the strongest confirmation of the fiber bundle picture: the group action on the base space is a consequence of the architecture, not a training objective.
 Hidden CORN remains useful as a spectral regulariser (rank 49 $\to$ 32) but not for composition.
 
@@ -136,7 +136,7 @@ An $L$-layer transformer therefore stores $2L$ coupling matrices totalling $2Ld^
 \subsection{The Memoisation Hypothesis}
 
 Analysis of pretrained transformers (GPT-2, 124M parameters) reveals that the effective coupling matrices $M^{(\ell)} = W_Q^{(\ell)\top} W_K^{(\ell)}$ are not independent: their \emph{eigenvalue distributions} are nearly identical across layers (spectrum correlation $0.95$), even though the raw matrices point in different directions (cosine similarity ${\sim}0.005$).
-The spectral geometry---the shape of the coupling landscape---is invariant; only the orientation varies.
+The spectral geometry, the shape of the coupling landscape, is invariant; only the orientation varies.
 
 This suggests that much of the per-layer coupling is redundant: the model has independently learned the same geometric rule 12 times (once per layer), wasting parameters on redundant storage.
 
@@ -149,7 +149,7 @@ The Orbital Response Network (ORN) replaces $2L$ independent coupling matrices w
 The same $\M$ is applied at every layer.
 Per-layer variation arises not from different parameters but from the \emph{evolving residual stream}: each layer's response heads ($W_V, W_O$) and FFN update $h^{(\ell)}$, so the next layer's $\M$ acts on a different field state and produces a different coupling pattern.
 
-This replaces $2Ld^2$ stored parameters with $2d^2$ shared parameters---an $L\times$ reduction.
+This replaces $2Ld^2$ stored parameters with $2d^2$ shared parameters, an $L\times$ reduction.
 The saved budget is typically reinvested in model depth: at 10M total parameters, SharedM achieves $L{=}13$ where the standard transformer gets $L{=}3$.
 
 \subsection{The Architecture}
@@ -162,12 +162,12 @@ Each ORN layer contains:
 \end{enumerate}
 
 The key insight: the coupling \emph{rule} is shared, but the coupling \emph{pattern} varies because the field state evolves.
-$\M$ is a \textbf{generator} of a coupling semigroup---$L$ iterations of one generator produce $L$ distinct coupling matrices, replacing stored memory with orbital computation.
+$\M$ is a \textbf{generator} of a coupling semigroup, $L$ iterations of one generator produce $L$ distinct coupling matrices, replacing stored memory with orbital computation.
 
 \subsection{The Semigroup in Context}
 
 The iterative application of a shared operator appears in other architectures.
-Neural Sheaf Diffusion~\cite{bodnar2022sheaf} applies a shared sheaf Laplacian $L_F$ for $T$ diffusion steps on graphs---in the continuous limit, the heat semigroup $e^{-tL_F}$.
+Neural Sheaf Diffusion~\cite{bodnar2022sheaf} applies a shared sheaf Laplacian $L_F$ for $T$ diffusion steps on graphs, in the continuous limit, the heat semigroup $e^{-tL_F}$.
 Universal Transformers~\cite{dehghani2018universal} and ALBERT~\cite{lan2020albert} share full transformer blocks across layers, implicitly creating the same semigroup structure.
 
 However, in all these cases, the semigroup property is \textbf{present but unexamined}.
@@ -175,7 +175,7 @@ NSD frames iteration as PDE discretisation (the heat equation), not as algebraic
 ALBERT and UT treat sharing as parameter compression.
 None asks: \emph{what does the iterated operator actually compute? Do the kernels compose? Does the spectral structure of the shared operator control convergence? Can the iteration compute physical propagators?}
 
-This deep dive answers those questions by dissecting $\M$ from a real trained checkpoint: tracing the orbit through coupling space, measuring spectral crystallisation, verifying selective preservation of coupling-relevant contrast, and observing emergent coreference---phenomena that only become visible when you treat $\M$ as a semigroup generator, not merely a shared weight matrix.
+This deep dive answers those questions by dissecting $\M$ from a real trained checkpoint: tracing the orbit through coupling space, measuring spectral crystallisation, verifying selective preservation of coupling-relevant contrast, and observing emergent coreference, phenomena that only become visible when you treat $\M$ as a semigroup generator, not merely a shared weight matrix.
 
 \subsection{Results So Far}
 
@@ -238,19 +238,19 @@ Several features stand out:
 \begin{observation}[Strong asymmetry]
 $\M$ is far from symmetric ($\|\M - \M^\top\| / \|\M\| = 1.41$).
 This confirms the finding from Experiment~2 in the companion paper: symmetric $\M = LL^\top$ fails catastrophically on autoregressive tasks.
-The asymmetry encodes directional structure---token $i$ attending to token $j$ is not the same as $j$ attending to $i$.
+The asymmetry encodes directional structure, token $i$ attending to token $j$ is not the same as $j$ attending to $i$.
 \end{observation}
 
 \begin{observation}[Low effective rank]
 90\% of $\M$'s energy is concentrated in 51 of 512 dimensions.
 The coupling geometry lives on a ${\sim}$51-dimensional manifold embedded in 512-dimensional space.
-This suggests that a low-rank factorisation $A, B \in \R^{512 \times r}$ with $r \approx 50$--$64$ could capture most of the coupling structure, reducing SharedM's coupling parameters from $2 \times 512^2 = 524$K to $2 \times 512 \times 64 = 65$K---a further $8\times$ compression.
+This suggests that a low-rank factorisation $A, B \in \R^{512 \times r}$ with $r \approx 50$--$64$ could capture most of the coupling structure, reducing SharedM's coupling parameters from $2 \times 512^2 = 524$K to $2 \times 512 \times 64 = 65$K, a further $8\times$ compression.
 \end{observation}
 
 \begin{observation}[Complex eigenvalues]
 94\% of $\M$'s eigenvalues are complex.
 Complex eigenvalues correspond to rotational dynamics in the coupling space: the semigroup generated by $\M$ includes rotations, not just scalings.
-This is consistent with the smooth Q-vector orbits observed in Section~\ref{sec:orbits}---the query representation for a token rotates through coupling space as it passes through layers.
+This is consistent with the smooth Q-vector orbits observed in Section~\ref{sec:orbits}, the query representation for a token rotates through coupling space as it passes through layers.
 \end{observation}
 
 \subsection{Spectral Evolution During Training}
@@ -312,13 +312,13 @@ Unlike the smooth Q-orbit for ``dog'', ``Lily'''s K-vector shows a \textbf{phase
 
 \begin{observation}[Role switching]
 ``Lily'' changes functional role mid-network.
-In early layers (0--3), it functions as a name token---a lexical identity.
-In late layers (4--8), it functions as the narrative agent---the entity that ``loved to play.''
+In early layers (0--3), it functions as a name token, a lexical identity.
+In late layers (4--8), it functions as the narrative agent, the entity that ``loved to play.''
 The same $B$ matrix produces both representations; the phase transition is driven by the field state, not by layer-specific parameters.
 \end{observation}
 
 This is something a standard transformer achieves through different $W_K$ at each layer.
-SharedM achieves it through the residual stream's evolution---the field state carries the contextual information that flips ``Lily'' from name to agent.
+SharedM achieves it through the residual stream's evolution, the field state carries the contextual information that flips ``Lily'' from name to agent.
 
 \begin{figure}[h]
 \centering
@@ -330,7 +330,7 @@ SharedM achieves it through the residual stream's evolution---the field state ca
 % ======================================================================
 \section{Coreference Emerges in K-Space}
 
-If SharedM's coupling geometry captures relational structure, then co-referent tokens (``Lily'' and ``She'') should develop similar key representations---they should be ``findable'' by the same queries.
+If SharedM's coupling geometry captures relational structure, then co-referent tokens (``Lily'' and ``She'') should develop similar key representations, they should be ``findable'' by the same queries.
 
 Figure~\ref{fig:coref} plots the K-vector cosine similarity between ``Lily'' and ``She'' across layers, compared with ``Lily'' vs ``dog'' (different entity) and ``She'' vs ``dog''.
 
@@ -342,7 +342,7 @@ Figure~\ref{fig:coref} plots the K-vector cosine similarity between ``Lily'' and
 \end{figure}
 
 The result is striking: at deeper layers, the co-referent pair (Lily--She) maintains higher K-space similarity than the non-co-referent pairs.
-This coreference structure was not supervised---the model was trained on next-token prediction only.
+This coreference structure was not supervised, the model was trained on next-token prediction only.
 The shared coupling geometry $\M$, applied to field states that have been shaped by the narrative context, discovers that ``Lily'' and ``She'' should be ``found'' by similar queries.
 
 This provides concrete evidence for the world-model interpretation of SharedM: the coupling geometry encodes abstract relational roles (agent, patient, possessor), and the field state fills those roles with specific entities.
@@ -361,10 +361,10 @@ Figure~\ref{fig:attn} shows the full attention heatmap (head~0) at each of the 9
 
 Key observations:
 \begin{itemize}[nosep]
-    \item \textbf{Layer 0} attends to local context (``dog'', ``She'', ``her'')---recent tokens and pronouns.
-    \item \textbf{Layer 1} attends to narrative framing (``Once'', ``upon'', ``a'')---the opening formula.
+    \item \textbf{Layer 0} attends to local context (``dog'', ``She'', ``her''), recent tokens and pronouns.
+    \item \textbf{Layer 1} attends to narrative framing (``Once'', ``upon'', ``a''), the opening formula.
     \item \textbf{Layers 2--5} distribute attention broadly, with varying focus on content words.
-    \item \textbf{Layers 6--8} attend to character identity (``girl'', ``little'', ``named'', ``Lily'')---the agent.
+    \item \textbf{Layers 6--8} attend to character identity (``girl'', ``little'', ``named'', ``Lily''), the agent.
 \end{itemize}
 
 This is \emph{layer specialisation without layer-specific coupling parameters}.
@@ -379,7 +379,7 @@ Figure~\ref{fig:field} shows how the residual stream evolves through the 9 layer
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../experiments/results/semigroup/field_evolution.png}
-\caption{Left: residual stream norm grows steadily with depth. Centre: mean pairwise cosine increases---tokens become more similar as they absorb shared context. Right: attention entropy and locality oscillate, creating alternating focus/diffuse patterns.}
+\caption{Left: residual stream norm grows steadily with depth. Centre: mean pairwise cosine increases, tokens become more similar as they absorb shared context. Right: attention entropy and locality oscillate, creating alternating focus/diffuse patterns.}
 \label{fig:field}
 \end{figure}
 
@@ -394,10 +394,10 @@ This is the ``convergent orbit'' phenomenon: the field state is attracted toward
 
 \paragraph{3. Entropy oscillation.} Attention entropy and locality oscillate across layers rather than following a monotonic trend.
 Low-entropy layers (L1, L5) produce focused, local attention; high-entropy layers (L0, L7, L8) produce distributed, global attention.
-This alternating pattern---\emph{focus, then diffuse, then focus}---is consistent with recent observations that entropy profiles across transformer layers are non-monotonic and architecture-specific~\cite{arcari2025entropylens}.\footnote{Arcari et al.\ measure the entropy of the residual stream's logit-lens predictions at each layer and find non-monotonic profiles in Gemma and Llama: entropy rises in middle layers then falls again. Our measurement is of attention entropy rather than logit-space entropy, but the non-monotonic character is shared. Whether these two non-monotonicities have a common cause is an open question.}
+This alternating pattern, \emph{focus, then diffuse, then focus}, is consistent with recent observations that entropy profiles across transformer layers are non-monotonic and architecture-specific~\cite{arcari2025entropylens}.\footnote{Arcari et al.\ measure the entropy of the residual stream's logit-lens predictions at each layer and find non-monotonic profiles in Gemma and Llama: entropy rises in middle layers then falls again. Our measurement is of attention entropy rather than logit-space entropy, but the non-monotonic character is shared. Whether these two non-monotonicities have a common cause is an open question.}
 
 The homogenisation has implications for the semigroup, but they are subtler than they first appear.
-A naive reading is that as tokens converge in the residual stream, the input to $\M$ becomes uniform, and late-layer coupling degenerates into mush---the per-token signal gets dampened out.
+A naive reading is that as tokens converge in the residual stream, the input to $\M$ becomes uniform, and late-layer coupling degenerates into mush, the per-token signal gets dampened out.
 This would be fatal: $\M$ would have nothing to distinguish between tokens at late layers.
 
 But this framing treats the response heads as passive consumers of a field they cannot influence.
@@ -411,9 +411,9 @@ This is not a one-way pipeline but a \textbf{feedback loop}: $\M$ shapes attenti
 The response heads are co-participants in a coupled dynamical system, not downstream consumers of a signal they cannot steer.
 
 This reframes the homogenisation.
-The tokens are not converging because signal is being lost---they are converging because $\M$ and the response heads are successfully \emph{propagating relational information} through the stream.
+The tokens are not converging because signal is being lost, they are converging because $\M$ and the response heads are successfully \emph{propagating relational information} through the stream.
 Each iteration, the response heads read $\M$'s coupling pattern and write back a representation that encodes ``what I learned from my neighbours.''
-After 9 iterations, every token's representation is dominated by what it learned from the field---the shared relational context---rather than by its original lexical identity.
+After 9 iterations, every token's representation is dominated by what it learned from the field, the shared relational context, rather than by its original lexical identity.
 The convergence is \textbf{consensus formation}, not signal degradation.
 
 This interpretation explains a puzzle: why do the late-layer attention heatmaps still show meaningful specialisation (entity-focused attention at L6--L8) despite the high pairwise cosine (0.86--0.91)?
@@ -445,16 +445,16 @@ The result confirms the prediction: \textbf{$\M$'s coupling subspace carries $1.
 Variance grows everywhere (the residual stream norm increases steadily), but it grows \emph{faster} in the directions that $\M$ reads.
 The response heads are preferentially amplifying signal in the coupling subspace.
 
-The ratio does decay (from 3.4 at layer~1 to 1.8 at layer~9), so the selective preservation is partial, not complete---the homogenisation encroaches on the coupling subspace too, just more slowly.
+The ratio does decay (from 3.4 at layer~1 to 1.8 at layer~9), so the selective preservation is partial, not complete, the homogenisation encroaches on the coupling subspace too, just more slowly.
 This may explain why the model benefits from depth ($L{=}9$) but does not benefit from unlimited depth (Experiment~10 showed divergence beyond training depth): the coupling signal degrades gradually, and eventually there is not enough per-token contrast for $\M$ to produce useful attention patterns.
 
 The broader implication is that the response heads have a dual role: (1)~transforming content (their explicit function), and (2)~\emph{steering the residual stream to maintain contrast in $\M$'s coupling subspace} (an implicit function that emerges from the feedback loop).
-This implicit coordination---never supervised, never parameterised explicitly---is a consequence of the shared coupling acting as a geometric constraint on the entire system.
+This implicit coordination, never supervised, never parameterised explicitly, is a consequence of the shared coupling acting as a geometric constraint on the entire system.
 
 The broader point is architectural.
 In our theory, $\M$ is the field and the response heads are agents in the field.
 The ``social'' metaphor is apt: agents do not merely observe the field, they \emph{write back to it}, shaping the medium that other agents (at later depths) will read.
-The interaction between $\M$ and the response heads is bidirectional and constitutive---neither makes sense without the other.
+The interaction between $\M$ and the response heads is bidirectional and constitutive, neither makes sense without the other.
 This is why tying the response heads (MEMOISE+TIED in Experiment~1) costs ${\sim}4\%$: the response heads carry the burden of maintaining per-token contrast in the coupling subspace, and this burden varies across depths.
 
 % ======================================================================
@@ -463,14 +463,14 @@ This is why tying the response heads (MEMOISE+TIED in Experiment~1) costs ${\sim
 \subsection{For Low-Rank Compression}
 
 The effective rank of 51 (out of 512) suggests that $\M$ could be factored as $A, B \in \R^{512 \times r}$ with $r \approx 50$--$64$ without significant quality loss.
-This would reduce coupling parameters from $2d^2 = 524$K to $2dr = 65$K at $r = 64$---a further $8\times$ compression on top of the $L\times$ savings from sharing.
+This would reduce coupling parameters from $2d^2 = 524$K to $2dr = 65$K at $r = 64$, a further $8\times$ compression on top of the $L\times$ savings from sharing.
 At the 50M scale with $L = 9$, total coupling compression would be $9 \times 8 = 72\times$ vs a standard transformer.
 
 This is the subject of Experiment~11 (M rank as domain diagnostic), which sweeps $r$ across multiple tasks to find the saturation point per domain.
 
 \subsection{For the World Model Interpretation}
 
-The coreference result (Section~4) and the layer specialisation (Section~5) support the interpretation of $\M$ as encoding an abstract relational geometry---a world model of ``how tokens interact''---rather than a specific set of coupling patterns.
+The coreference result (Section~4) and the layer specialisation (Section~5) support the interpretation of $\M$ as encoding an abstract relational geometry, a world model of ``how tokens interact'', rather than a specific set of coupling patterns.
 The field state provides the content; $\M$ provides the relational template.
 
 This decomposition (geometry $\times$ content) is the basis for the fine-tuning argument in the companion papers: freeze $\M$ (the world model is task-independent), adapt the response heads and ontological codes (the content is task-specific).
@@ -479,7 +479,7 @@ This decomposition (geometry $\times$ content) is the basis for the fine-tuning 
 
 The homogenisation of the field state (Figure~\ref{fig:field}, centre) suggests that the orbit has an attractor.
 If we trained with variable depth (Experiment~10b), the attractor would be the fixed point of the map $h \mapsto h + \text{Block}(h)$.
-The convergence analysis shows that tokens are already approaching this fixed point by layer~9---mean pairwise cosine is 0.91, leaving only 9\% of variance for per-token distinction.
+The convergence analysis shows that tokens are already approaching this fixed point by layer~9, mean pairwise cosine is 0.91, leaving only 9\% of variance for per-token distinction.
 
 Whether this convergence is beneficial (the model has extracted all useful information) or harmful (the model has lost token identity) depends on the task.
 For short-horizon prediction (next token), convergence may help.
@@ -491,17 +491,17 @@ This is where the ontological pathway becomes essential: it maintains per-token 
 
 The ORN's semigroup is \textbf{emergent, not coded}.
 The implementation is simple parameter sharing: one $A$, one $B$, referenced by every layer.
-At layer $\ell$: $q = \text{LN}(h_\ell) \cdot A$, $k = \text{LN}(h_\ell) \cdot B$---the same matrices applied to a different field state.
+At layer $\ell$: $q = \text{LN}(h_\ell) \cdot A$, $k = \text{LN}(h_\ell) \cdot B$, the same matrices applied to a different field state.
 We do not compute $\M^L$ or compose coupling matrices explicitly.
 The semigroup arises because the per-layer response heads transform $h$ between applications of $\M$, so one coupling rule produces $L$ distinct patterns.
 
-This is architecturally identical to ALBERT~\cite{lan2020albert} sharing attention weights---the only difference is that the ORN shares \emph{only} the coupling (A, B) while keeping response heads ($W_V$, $W_O$, FFN) per-layer.
+This is architecturally identical to ALBERT~\cite{lan2020albert} sharing attention weights, the only difference is that the ORN shares \emph{only} the coupling (A, B) while keeping response heads ($W_V$, $W_O$, FFN) per-layer.
 The per-layer response heads drive the field state evolution that makes the semigroup rich.
 ALBERT shares everything, so its response heads cannot drive variation, which is why ALBERT loses ${\sim}1.5\%$ while the ORN does not.
 
 \subsection{Could Explicit Composition Help?}
 
-An open question: would making the semigroup explicit---composing $\M$ in coupling space rather than through the field state---produce different results?
+An open question: would making the semigroup explicit, composing $\M$ in coupling space rather than through the field state, produce different results?
 Three variants tested against the standard ORN on TinyStories ($d{=}64$, $L{=}4$, CPU):
 
 \begin{description}[nosep, leftmargin=1.5em]
@@ -534,16 +534,16 @@ The implicit ORN wins, confirming that the standard design is correct.
 
 \textbf{Explicit-Power is worst} ($+0.063$ vs implicit).
 $A^\ell$ amplifies the dominant eigenmode at each layer, killing coupling diversity: by layer~4, $A^4$ is effectively rank-1, so all tokens couple through the same pattern regardless of context.
-The eigenvalue ratio $(\sigma_1/\sigma_2)^4$ means the second mode is suppressed by a factor of $(\sigma_1/\sigma_2)^4$ relative to the first---exactly the spectral collapse that the field-state mechanism avoids.
+The eigenvalue ratio $(\sigma_1/\sigma_2)^4$ means the second mode is suppressed by a factor of $(\sigma_1/\sigma_2)^4$ relative to the first, exactly the spectral collapse that the field-state mechanism avoids.
 
 \textbf{Explicit-Accumulate is close to the transformer} ($3.815$ vs $3.811$) but does not beat the implicit ORN.
 The separate coupling state provides a compositional trajectory, but this trajectory does not interact with the content extracted by the response heads as richly as the implicit mechanism, where the coupling and content share the same residual stream.
 
 \textbf{The implicit ORN beats the transformer} ($3.802$ vs $3.811$), consistent with all prior experiments.
-The field-state rotation---driven by per-layer response heads as a side effect of content extraction---is a more effective mechanism for generating diverse coupling patterns than either explicit matrix powers or a separate coupling trajectory.
+The field-state rotation, driven by per-layer response heads as a side effect of content extraction, is a more effective mechanism for generating diverse coupling patterns than either explicit matrix powers or a separate coupling trajectory.
 
 This validates the architectural choice: the semigroup should be implicit.
-The response heads' dual role (content extraction + field rotation) is not a limitation to be overcome by explicit composition---it is the mechanism that makes the architecture work.
+The response heads' dual role (content extraction + field rotation) is not a limitation to be overcome by explicit composition, it is the mechanism that makes the architecture work.
 
 \subsection{The Chapman-Kolmogorov Loss and Its Literature Context}
 
@@ -555,7 +555,7 @@ We use this as a training loss (the \textbf{CK loss}):
 \mathcal{L}_{\text{CK}} = \| T(h_1) - h_2 \|^2, \quad \text{where } h_1 = T(h_0), \; h_2 = T(T(h_0))
 \]
 enforcing that $T \circ T$ matches $T^2$ in output space.
-Our experiments achieve 0.99 CK correlation but find that applying CK loss to all parameters hurts prediction---the response heads get pulled toward composable transitions at the expense of convergent ones.
+Our experiments achieve 0.99 CK correlation but find that applying CK loss to all parameters hurts prediction, the response heads get pulled toward composable transitions at the expense of convergent ones.
 The resolution: \textbf{CK gradients should update only $A$ and $B$} (the coupling geometry), while response heads receive only prediction gradients.
 Composability is a property of the geometry; prediction is a property of the response.
 
@@ -577,47 +577,47 @@ In both cases, the content (what is generated, what is predicted) is handled by 
 
 \paragraph{Slow thinking as denoising.}
 The connection to diffusion is deeper than technical.
-A diffusion model starts with noise---a fuzzy, unstructured image---and progressively refines detail through iterative denoising.
+A diffusion model starts with noise, a fuzzy, unstructured image, and progressively refines detail through iterative denoising.
 Each step sharpens the picture while maintaining consistency with the global structure.
-Deliberative thinking works the same way: we start with a vague sense of the answer (a fuzzy representation of possible futures), and each step of deliberation refines the picture---sharpening details, resolving ambiguities, checking consistency.
+Deliberative thinking works the same way: we start with a vague sense of the answer (a fuzzy representation of possible futures), and each step of deliberation refines the picture, sharpening details, resolving ambiguities, checking consistency.
 
 In the ORN's compose-then-predict framework (see companion paper, \emph{Orbits Without Horizon}), the compose phase IS denoising: iterating $\M$ to refine a fuzzy representation of the reachable state space into a consistent, path-structured landscape.
 The predict phase reads the clarified landscape and makes a decision.
-The CK loss ensures that each refinement step is consistent with the semigroup structure---just as each denoising step in a diffusion model is consistent with the probability flow ODE.
+The CK loss ensures that each refinement step is consistent with the semigroup structure, just as each denoising step in a diffusion model is consistent with the probability flow ODE.
 
 This analogy suggests that the response heads' per-layer specialisation plays the role of the noise schedule in diffusion: early layers (high ``noise'') handle coarse structure, late layers (low ``noise'') handle fine detail.
-The ORN doesn't need an explicit noise schedule because the response heads implicitly provide one---each layer applies the same $\M$ but at a different resolution of the residual field.
+The ORN doesn't need an explicit noise schedule because the response heads implicitly provide one, each layer applies the same $\M$ but at a different resolution of the residual field.
 
 \paragraph{Connection to temporal difference learning.}
-Reinforcement learning's TD loss $V(s) = r + \gamma V(s')$ is a 1-step Bellman consistency condition---the simplest special case of CK.
+Reinforcement learning's TD loss $V(s) = r + \gamma V(s')$ is a 1-step Bellman consistency condition, the simplest special case of CK.
 Our CK loss is the multi-step generalisation applied to representation dynamics rather than value functions.
 Both bootstrap: the target for the current state is defined in terms of the model's own evaluation of the next state.
 
 \subsection{What Could CK-Trained Representations Look Like?}
 
-A CK-trained semigroup satisfies $T(s{+}t) = T(s) \circ T(t)$---transitions compose.
+A CK-trained semigroup satisfies $T(s{+}t) = T(s) \circ T(t)$, transitions compose.
 But CK does not prescribe \emph{what} the transitions do, only that they are self-consistent.
 Six qualitatively different outcomes are possible:
 
 \begin{description}[nosep, leftmargin=1em]
-\item[Collapse:] all inputs map to the same fixed point. CK trivially satisfied by forgetting. \emph{Useless}---needs information-preservation regulariser.
+\item[Collapse:] all inputs map to the same fixed point. CK trivially satisfied by forgetting. \emph{Useless}, needs information-preservation regulariser.
 
-\item[Convergent orbits:] inputs stay distinguishable but become more similar. A well-behaved contractive semigroup. \emph{Composable prediction}---useful but not divergent.
+\item[Convergent orbits:] inputs stay distinguishable but become more similar. A well-behaved contractive semigroup. \emph{Composable prediction}, useful but not divergent.
 
-\item[Parallel orbits:] different inputs stay different, similarity constant. Volume-preserving (isometric) dynamics. \emph{Best case for structural context}---each orbit point represents a distinct reachable state.
+\item[Parallel orbits:] different inputs stay different, similarity constant. Volume-preserving (isometric) dynamics. \emph{Best case for structural context}, each orbit point represents a distinct reachable state.
 
-\item[Divergent orbits:] inputs become more different, entropy increases. Expansive dynamics. \emph{Noisy}---needs contraction penalty to keep orbits bounded.
+\item[Divergent orbits:] inputs become more different, entropy increases. Expansive dynamics. \emph{Noisy}, needs contraction penalty to keep orbits bounded.
 
-\item[Linear dynamics:] $T(h_1 + h_2) \approx T(h_1) + T(h_2)$. CK trivially satisfied by matrix exponentiation. \emph{Geometrically uninteresting}---nonlinearity suppressed.
+\item[Linear dynamics:] $T(h_1 + h_2) \approx T(h_1) + T(h_2)$. CK trivially satisfied by matrix exponentiation. \emph{Geometrically uninteresting}, nonlinearity suppressed.
 
-\item[Structured basins:] orbits form clusters corresponding to data categories. Entropy stable, topology non-trivial. \emph{Most interesting}---the semigroup discovers the relational landscape of the data.
+\item[Structured basins:] orbits form clusters corresponding to data categories. Entropy stable, topology non-trivial. \emph{Most interesting}, the semigroup discovers the relational landscape of the data.
 \end{description}
 
 The critical diagnostic pair is \textbf{information preservation} (does the orbit encode which input it started from?) and \textbf{orbit geometry} (do trajectories converge, diverge, or stay parallel?).
 If information is preserved and orbits neither collapse nor explode, CK-trained representations encode genuine relational structure that could serve as context for a prediction network (see companion paper, \emph{Orbits Without Horizon}, Section~\ref{sec:orbit-context}).
 
 The G6 path integral network (companion paper, \emph{Path Integral Explorations}) demonstrated that CK-style training CAN produce useful computation: exact Ising thermodynamics to 3--4 significant figures.
-That network satisfied CK and computed integrals over paths---genuine statistical mechanics.
+That network satisfied CK and computed integrals over paths, genuine statistical mechanics.
 The question is whether CK applied to language representations produces similarly structured dynamics or collapses to a trivial solution.
 
 \subsection{CK Diagnostic Results}\label{sec:ck-diagnostics}
@@ -640,18 +640,18 @@ C: CK(M)+Predict & No & 0.73 & Diverge & Spreads & 0.0021 \\
 Model B achieves perfect CK consistency (error ${\approx}0$) by mapping all inputs to the same max-entropy trajectory.
 Information is destroyed (dist\_ratio drops from 0.68 to 0.04 after one transition).
 Orbits converge (cosine similarity 0.92 $\to$ 0.99).
-Output entropy is maximal (5.52/5.55) and stable---the model predicts a uniform distribution.
+Output entropy is maximal (5.52/5.55) and stable, the model predicts a uniform distribution.
 CK is trivially satisfied by forgetting.
 This is Outcome~1 from the decision tree: composable but information-free.
 
 \paragraph{CK(M)+Predict produces divergent, information-preserving orbits.}
 Model C achieves the qualitative behaviour we sought: orbits diverge (cosine 0.81 $\to$ 0.50), information is preserved (dist\_ratio 0.73, best of all three), and entropy increases with iterations (0.49 $\to$ 0.71).
-This is closest to Outcome~4 (divergent orbits) but with information preservation---the representations spread out while remaining distinguishable.
-However, M is not very CK-consistent (error 0.0021, same as predict-only)---the CE gradients dominate.
+This is closest to Outcome~4 (divergent orbits) but with information preservation, the representations spread out while remaining distinguishable.
+However, M is not very CK-consistent (error 0.0021, same as predict-only), the CE gradients dominate.
 
 \paragraph{The lesson: consistency does not create meaning.}
 This parallels the relationship between diffusion models and consistency models~\cite{song2023consistency}.
-Consistency models do not train a diffusion process from scratch---they \emph{distill} a pre-trained diffusion model into a self-consistent version.
+Consistency models do not train a diffusion process from scratch, they \emph{distill} a pre-trained diffusion model into a self-consistent version.
 The pre-training provides the meaningful trajectory; consistency training preserves it.
 
 Our CK-only model tried to create composable transitions from nothing.
@@ -668,7 +668,7 @@ Pre-training provides the meaning; CK fine-tuning provides the consistency.
 \section{The Koopman Interpretation and Spectral Mode Theory}\label{sec:koopman}
 
 The semigroup analysis reveals a deeper mathematical structure.
-$\M$'s shared coupling matrix is not merely a parameter-sharing trick---it is a finite-dimensional \textbf{Koopman operator}.
+$\M$'s shared coupling matrix is not merely a parameter-sharing trick, it is a finite-dimensional \textbf{Koopman operator}.
 
 \subsection{M as a Koopman Operator}
 
@@ -687,7 +687,7 @@ ORN's $\M$ is a finite-dimensional approximation to this operator:
 
 This identification has immediate consequences.
 $\M$'s eigenvalues control the dynamics: real parts govern growth/decay rates, imaginary parts govern oscillation frequencies.
-$\M$'s eigenvectors define \textbf{Koopman modes}---invariant directions along which the dynamics decouple.
+$\M$'s eigenvectors define \textbf{Koopman modes}, invariant directions along which the dynamics decouple.
 Multi-step reasoning IS just matrix powering in the eigenbasis.
 
 \subsection{Spectral Mode Theory: Fast Prediction, Slow Reasoning}
@@ -707,7 +707,7 @@ Prediction uses one spectral region; reasoning uses another.
 \end{conjecture}
 
 This reframes the problem.
-The issue is not that $\M$ lacks capacity for reasoning---it has 512 dimensions and uses only 20.
+The issue is not that $\M$ lacks capacity for reasoning, it has 512 dimensions and uses only 20.
 The issue is that prediction training \emph{actively suppresses} the slow modes because they don't help next-token loss.
 The lower singular values get pushed to zero, not because they're useless, but because the training objective doesn't reward them.
 
@@ -720,7 +720,7 @@ A spectral regulariser that prevents the lower singular values from collapsing:
 where $r_{\text{pred}} \approx 20$ is the prediction rank and $r_{\text{reason}} \approx 10$--$20$ is the number of protected reasoning modes.
 This says: ``maintain at least $r_{\text{reason}}$ modes beyond what prediction needs, with singular values at least $\sigma_{\min}$.''
 
-The protected modes are not prescribed---their content is learned by whatever auxiliary loss shapes them (semigroup consistency, contrastive, or information-theoretic).
+The protected modes are not prescribed, their content is learned by whatever auxiliary loss shapes them (semigroup consistency, contrastive, or information-theoretic).
 The protection just prevents prediction from killing them.
 
 \subsection{Connections to the Literature}
@@ -728,17 +728,17 @@ The protection just prevents prediction from killing them.
 \paragraph{Deep-OSG.}
 Wu \& Chen~\cite{deeposg2023} provide the most directly applicable framework: a semigroup regularisation loss $\mathcal{L}_{\text{SG}} = \|T(s{+}t, x) - T(s, T(t, x))\|^2$ that can be added to any prediction loss.
 Their key finding: semigroup regularisation actually \emph{improves} prediction accuracy, not just adds a constraint.
-This contradicts our initial result (CK hurts prediction)---the difference may be implementation: Deep-OSG uses random time pairs $(s, t)$ and architectural identity-at-zero, while our CK used fixed half/full block splits.
+This contradicts our initial result (CK hurts prediction), the difference may be implementation: Deep-OSG uses random time pairs $(s, t)$ and architectural identity-at-zero, while our CK used fixed half/full block splits.
 
 \paragraph{Koopman autoencoders.}
 Lusch et al.~\cite{koopman_deep} learn a linear Koopman operator $K$ in a latent space: encoder $\phi$ maps to latent, $K$ evolves linearly, decoder $\psi$ reconstructs.
 The temporally consistent variant (tcKAE)~\cite{tckae2025} adds multi-step consistency: $\phi(x_{t+n}) \approx K^n \phi(x_t)$ for various $n$ simultaneously.
-This is latent overshooting applied to Koopman dynamics---exactly what ORN's semigroup consistency should enforce.
+This is latent overshooting applied to Koopman dynamics, exactly what ORN's semigroup consistency should enforce.
 
 \paragraph{Information bottleneck.}
 The IB framework~\cite{tishby1999} explains why CK-only training fails.
 CK maximises compression (the semigroup compresses consistently) without maintaining $I(T; Y)$ (predictive information).
-The successive refinement literature~\cite{ib_refinement} reveals that IB coarse-graining \emph{itself} has semigroup structure---the bottleneck operations compose.
+The successive refinement literature~\cite{ib_refinement} reveals that IB coarse-graining \emph{itself} has semigroup structure, the bottleneck operations compose.
 This means ORN's layers are successive IB refinements, and the semigroup property is not an external constraint but an intrinsic property of depth-wise compression.
 
 Optimal $\M$ minimises: $I(X; \exp(t\M)X) - \beta \cdot I(\exp(t\M)X; Y)$.
@@ -748,13 +748,13 @@ The semigroup structure requires these to be consistent across $t$.
 
 \paragraph{Contrastive dynamics.}
 DynCL~\cite{dyncl2025} shows that contrastive learning can recover true system dynamics from observations, performing nonlinear system identification.
-The composition property \emph{emerges} from learning correct dynamical structure---it doesn't need to be enforced explicitly.
+The composition property \emph{emerges} from learning correct dynamical structure, it doesn't need to be enforced explicitly.
 This suggests an alternative to CK loss: train $\M$ with contrastive loss on its transitions (InfoNCE on state pairs), and composability may emerge as a consequence of learning correct dynamics rather than as an imposed constraint.
 
 \paragraph{World models.}
 DreamerV3's ``latent overshooting'' is identical to the semigroup consistency loss.
 THICK's hierarchical timescales~\cite{thick2024} map directly to $\M$'s eigenspectrum: large eigenvalues handle fast timescales (frame-to-frame), small eigenvalues handle slow timescales (goal-level planning).
-KL balancing and free bits prevent information collapse---tools we should adopt.
+KL balancing and free bits prevent information collapse, tools we should adopt.
 
 \subsection{Proposed Unified Training Framework}
 
@@ -765,7 +765,7 @@ Based on the literature synthesis, the training objective for $\M$ should be:
 with a phased schedule:
 \begin{enumerate}[nosep]
     \item \textbf{Phase 1} (warm-up): $\mathcal{L}_{\text{pred}}$ only.  $\M$ crystallises prediction geometry.
-    \item \textbf{Phase 2} (protect): Add $\mathcal{L}_{\text{spectral}}$.  Prevent prediction from crushing the slow modes.  No semigroup loss yet---just protect the spectral capacity.
+    \item \textbf{Phase 2} (protect): Add $\mathcal{L}_{\text{spectral}}$.  Prevent prediction from crushing the slow modes.  No semigroup loss yet, just protect the spectral capacity.
     \item \textbf{Phase 3} (compose): Add $\mathcal{L}_{\text{SG}}$ (Deep-OSG style, random time pairs, on $\M$ only).  The slow modes learn to compose.  The fast modes are already established and $\mathcal{L}_{\text{spectral}}$ prevents them from absorbing the slow modes.
     \item \textbf{Phase 4} (optional): Add $\mathcal{L}_{\text{info}}$ (contrastive or IB) to ensure the slow modes carry useful information, not just composable noise.
 \end{enumerate}
@@ -778,12 +778,12 @@ And spectral protection ensures prediction doesn't destroy the capacity for reas
 \section{The Koopman Composition Argument: Why Linearisation Solves the Duality}\label{sec:koopman-composition}
 
 The previous sections established that $\M$ is a finite-dimensional Koopman operator and that state-based architectures fail to compose.
-This section constructs the full argument for \emph{why} the Koopman identification---if taken seriously---resolves the state/composition duality, and where the argument breaks down.
+This section constructs the full argument for \emph{why} the Koopman identification, if taken seriously, resolves the state/composition duality, and where the argument breaks down.
 
 \subsection{The Categorical Argument}
 
 The Koopman operator $\mathcal{K}$ is defined as the pullback of composition: $\mathcal{K}[g] = g \circ F$ for observable $g$ and dynamics $F$~\cite{koopman_original, brunton2022modern}.
-This is not merely a convenient linearisation---it is a functorial lift from the category of dynamical systems to the category of linear operators on function spaces.
+This is not merely a convenient linearisation, it is a functorial lift from the category of dynamical systems to the category of linear operators on function spaces.
 The composition law
 \[
     \mathcal{K}^n[g] = g \circ F^n
@@ -798,9 +798,9 @@ This is why long-horizon prediction in the true Koopman space is exactly as accu
 If $\M$ is an exact finite-dimensional Koopman representation of the coupling dynamics, then:
 \begin{enumerate}[nosep]
     \item Multi-step composition is matrix powering: $\M^n$ gives the exact $n$-step coupling
-    \item The semigroup property holds without a CK loss---it is built into the algebra
+    \item The semigroup property holds without a CK loss, it is built into the algebra
     \item Different timescales decouple in the eigenbasis: fast modes (large $|\lambda_i|$) converge rapidly, slow modes (small $|\lambda_i|$) evolve gradually, oscillatory modes ($\lambda_i$ complex) rotate
-    \item State is not separate from composition---$\M$'s eigendecomposition IS the state, and matrix multiplication IS composition
+    \item State is not separate from composition, $\M$'s eigendecomposition IS the state, and matrix multiplication IS composition
 \end{enumerate}
 \end{observation}
 
@@ -831,10 +831,10 @@ But composition fidelity is catastrophic: 58.76\% top-1 agreement between one-ch
 The state introduces path-dependence that breaks the semigroup property.
 
 OM-ORN composes best (99.58\%) and uses $\M$'s eigenspectrum most richly (mode entropy 0.971), consistent with the Koopman prediction that orbit-based memory preserves compositional structure.
-But it cannot match RS-ORN's raw prediction power---the orbit provides structural consistency, not accumulated context.
+But it cannot match RS-ORN's raw prediction power, the orbit provides structural consistency, not accumulated context.
 
 The tension sharpens with scale: at the earlier dry run ($d{=}64$), RS-ORN's advantage was 13\% (val 0.425 vs 0.492); at $d{=}128$, it is 200\% (val 0.155 vs 0.463).
-The state becomes \emph{more} valuable with width, not less---more dimensions mean more information can be carried.
+The state becomes \emph{more} valuable with width, not less, more dimensions mean more information can be carried.
 This means the resolution cannot be ``just make it wider.''
 The architecture must change.
 
@@ -844,17 +844,17 @@ Bramburger~\cite{bramburger2025lattice} proves that the spectrum of the Koopman 
 If $\lambda_1$ and $\lambda_2$ are Koopman eigenvalues with eigenfunctions $\psi_1$ and $\psi_2$, then $\psi_1 \cdot \psi_2$ is an eigenfunction with eigenvalue $\lambda_1 \lambda_2$.
 
 This has a direct architectural consequence.
-If $\M$'s eigenvalues form a multiplicative sub-semigroup of $\mathbb{C}$, then the algebra of $\M$-eigenfunctions is closed under products---and \emph{any finite truncation to a subset of eigenfunctions that is closed under multiplication preserves composition exactly.}
+If $\M$'s eigenvalues form a multiplicative sub-semigroup of $\mathbb{C}$, then the algebra of $\M$-eigenfunctions is closed under products, and \emph{any finite truncation to a subset of eigenfunctions that is closed under multiplication preserves composition exactly.}
 This is the sharpest known sufficient condition for when truncation does not destroy composability~\cite{brunton2016koopman, kvalheim2021minimal}.
 
 For ORN, the implication is: $\M$'s learned eigenspectrum should naturally develop multiplicative closure, because the coupling dynamics it memorises are (approximately) the dynamics of a real system.
-The spectral crystallisation we observe (rank 189 $\to$ 20 during training) may be the network discovering a minimal generating set of Koopman eigenfunctions---the smallest set whose multiplicative closure spans the coupling dynamics.
+The spectral crystallisation we observe (rank 189 $\to$ 20 during training) may be the network discovering a minimal generating set of Koopman eigenfunctions, the smallest set whose multiplicative closure spans the coupling dynamics.
 
 \begin{conjecture}[Spectral crystallisation as eigenfunction discovery]
 $\M$'s rank reduction during training is not information loss.
 It is the discovery of a \textbf{minimal set of Koopman eigenfunctions}~\cite{kvalheim2021minimal} whose multiplicative closure generates the full coupling dynamics.
 The 20 surviving modes are the independent generators; the collapsed modes were redundant products.
-If this is correct, the number of surviving modes should equal the effective dimensionality of the coupling dynamics---a testable prediction.
+If this is correct, the number of surviving modes should equal the effective dimensionality of the coupling dynamics, a testable prediction.
 \end{conjecture}
 
 \subsection{Why This Resolves the State/Composition Duality}
@@ -863,7 +863,7 @@ The argument in full:
 
 \begin{enumerate}
     \item \textbf{State-based models fail to compose} because they compress context into a fixed-size vector via lossy projection.
-    This compression destroys relational structure---specifically, the higher-order correlations that composition requires~\cite{merrill2024illusion, sanford2025provable}.
+    This compression destroys relational structure, specifically, the higher-order correlations that composition requires~\cite{merrill2024illusion, sanford2025provable}.
     The TC0 barrier formalises this: diagonal-state models provably cannot compute permutation composition.
 
     \item \textbf{Full attention composes} because it preserves all pairwise relationships.
@@ -873,21 +873,21 @@ The argument in full:
     Instead of compressing state (lossy) or preserving all pairs (expensive), it lifts the dynamics to a space where composition is \emph{linear}.
     The ``state'' is the projection of the residual stream onto $\M$'s eigenvectors.
     ``Composition'' is matrix multiplication in the eigenbasis.
-    State and composition are not separate operations---they are the same operation viewed in two bases.
+    State and composition are not separate operations, they are the same operation viewed in two bases.
 
     \item \textbf{The cost is bounded.}
-    If the coupling dynamics have a finite-dimensional Koopman-invariant subspace (a strong assumption---see critiques below), then $\M$ captures the dynamics exactly in $d$ dimensions.
+    If the coupling dynamics have a finite-dimensional Koopman-invariant subspace (a strong assumption, see critiques below), then $\M$ captures the dynamics exactly in $d$ dimensions.
     Multi-step composition is $O(d^2)$ regardless of sequence length.
     This is cheaper than attention ($O(T^2)$) and more expressive than diagonal state ($O(d)$).
 
     \item \textbf{The semigroup property is automatic.}
     If $\M$ approximates the Koopman operator, $\exp(t\M)$ satisfies the semigroup law by construction.
-    No CK loss is needed to \emph{impose} composability---it follows from the algebra.
+    No CK loss is needed to \emph{impose} composability, it follows from the algebra.
     The CK loss's role becomes diagnostic: if $T(s{+}t) \neq T(s) \circ T(t)$, the Koopman approximation is poor and $\M$ needs more spectral capacity.
 \end{enumerate}
 
 The practical consequence: the CORN recipe (Section~\ref{sec:corn}) may be training $\M$ to be a better Koopman approximation.
-The three-phase protocol---crystallise prediction geometry, impose composability, freeze and fine-tune---maps onto the Koopman learning pipeline: (1) discover the observable space, (2) enforce linear dynamics in that space, (3) learn the decoder.
+The three-phase protocol, crystallise prediction geometry, impose composability, freeze and fine-tune, maps onto the Koopman learning pipeline: (1) discover the observable space, (2) enforce linear dynamics in that space, (3) learn the decoder.
 The prediction cost in Phase~2 (2.9\% at $d{=}128$, $0.06\%$ at $d{=}256$) is the cost of making $\M$ a better Koopman operator: a more faithful linearisation of the coupling dynamics, at the expense of the greedy shortcuts that pure prediction training discovers.
 
 \subsection{Evidence from the Literature}
@@ -896,12 +896,12 @@ Several independent lines of evidence support this argument.
 
 \paragraph{Deep-OSG.}
 Wu \& Chen~\cite{deeposg2023} show that semigroup regularisation \emph{improves} prediction accuracy in PDE operator learning.
-The semigroup loss is not a competing objective---it provides structural regularisation that prevents overfitting to single-step dynamics.
+The semigroup loss is not a competing objective, it provides structural regularisation that prevents overfitting to single-step dynamics.
 Our finding that CK loss hurts prediction at small scale but becomes free at $d{=}256$ is consistent: at sufficient width, the Koopman invariant subspace can accommodate both prediction and composition.
 
 \paragraph{Temporally consistent Koopman autoencoders.}
 Azencot et al.~\cite{tckae2025} enforce multi-step consistency $\phi(x_{t+n}) \approx K^n \phi(x_t)$ and show this improves long-horizon prediction.
-This is exactly our CK loss applied to Koopman dynamics---the observation that multi-step consistency is not a constraint but a \emph{feature} of correct dynamics.
+This is exactly our CK loss applied to Koopman dynamics, the observation that multi-step consistency is not a constraint but a \emph{feature} of correct dynamics.
 
 \paragraph{Least-squares multi-step Koopman.}
 Recent work~\cite{lsmsk2025} demonstrates that fitting directly to $n$-step maps (rather than composing $1$-step maps) gives non-asymptotic bounds where the error depends only on the target mapping, not on composition depth.
@@ -911,7 +911,7 @@ This provides a concrete training protocol: instead of single-step prediction lo
 \paragraph{SKOLR.}
 Nath et al.~\cite{nath2025skolr} establish formal equivalence between structured Koopman operators and linear RNN updates.
 Time-delayed observations in the Koopman framework correspond to different memory horizons in the RNN.
-Each Koopman eigenfunction component evolves at its own rate---fast modes need short memory, slow modes need long memory.
+Each Koopman eigenfunction component evolves at its own rate, fast modes need short memory, slow modes need long memory.
 This validates our orbit memory design (OM-ORN): different orbit points should track different Koopman modes, with mode-specific horizons.
 
 \paragraph{Invariance proximity bounds.}
@@ -939,13 +939,13 @@ Brunton et al.~\cite{brunton2016koopman} and Conradie et al.~\cite{conradie2026t
 Our 99\% composition fidelity at $d{=}64$ may not survive at sequence lengths of 2048+.
 
 \textbf{Mitigation:} The response heads ($W_V$, $W_O$, FFN) act as a nonlinear ``decoder'' from Koopman space to predictions.
-Even if $\M$'s linear dynamics are approximate, the decoder can compensate for projection errors---provided those errors are systematic (low-rank, slowly varying) rather than chaotic.
+Even if $\M$'s linear dynamics are approximate, the decoder can compensate for projection errors, provided those errors are systematic (low-rank, slowly varying) rather than chaotic.
 The per-layer decoder is the key difference from pure EDMD: ORN does not require exact closure because the decoder absorbs the residual.
 
 \begin{quote}\small
 \textbf{Toy Experiment T1: Closure Under Composition.}
 Task: learn a known Koopman system and measure closure directly.
-Generate data from a simple nonlinear system with known Koopman eigenfunctions---e.g., the Duffing oscillator ($\ddot{x} + \delta\dot{x} + \alpha x + \beta x^3 = 0$) or a 2D rotation with a single fixed point.
+Generate data from a simple nonlinear system with known Koopman eigenfunctions, e.g., the Duffing oscillator ($\ddot{x} + \delta\dot{x} + \alpha x + \beta x^3 = 0$) or a 2D rotation with a single fixed point.
 Train a small SharedM ($d{=}32$) to predict $x_{t+1}$ from $x_t$.
 Then measure:
 (a)~the \textbf{invariance proximity} $\varepsilon = \sin(\theta_{\max})$ between $\M$'s column space and $\M \cdot (\text{column space})$;
@@ -986,7 +986,7 @@ Our spectral crystallisation may be discovering exactly such a sub-semigroup.
 
 \begin{quote}\small
 \textbf{Toy Experiment T3: Eigenvalue Lattice Test.}
-Take a trained $\M$ (from any existing checkpoint---V1, toy, or architecture sweep).
+Take a trained $\M$ (from any existing checkpoint, V1, toy, or architecture sweep).
 Extract the eigenvalues $\{\lambda_i\}$.
 For every pair $(\lambda_i, \lambda_j)$, check whether $\lambda_i \cdot \lambda_j$ is close to some $\lambda_k$ in the spectrum.
 Report the \textbf{lattice closure fraction}: the fraction of eigenvalue products that map back to the spectrum (within tolerance $\delta$).
@@ -998,7 +998,7 @@ Compare against: (a)~a random matrix of the same dimensions (null hypothesis); (
 
 \paragraph{Critique 4: The decoder compensates for everything (philosophical).}
 A sufficiently powerful per-layer decoder ($W_V$, $W_O$, FFN) can compensate for any deficiency in $\M$.
-If the decoder does most of the work, the Koopman interpretation of $\M$ is vacuous---$\M$ is just a shared projection matrix, not a dynamical operator.
+If the decoder does most of the work, the Koopman interpretation of $\M$ is vacuous, $\M$ is just a shared projection matrix, not a dynamical operator.
 The frozen-$\M$ test (1.01\% gap) shows $\M$ carries real structure, but it does not prove that structure is Koopman-like.
 
 \textbf{Mitigation:} The composition fidelity diagnostic distinguishes Koopman-like from arbitrary shared matrices.
@@ -1018,7 +1018,7 @@ If $\M$ is a true Koopman operator, $\M^L$ should capture the $L$-step dynamics,
 If $\M$ is just a shared weight, $\M^L$ will produce garbage (the decoder interventions are doing all the work, and skipping them destroys the computation).
 
 Measure: (a)~cosine similarity between pipeline and M-power hidden states; (b)~KL divergence on output distributions; (c)~how (a) and (b) change with $L$ (Koopman: stable; shared weight: diverges).
-Also test with a \textbf{random} $\M$ of matched spectral norm as null hypothesis---if random $\M^L$ is equally bad, the test has no power.
+Also test with a \textbf{random} $\M$ of matched spectral norm as null hypothesis, if random $\M^L$ is equally bad, the test has no power.
 \emph{Expected runtime:} $<2$ minutes, CPU (single forward pass + one matrix power).
 \end{quote}
 
@@ -1026,7 +1026,7 @@ Also test with a \textbf{random} $\M$ of matched spectral norm as null hypothesi
 The entire Koopman framework assumes a well-defined state space and deterministic (or stochastic with known measure) dynamics.
 Language has no canonical state space.
 The ``dynamics'' are the mapping from context to prediction, which depends on the entire history in a non-Markovian way.
-Identifying $\M$ as a Koopman operator requires believing that the residual stream evolves according to (approximately) autonomous dynamics---that the coupling rule at layer $\ell$ depends on the field state $h^{(\ell)}$ but not on the specific tokens or their positions.
+Identifying $\M$ as a Koopman operator requires believing that the residual stream evolves according to (approximately) autonomous dynamics, that the coupling rule at layer $\ell$ depends on the field state $h^{(\ell)}$ but not on the specific tokens or their positions.
 This is the memoisation hypothesis, and it is empirically supported (spectrum correlation 0.98 across layers) but not proven.
 
 \textbf{Mitigation:} The relevant dynamics may not be token-level prediction but \emph{coupling-level} dynamics: how the pattern of ``which tokens attend to which'' evolves with depth.
@@ -1079,7 +1079,7 @@ T5: Coupling autonomy & $R^2 > 0.5$ & $R^2 < 0.2$ \\
 
 \noindent If all five tests show positive signals, the Koopman interpretation is on strong empirical ground and we should invest in Koopman-informed architecture design (eigenmode-specific memory, spectral protection, M-derived decay rates).
 If three or more show kill signals, the Koopman framing is wrong and we should seek a different theoretical foundation for SharedM.
-Mixed results (some positive, some negative) would indicate the Koopman interpretation is partially valid---useful for some aspects of $\M$'s behaviour (e.g., spectral structure, composition) but not others (e.g., long-horizon prediction, chaotic inputs).
+Mixed results (some positive, some negative) would indicate the Koopman interpretation is partially valid, useful for some aspects of $\M$'s behaviour (e.g., spectral structure, composition) but not others (e.g., long-horizon prediction, chaotic inputs).
 
 The laboratory replaces speculation with measurement.
 Each test that passes increases our confidence in spending GPU cycles on Koopman-informed architectures.
@@ -1100,7 +1100,7 @@ $\M^n$ leaves the encoder's range and the decoder produces nonsense.
 
 \paragraph{T2: Spectrum type transition (MIXED).}
 Sweeping nonlinearity $\varepsilon \in [0, 1]$, the M-power/sequential ratio \emph{decreases} with $\varepsilon$ (from $401\times$ at $\varepsilon{=}0$ to $1.0\times$ at $\varepsilon{=}1$).
-This is not because $\M^n$ improves---it is because sequential prediction also fails.
+This is not because $\M^n$ improves, it is because sequential prediction also fails.
 At high nonlinearity, both methods converge to the same (wrong) prediction.
 This is graceful degradation in the sense that nothing catastrophically breaks, but neither method works at $n{=}8$.
 
@@ -1111,7 +1111,7 @@ This is the opposite of lattice structure.
 $\M$ has not learned a multiplicative sub-semigroup; it has learned a spectral distribution optimised for single-step prediction.
 
 \paragraph{T4: M-power vs pipeline (MIXED).}
-$\M^6$ applied to embedded input gives cosine similarity $0.10$ with the pipeline output (vs $0.008$ for random $\M$---$13\times$ above baseline).
+$\M^6$ applied to embedded input gives cosine similarity $0.10$ with the pipeline output (vs $0.008$ for random $\M$, $13\times$ above baseline).
 Top-1 agreement is 96\%, but this is misleading: the logit distributions are wildly different (KL $= 303$), and the agreement comes from both producing the same high-frequency byte predictions.
 The per-layer breakdown reveals the mechanism: $\M^1$ vs layer~1 gives cosine $-0.0001$ (garbage), but cosine \emph{increases} with depth, reaching $0.16$ at layer~5.
 The response heads transform the representation at every layer; $\M$ alone captures none of these transformations.
@@ -1119,7 +1119,7 @@ The response heads transform the representation at every layer; $\M$ alone captu
 \paragraph{T5: Coupling autonomy (MIXED--POSITIVE).}
 A linear probe predicting layer-$(\ell{+}1)$ coupling features from layer-$\ell$ features achieves $R^2 = 0.40$ on average, rising from $0.28$ at early layers to $0.63$ at late layers.
 Coupling dynamics become increasingly autonomous with depth: early layers' coupling depends on token identity (which tokens are present), while late layers' coupling is increasingly predictable from the prior coupling pattern alone (how tokens relate).
-This is consistent with the residual stream ``converging'' toward $\M$'s geometric attractor---but through the decoder, not through $\M^n$.
+This is consistent with the residual stream ``converging'' toward $\M$'s geometric attractor, but through the decoder, not through $\M^n$.
 
 \begin{center}\small
 \begin{tabular}{@{}llll@{}}
@@ -1148,7 +1148,7 @@ And the architecture sweep shows that $\M$-based orbit memory composes at 99.6\%
 The revised interpretation:
 
 \begin{quote}
-$\M$ is a \textbf{coupling geometry}---a landscape that the response heads navigate, not a dynamical operator that evolves the state.
+$\M$ is a \textbf{coupling geometry}, a landscape that the response heads navigate, not a dynamical operator that evolves the state.
 The semigroup property is approximate and mediated by the decoder: $T(s) \circ T(t) \approx T(s{+}t)$ holds because the response heads learn to compensate for $\M$'s invariance failures, not because $\M^{s+t} = \M^s \cdot \M^t$ captures the dynamics exactly.
 Composition works not because $\M$ is a perfect Koopman operator, but because $\M$ provides a \emph{consistent geometric frame} that the decoders can align to.
 \end{quote}
@@ -1160,7 +1160,7 @@ This explains several observations:
     \item \textbf{Why the frozen-$\M$ test works} (1.01\% gap): the geometry carries information because it defines the ``directions of coupling.''
     Fresh decoders can learn to navigate a frozen geometry nearly as well as one they co-evolved with.
     \item \textbf{Why spectral crystallisation occurs}: prediction training discovers the dominant coupling directions.
-    These become $\M$'s principal eigenvectors---not because $\M$ is a Koopman operator, but because eigenvectors are the natural basis for describing a bilinear coupling form.
+    These become $\M$'s principal eigenvectors, not because $\M$ is a Koopman operator, but because eigenvectors are the natural basis for describing a bilinear coupling form.
     \item \textbf{Why RS-ORN predicts better but composes worse}: the state tensor adds information that $\M$'s geometry alone does not provide (accumulated context), but it breaks geometric consistency between chunks because the state is path-dependent.
 \end{itemize}
 
@@ -1170,9 +1170,9 @@ The spectral structure of $\M$ genuinely matters (mode utilisation, crystallisat
 But the architectural priority shifts from ``make $\M$ a better Koopman operator'' to ``make the response heads compose better over a shared geometry.''
 Specifically:
 \begin{itemize}[nosep]
-    \item The CK loss on $A, B$ is still valuable---not because it makes $\M$ Koopman-like, but because it regularises $\M$'s geometry to be self-consistent at multiple timescales, which helps the decoders compose.
+    \item The CK loss on $A, B$ is still valuable, not because it makes $\M$ Koopman-like, but because it regularises $\M$'s geometry to be self-consistent at multiple timescales, which helps the decoders compose.
     \item Orbit memory (OM-ORN) works because it queries $\M$'s geometry at multiple depths, giving the decoders a multi-scale view.
-    The orbit points are not ``Koopman trajectory points''---they are ``geometry samples at different coupling strengths.''
+    The orbit points are not ``Koopman trajectory points'', they are ``geometry samples at different coupling strengths.''
     \item The delta-rule state update (Section~\ref{sec:state-composition}) remains promising: it provides the prediction advantage of state while routing associations through $\M$'s geometry, maintaining geometric consistency.
     \item Spectral protection (preventing slow modes from collapsing) remains important, not for ``reasoning modes'' in the Koopman sense, but for maintaining a rich geometric landscape that the decoders can exploit.
 \end{itemize}
@@ -1205,7 +1205,7 @@ Formally: $\M \cdot \text{image}(\phi) \subseteq \text{image}(\phi)$.
 
 Cross-entropy training has no incentive to enforce this.
 It optimises $\psi_L(\ldots \psi_1(\M, \phi(x)))$ to predict the next token.
-The decoder $\psi_\ell$ at each layer compensates for wherever $\M$ sends the representation---it does not matter whether $\M$'s output is in $\phi$'s range, because $\psi_\ell$ rescues it.
+The decoder $\psi_\ell$ at each layer compensates for wherever $\M$ sends the representation, it does not matter whether $\M$'s output is in $\phi$'s range, because $\psi_\ell$ rescues it.
 $\M$ is free to send representations \emph{anywhere}, and the decoder maps them back.
 Over training, $\M$ and the decoders co-adapt into a pipeline that works for 1-step prediction but has no compositional structure.
 
@@ -1223,10 +1223,10 @@ So even a \emph{perfect} Koopman operator $\M$ cannot break TC0 through $\M^n$ a
 The expressiveness comes from the nonlinear encoder $\phi$ and decoder $\psi$: the encoder lifts the dynamics into a space where linear evolution is sufficient; the decoder maps back.
 
 The TC0 barrier for SSMs applies to models with \emph{diagonal} state transitions~\cite{merrill2024illusion}.
-$\M$ is a full $d \times d$ matrix---it is not diagonal, and full matrix multiplication \emph{can} represent permutations.
+$\M$ is a full $d \times d$ matrix, it is not diagonal, and full matrix multiplication \emph{can} represent permutations.
 RWKV-7~\cite{peng2025rwkv7} breaks TC0 precisely by making state transitions non-diagonal and input-dependent.
 $\M$ is already non-diagonal.
-The obstacle is not representational capacity---it is \emph{training}.
+The obstacle is not representational capacity, it is \emph{training}.
 
 The precise claim: \textbf{the failure to learn a Koopman operator is a training problem, not an architecture problem.}
 The architecture ($d$-dimensional $\M$ with nonlinear encoder/decoder) has sufficient capacity.
@@ -1249,7 +1249,7 @@ The training loss combines reconstruction, 1-step prediction, and \textbf{multi-
 
 The critical term is the \textbf{Koopman invariance loss}: $\|\phi(x_{t+n}) - \M^n \phi(x_t)\|^2$.
 This forces the encoder to produce representations that evolve linearly under $\M$.
-The encoder must find a subspace where $\M$'s linear dynamics approximate the true nonlinear dynamics---this is the Koopman eigenfunction discovery problem.
+The encoder must find a subspace where $\M$'s linear dynamics approximate the true nonlinear dynamics, this is the Koopman eigenfunction discovery problem.
 
 \subsection{Adaptation to the ORN}
 
@@ -1267,7 +1267,7 @@ This says: the residual stream at layer $\ell + n$ should be approximately $\M^n
 
 There is a subtlety: the residual stream at layer $\ell$ is the \emph{output} of $\psi_\ell$, not the input.
 So we are asking $\M^n$ to predict the net effect of $n$ layers of decoder intervention.
-This is a strong demand---it requires $\M$ to capture not just the coupling dynamics but also the response heads' transformations.
+This is a strong demand, it requires $\M$ to capture not just the coupling dynamics but also the response heads' transformations.
 
 \paragraph{A weaker but more tractable variant.}
 Instead of requiring $h^{(\ell+n)} \approx \M^n h^{(\ell)}$ (which asks $\M$ to model the full pipeline), we can require that the \emph{coupling pattern} is Koopman-linear:
@@ -1298,7 +1298,7 @@ For a $d$-dimensional $\M$ with eigendecomposition $\M = V \Lambda V^{-1}$, the 
 If we constrain the encoder to output representations as linear combinations of $\M$'s eigenvectors, then $\M$-invariance is guaranteed by construction (eigenvectors are invariant under the linear map).
 
 The architecture: decompose $\M = V \Lambda V^{-1}$, embed tokens as $\phi(x) = V \alpha(x)$ where $\alpha(x)$ is a learned coefficient vector.
-Then $\M \phi(x) = V \Lambda \alpha(x)$---the evolution is just elementwise scaling of the coefficients by eigenvalues.
+Then $\M \phi(x) = V \Lambda \alpha(x)$, the evolution is just elementwise scaling of the coefficients by eigenvalues.
 This is \emph{exactly} a structured state-space model in disguise: the ``state'' is $\alpha$, the ``transition'' is $\Lambda$ (diagonal), and $V$ provides the change of basis.
 
 \textbf{Risk:} This reduces to a diagonal SSM, which is bounded by TC0.
@@ -1308,7 +1308,7 @@ The full matrix power $\M^n = V \Lambda^n V^{-1}$ decomposes into eigenvalue pow
 \paragraph{Approach 3: Koopman autoencoder with periodic re-encoding.}
 The key insight from T1: $\M^n$ fails because $\M$ pushes representations out of the encoder's range.
 The fix: \emph{periodically re-encode} to bring representations back into range.
-Every $k$ layers, apply: $h \leftarrow \phi(\psi(h))$---decode to observation space, then re-encode to Koopman space.
+Every $k$ layers, apply: $h \leftarrow \phi(\psi(h))$, decode to observation space, then re-encode to Koopman space.
 
 The training loss becomes:
 \begin{equation}
@@ -1329,7 +1329,7 @@ The composition property \emph{emerges} from learning correct dynamical structur
 Applied to ORN: use InfoNCE loss on state pairs $(h^{(\ell)}, h^{(\ell+n)})$, trained to distinguish ``same trajectory, $n$ steps apart'' from ``different trajectories.''
 
 The conjecture: a contrastive loss that respects temporal structure will implicitly discover Koopman eigenfunctions, because these are the features that evolve most predictably.
-Unlike the explicit Koopman invariance loss (which requires computing $\M^n$), the contrastive loss only requires pairs of representations---no matrix powers, no subspace invariance check.
+Unlike the explicit Koopman invariance loss (which requires computing $\M^n$), the contrastive loss only requires pairs of representations, no matrix powers, no subspace invariance check.
 Composability would emerge as a side effect of correct dynamics, not as an imposed constraint.
 
 \textbf{Risk:} The ``emergent composability'' claim from DynCL is demonstrated on simple physical systems, not language.
@@ -1358,7 +1358,7 @@ The nonlinear encoder/decoder can break TC0, but only by departing from Koopman 
 \textbf{There may be no architecture that is simultaneously a true Koopman operator AND expressively beyond TC0.}
 The two desiderata are in formal tension: Koopman demands linear dynamics (TC0-bounded), expressiveness demands nonlinearity (TC0-breaking).
 
-The resolution may be \textbf{approximate Koopman with periodic nonlinear correction}---essentially Approach~3 / OM-ORN.
+The resolution may be \textbf{approximate Koopman with periodic nonlinear correction}, essentially Approach~3 / OM-ORN.
 $\M$ evolves linearly for $k$ steps (compositional, TC0-bounded), then a nonlinear re-encoding corrects the trajectory (expressive, TC0-breaking).
 The composability is approximate ($k$-step, not infinite-step) but may be sufficient for practical language modelling where the ``composition depth'' is bounded by the number of reasoning steps needed.
 
@@ -1410,7 +1410,7 @@ As $\Delta \to 0$, the output approaches the identity ($T(0) = I$, hard-coded by
 A single forward pass produces $T(\Delta)$ for any $\Delta$.
 
 The semigroup loss then compares $T(\Delta_1 + \Delta_2)$ against $T(\Delta_1) \circ T(\Delta_2)$ for randomly sampled $\Delta_1, \Delta_2$.
-These are genuinely different computations because the network receives different $\Delta$ values---unlike our earlier implementation, which ran the same blocks multiple times and obtained trivially zero error.
+These are genuinely different computations because the network receives different $\Delta$ values, unlike our earlier implementation, which ran the same blocks multiple times and obtained trivially zero error.
 
 Diffusion models have the same structure: the noise level $\sigma(t)$ is a continuous input to the denoiser.
 The consistency condition~\cite{song2023consistency} ($f(x_t, t) = f(x_{t'}, t')$ for points on the same trajectory) is the semigroup property on the denoising process.
@@ -1442,12 +1442,12 @@ Extending $t$ to the complex plane:
 
 \paragraph{The eigenvalue structure supports this.}
 We observed that 89\% of V1's $\M$ eigenvalues are complex (with nonzero imaginary parts).
-These complex eigenvalues produce oscillatory dynamics even at real $t$---the residual stream already rotates as it evolves through depth.
+These complex eigenvalues produce oscillatory dynamics even at real $t$, the residual stream already rotates as it evolves through depth.
 The real parts of the eigenvalues control convergence rate (prediction).
 The imaginary parts control oscillation frequency (exploration).
 Both are present in the same $\M$, learned by standard prediction training.
 
-The prediction/reasoning duality is not an architectural addition---it is a property of the complex eigenvalue structure that $\M$ already possesses.
+The prediction/reasoning duality is not an architectural addition, it is a property of the complex eigenvalue structure that $\M$ already possesses.
 Prediction training exploits the real parts.
 Reasoning would exploit the imaginary parts.
 
@@ -1515,7 +1515,7 @@ The only change is the direction of traversal through $\M$'s geometry.
 \section{The CORN Training Recipe: From Prediction to Composable World Model}\label{sec:corn}
 
 The theoretical programme of Sections~\ref{sec:koopman}--\ref{sec:complex-depth} raises an immediate practical question: can we \emph{train} the semigroup property into $\M$?
-This section documents what we learned --- including the failures that shaped the final recipe.
+This section documents what we learned ,  including the failures that shaped the final recipe.
 
 \subsection{The Bug That Revealed the Architecture}
 
@@ -1532,7 +1532,7 @@ Our Level~0 implementation is minimal: scale the coupling matrices by a continuo
 \[
   q = h \cdot (t \cdot A), \qquad k = h \cdot (t \cdot B).
 \]
-At $t = 1$ this is exactly the standard ORN --- no new parameters, no architectural change.
+At $t = 1$ this is exactly the standard ORN ,  no new parameters, no architectural change.
 The semigroup constraint now has teeth: the network must learn an $\M$ whose geometry is \emph{self-consistent under time composition}, not merely repeated application.
 
 Verification was immediate.
@@ -1546,7 +1546,7 @@ With a working semigroup loss, we explored several training configurations.
 Each failure was informative.
 
 \paragraph{CK-only training.}
-Optimising the CK identity alone, with no prediction loss, produced an $\M$ that was perfectly composable --- and perfectly useless.
+Optimising the CK identity alone, with no prediction loss, produced an $\M$ that was perfectly composable ,  and perfectly useless.
 The model collapsed to a max-entropy coupling: every token attended uniformly to every other token.
 Information was destroyed.
 The semigroup property was trivially satisfied because $\M$ had degenerated to a scaled identity.
@@ -1558,7 +1558,7 @@ The CE gradients dominated: they shaped $\M$ for greedy next-token prediction, a
 \emph{Lesson: prediction pressure crushes composability if applied simultaneously from initialisation.}
 
 \paragraph{CK on $\M$ + prediction on all (curriculum).}
-A curriculum schedule --- CK loss first, CE ramped in gradually --- showed partial success.
+A curriculum schedule ,  CK loss first, CE ramped in gradually ,  showed partial success.
 CK error dropped 15\%.
 Entropy increased (the model maintained broader coupling patterns).
 But prediction cost 2.6\% relative to the CE-only baseline.
@@ -1569,7 +1569,7 @@ The Deep-OSG-inspired $t$-scaling was the breakthrough.
 With random $(t_1, t_2)$ pairs drawn during training and the semigroup loss checking $T(t_1 + t_2) \approx T(t_1) \circ T(t_2)$:
 \begin{itemize}[nosep]
   \item SG error dropped 33\% relative to the curriculum variant.
-  \item The second singular value $\sigma_{20}$ reached 0.366 --- three times the baseline, indicating genuine spectral structure rather than collapse.
+  \item The second singular value $\sigma_{20}$ reached 0.366 ,  three times the baseline, indicating genuine spectral structure rather than collapse.
   \item Prediction cost was 2.9\% relative to CE-only.
 \end{itemize}
 
@@ -1577,20 +1577,20 @@ With random $(t_1, t_2)$ pairs drawn during training and the semigroup loss chec
 Prediction training \emph{actively destroys} composability.
 During CE-only training phases, semigroup error rose by 57\%.
 The semigroup loss reverses this trend, but only when time is a continuous input.
-This is not a failure of our implementation --- it reflects a fundamental tension between greedy prediction and structural composability.
+This is not a failure of our implementation ,  it reflects a fundamental tension between greedy prediction and structural composability.
 
 \subsection{The Fundamental Tension Reframed}
 
 The 2.9\% prediction cost is not a failure.
 It \emph{is} the slow thinking.
 
-A model trained only for next-token prediction converges its orbits rapidly --- it commits to the most likely continuation and discards alternatives.
+A model trained only for next-token prediction converges its orbits rapidly ,  it commits to the most likely continuation and discards alternatives.
 This is fast, fluent, and shallow.
 A model with composable geometry maintains awareness of possibilities: higher entropy in the coupling, less convergent orbits, richer spectral structure in $\M$.
 This is slower, more exploratory, and deeper.
 
 You cannot think fast and slow simultaneously.
-The prediction cost is a training-time investment in a richer world model --- one where $\M$'s Koopman modes encode temporal regularities that pure prediction never discovers.
+The prediction cost is a training-time investment in a richer world model ,  one where $\M$'s Koopman modes encode temporal regularities that pure prediction never discovers.
 
 The analogy is precise: a chess engine that evaluates only the top move is fast but brittle.
 One that maintains a search tree over many continuations is slower per move but stronger per game.
@@ -1614,7 +1614,7 @@ At each step, draw random $(t_1, t_2) \in (0, 1]$ and enforce:
 \[
   \mathcal{L}_{\mathrm{SG}} = \bigl\| T(t_1 + t_2)[\mathbf{h}] - T(t_1)\bigl[T(t_2)[\mathbf{h}]\bigr] \bigr\|^2.
 \]
-The semigroup loss is routed to $A$ and $B$ only --- response heads ($W_V$, $W_O$, FFN) receive only CE gradients.
+The semigroup loss is routed to $A$ and $B$ only ,  response heads ($W_V$, $W_O$, FFN) receive only CE gradients.
 The semigroup weight $\lambda$ ramps linearly from 0 to a target value over the first 20\% of Phase~2 steps.
 $\M$ becomes composable while response heads continue predicting.
 
@@ -1627,7 +1627,7 @@ Prediction quality is expected to recover, and the model retains composable geom
 
 \medskip
 \noindent\textbf{At inference:} the standard ORN ($t = 1$, fast prediction) is used for fluent generation.
-When reasoning is needed --- multi-step planning, coherence checking, self-correction --- the model iterates at variable $t$, invoking the composable structure.
+When reasoning is needed ,  multi-step planning, coherence checking, self-correction ,  the model iterates at variable $t$, invoking the composable structure.
 The slow Koopman modes are present in $\M$ even during fast inference; they activate when the residual stream's field state engages them.
 
 \subsection{What We Don't Yet Know}
@@ -1648,14 +1648,14 @@ Several critical questions remain open:
 \end{enumerate}
 
 \noindent The CORN recipe is a hypothesis, not a conclusion.
-The diagnostic journey gives us confidence that the \emph{direction} is correct --- semigroup structure is trainable, time-scaling is the right mechanism, and the prediction cost is interpretable rather than pathological.
+The diagnostic journey gives us confidence that the \emph{direction} is correct ,  semigroup structure is trainable, time-scaling is the right mechanism, and the prediction cost is interpretable rather than pathological.
 Whether this translates to a practical advantage at scale is the next experiment.
 
 \paragraph{Update: CORN stories at $d=256$.}
 The CORN stories experiment on TinyStories at $d_{\mathrm{model}}=256$ shows the prediction cost vanishes at sufficient scale.
 Val loss: ORN 2.182 vs CORN 2.183 ($+0.06\%$).
 Rank compresses from 20 to 10 with zero quality cost.
-The fundamental tension between composability and prediction, measured at 2.9\% at $d=128$, is a small-scale artefact --- at $d=256$ there is enough spectral capacity for $\M$ to be both a good predictor and composable.
+The fundamental tension between composability and prediction, measured at 2.9\% at $d=128$, is a small-scale artefact ,  at $d=256$ there is enough spectral capacity for $\M$ to be both a good predictor and composable.
 This answers open question~3 (scale dependence): the tension shrinks with width and is negligible at $d \geq 256$.
 
 % ======================================================================
@@ -1668,10 +1668,10 @@ This section presents an empirical result that collapses these connections into 
 
 Standard diffusion models train a neural network to denoise images at varying noise levels.
 The noise level $\sigma(t)$ is an external schedule imposed on the network: a separate input, usually via sinusoidal positional embedding, that tells the network ``this much noise was added, please remove it.''
-The network architecture does not change with $\sigma$---only the conditioning signal does.
+The network architecture does not change with $\sigma$, only the conditioning signal does.
 
 The ORN's $t$-scaled coupling ($q = h \cdot (tA)$, $k = h \cdot (tB)$) changes the \emph{dynamics themselves}: at high $t$, $\M$ couples tokens more strongly; at low $t$, coupling is weaker.
-If these two parameters---the external noise level and the internal coupling strength---correspond, then the diffusion noise schedule is not an external imposition but an emergent property of $\M$'s spectral structure.
+If these two parameters, the external noise level and the internal coupling strength, correspond, then the diffusion noise schedule is not an external imposition but an emergent property of $\M$'s spectral structure.
 
 \subsection{Experimental Setup}
 
@@ -1692,7 +1692,7 @@ E: Direct & $t = \sigma$ & Coupling IS noise level \\
 \end{tabular}
 \end{center}
 
-All other aspects---architecture, training objective (predict clean from noisy), noise schedule, number of steps---were identical across all five variants.
+All other aspects, architecture, training objective (predict clean from noisy), noise schedule, number of steps, were identical across all five variants.
 
 \subsection{Results}
 
@@ -1705,7 +1705,7 @@ All other aspects---architecture, training objective (predict clean from noisy),
 B: $t = 1+\sigma$ & 0.0211 & $-1.9\%$ \\
 D: $t = 0.5+\sigma$ & 0.0214 & $-0.5\%$ \\
 C: $t = 1/(1+\sigma)$ & 0.0214 & $-0.5\%$ \\
-A: $t = 1$ (no link) & 0.0215 & --- \\
+A: $t = 1$ (no link) & 0.0215 & ,  \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1729,12 +1729,12 @@ This is the spectral hierarchy that maps onto the noise schedule:
     \item The $t$-scaling amplifies or dampens this hierarchy: high $t$ emphasises fast modes (coarse denoising), low $t$ lets slow modes contribute (fine refinement).
 \end{itemize}
 
-The homogenisation observed in Section~\ref{sec:orbits}---tokens converging from cosine 0.21 to 0.91 through depth---IS denoising.
+The homogenisation observed in Section~\ref{sec:orbits}, tokens converging from cosine 0.21 to 0.91 through depth, IS denoising.
 Each layer propagates relational information through the field, reducing per-token noise toward consensus.
 The entropy oscillation (focus $\to$ diffuse $\to$ focus across layers) IS multi-scale refinement: alternating between global structure recovery and local detail recovery.
 
 The ORN does not need a diffusion framework bolted onto it.
-Its natural forward dynamics---shared coupling applied to an evolving field state---already implement a spectral denoising process.
+Its natural forward dynamics, shared coupling applied to an evolving field state, already implement a spectral denoising process.
 The $t$-scaling makes this explicit: the coupling strength controls which modes are active, which is exactly what a noise schedule does in diffusion.
 
 \subsection{Implications}
@@ -1821,7 +1821,7 @@ for t in range(T, 0, -1):
 
 \paragraph{What the semigroup adds.}
 The semigroup property $T(\sigma_1) \circ T(\sigma_2) \approx T(\sigma_1 + \sigma_2)$ constrains the denoiser: denoising from $\sigma{=}0.8$ should be decomposable into denoising from $\sigma{=}0.5$ followed by $\sigma{=}0.3$.
-Standard DDPM makes no such guarantee---each step is trained independently.
+Standard DDPM makes no such guarantee, each step is trained independently.
 The CORN semigroup loss (Section~\ref{sec:corn}) could be applied during diffusion training to enforce this, potentially improving multi-step consistency and allowing fewer reverse steps at generation time.
 
 \subsection{Note: The Path Integral Connection}
@@ -1840,7 +1840,7 @@ These are four views of the same object: $\M$ generates the dynamics, the semigr
 \paragraph{What this means for training.}
 The path integral perspective suggests three things:
 
-First, the semigroup consistency loss (Section~\ref{sec:corn}) is not an arbitrary regulariser---it enforces that the \emph{propagator composes correctly}.  In physics, a propagator that doesn't compose produces inconsistent transition amplitudes.  In diffusion, a denoiser whose steps don't compose produces inconsistent multi-step denoising.  The semigroup loss is the natural training signal for compositional generation.
+First, the semigroup consistency loss (Section~\ref{sec:corn}) is not an arbitrary regulariser, it enforces that the \emph{propagator composes correctly}.  In physics, a propagator that doesn't compose produces inconsistent transition amplitudes.  In diffusion, a denoiser whose steps don't compose produces inconsistent multi-step denoising.  The semigroup loss is the natural training signal for compositional generation.
 
 Second, the G6 result (exact physics from propagator composition) suggests that CORN-trained models should be better at multi-step diffusion than standard models, because their denoising steps are guaranteed to compose.  This could allow \emph{fewer reverse steps} at generation time: if $T(0.5) \circ T(0.5) = T(1.0)$ exactly, you can denoise in one large step instead of two small ones.  Standard diffusion cannot make this guarantee.
 
@@ -1935,33 +1935,33 @@ If $T(\sigma_1) \circ T(\sigma_2) \neq T(\sigma_1{+}\sigma_2)$, then:
 \end{itemize}
 
 Composability is not an optional extra.
-It is the structural property that makes the possibility space \emph{real}---not just a mathematical abstraction but a space the model can navigate, explore, and sample from.
+It is the structural property that makes the possibility space \emph{real}, not just a mathematical abstraction but a space the model can navigate, explore, and sample from.
 This is why CORN, despite its prediction cost, may be essential for any application that requires more than greedy next-token generation.
 
 % ======================================================================
 \section{The State--Composition Duality and Hybrid Architectures}\label{sec:state-composition}
 
 Our architecture sweep (Section~\ref{sec:wild}, following experiments) revealed a stark tension: RS-ORN (residual state) achieves the best prediction (val~0.4253) but the worst composition fidelity (55\% top-1 agreement), while OM-ORN (orbit memory) composes almost perfectly (99.78\%) but predicts slightly worse.
-This is not a quirk of our architecture---it reflects a deep structural tradeoff.
+This is not a quirk of our architecture, it reflects a deep structural tradeoff.
 Recent theoretical and empirical work across the hybrid architecture literature illuminates both the cause and several promising resolutions.
 
 \subsection{The TC0 Barrier: Why State Breaks Composition}
 
-Merrill et al.~\cite{merrill2024illusion} prove that state-space models with fixed-size state and diagonal (or scalar) state transitions are bounded by the circuit complexity class TC0---the same class as standard transformers.
+Merrill et al.~\cite{merrill2024illusion} prove that state-space models with fixed-size state and diagonal (or scalar) state transitions are bounded by the circuit complexity class TC0, the same class as standard transformers.
 This means they \emph{provably cannot} solve permutation composition, a canonical test of compositional reasoning.
 The key insight: lossy compression of context into a fixed-size state destroys exactly the relational information needed for composition.
 
-Sanford et al.~\cite{sanford2025provable} sharpen this: solving $L$-level sequential function composition requires either $(L{+}1)$ full attention layers or $2^{3L^2}$ linear attention layers---an \emph{exponential} gap.
+Sanford et al.~\cite{sanford2025provable} sharpen this: solving $L$-level sequential function composition requires either $(L{+}1)$ full attention layers or $2^{3L^2}$ linear attention layers, an \emph{exponential} gap.
 Full attention preserves all pairwise relationships (at quadratic cost); linear attention and SSMs compress these away.
 
 \begin{observation}[RS-ORN and TC0]
-RS-ORN's state accumulation rule $s_\ell = s_{\ell-1} + \alpha \cdot \text{compress}(h_\ell)$ is an additive compression---it projects the full residual stream into a fixed-size state via a linear map.
+RS-ORN's state accumulation rule $s_\ell = s_{\ell-1} + \alpha \cdot \text{compress}(h_\ell)$ is an additive compression, it projects the full residual stream into a fixed-size state via a linear map.
 This is precisely the class of operation bounded by TC0.
 The 55\% composition fidelity is not a bug in our implementation; it is the theoretical ceiling for this class of state dynamics.
 \end{observation}
 
 OM-ORN escapes TC0 because orbit attention preserves full pairwise relationships between the query and the $K$ orbit points.
-The orbit points are generated by $\M$'s dynamics, so the relational structure is grounded in $\M$'s geometry, but the attention mechanism itself is quadratic---hence composable.
+The orbit points are generated by $\M$'s dynamics, so the relational structure is grounded in $\M$'s geometry, but the attention mechanism itself is quadratic, hence composable.
 
 \subsection{Breaking Through: Non-Diagonal State Transitions}
 
@@ -2026,13 +2026,13 @@ If $\M = U \Sigma V^\top$ and we identify the singular values $\sigma_i$ with de
 \end{enumerate}
 High-eigenvalue modes couple strongly and decay slowly (long memory).
 Low-eigenvalue modes couple weakly and decay rapidly (local attention).
-This gives multi-scale retention (cf.\ RetNet~\cite{sun2023retnet}) entirely from $\M$'s existing spectral structure---no additional per-layer parameters.
+This gives multi-scale retention (cf.\ RetNet~\cite{sun2023retnet}) entirely from $\M$'s existing spectral structure, no additional per-layer parameters.
 \end{conjecture}
 
 \subsection{Hybrid Interleaving: The Jamba Principle}
 
 Jamba~\cite{lieber2024jamba} interleaves attention and Mamba SSM layers at a 1:7 ratio.
-Ablations show no substantial quality difference between 1:3 and 1:7---a few attention layers suffice.
+Ablations show no substantial quality difference between 1:3 and 1:7, a few attention layers suffice.
 The critical finding: pure Mamba fails to develop in-context learning; the attention layers develop induction heads that enable ICL.
 Early layers should be SSM-like (feature extraction); attention layers belong at strategic depths.
 
@@ -2056,7 +2056,7 @@ MASA's finding that ${\sim}4$--$8$ atoms suffice for hundreds of layers directly
 \subsection{Griffin's Split Gate: When to Remember vs When to Compose}
 
 Griffin~\cite{de2024griffin} introduces the Real-Gated Linear Recurrent Unit (RG-LRU), interleaving gated linear recurrences with local attention at a 2:1 ratio.
-The recurrence gate interpolates between ``update state'' and ``preserve state''---learning per-position when to accumulate context and when to maintain existing representations.
+The recurrence gate interpolates between ``update state'' and ``preserve state'', learning per-position when to accumulate context and when to maintain existing representations.
 
 This maps directly to our perturbative correction gate.
 Currently, the ORN gate controls ``how much correction to apply.''
@@ -2081,7 +2081,7 @@ SKOLR~\cite{nath2025skolr} establishes a formal equivalence between structured K
 By representing state as time-delayed observations, the Koopman operator's spectral decomposition yields a structured linear recurrence where different eigenfunction components evolve at different rates.
 
 This deepens our Koopman interpretation (Section~\ref{sec:koopman}).
-$\M$'s eigenvectors define Koopman eigenfunctions---directions along which the dynamics decouple.
+$\M$'s eigenvectors define Koopman eigenfunctions, directions along which the dynamics decouple.
 Each eigenfunction component can be tracked independently with its own memory horizon:
 \begin{itemize}[nosep]
     \item Fast modes ($|\lambda_i|$ large): converge quickly, need short memory
@@ -2101,7 +2101,7 @@ SharedM \emph{is} a connection on the ``representation bundle'' over sequence po
 \begin{itemize}[nosep]
     \item $\M$ defines how representations at different positions couple (parallel transport)
     \item The same $\M$ at every layer means a \emph{flat} connection (zero curvature in the depth direction)
-    \item Perturbative corrections introduce \emph{curvature}---deviations from flat geometry
+    \item Perturbative corrections introduce \emph{curvature}, deviations from flat geometry
     \item Composition fidelity corresponds to \emph{flatness}: a flat connection trivially composes
 \end{itemize}
 
@@ -2140,7 +2140,7 @@ Commutator corrections & Gauge theory~\cite{weiler2024gauge} & Geometric consist
 \end{table}
 
 \paragraph{The key theoretical takeaway.}
-The state/composition tradeoff is not a fundamental law---it is a consequence of \emph{diagonal state transitions} and \emph{uniform decay}.
+The state/composition tradeoff is not a fundamental law, it is a consequence of \emph{diagonal state transitions} and \emph{uniform decay}.
 Recent work (RWKV-7, Gated DeltaNet, the expressiveness hierarchy) shows clear paths through it.
 For ORN specifically: keep SharedM as the coupling authority, but upgrade state dynamics to use $\M$'s full matrix structure (non-diagonal transitions, delta-rule updates, eigenmode-aware memory).
 This preserves the parameter efficiency thesis while addressing the composition failure.

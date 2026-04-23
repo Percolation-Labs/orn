@@ -45,7 +45,7 @@
     {\small Percolation Labs}\\
     {\small \url{https://github.com/Percolation-Labs/orn}}%
 }
-\date{April 2026 \quad{\small\textnormal{--- Working Draft}}}
+\date{April 2026 \quad{\small\textnormal{,  Working Draft}}}
 
 \begin{document}
 \maketitle
@@ -53,7 +53,7 @@
 % ======================================================================
 \begin{abstract}
 A transformer reads a sequence by transforming states: $L$ layers of attention and feedforward computation, each materialising an intermediate representation that the next layer consumes.
-We ask whether the coupling between tokens---which positions attend to which---can be separated from the response to that coupling and computed algebraically, without materialising intermediate states.
+We ask whether the coupling between tokens, which positions attend to which, can be separated from the response to that coupling and computed algebraically, without materialising intermediate states.
 
 We begin with an empirical observation from the Orbital Response Network: a single shared coupling operator $\M$ crystallises during training to a stable low-rank structure and transfers across tasks.
 We formalise this as the question: does the state trajectory of an $L$-layer network lie in the Krylov subspace of $\M$?
@@ -61,19 +61,19 @@ If so, a polynomial of $\M$ recovers the trajectory and intermediate states are 
 
 \textbf{The answer is nuanced.}
 The Krylov subspace recovers 36\% of the trajectory.
-Per-layer analysis reveals a clean split: early layers (1--4) are 96\% linear in $\M$---the operator dominates.
-Deep layers (5--8) are 50\% nonlinear---the feedforward network does real work.
+Per-layer analysis reveals a clean split: early layers (1--4) are 96\% linear in $\M$, the operator dominates.
+Deep layers (5--8) are 50\% nonlinear, the feedforward network does real work.
 A polynomial alone cannot replace $L$ layers.
-But the polynomial captures the \emph{coupling structure}---the relational grammar---while the FFN handles \emph{content}: which specific tokens fill the structural slots.
+But the polynomial captures the \emph{coupling structure}, the relational grammar, while the FFN handles \emph{content}: which specific tokens fill the structural slots.
 
 This decomposition motivates a new architecture: \textbf{asymmetric geometric attention}.
 The coupling operator $\M = AB^\top$ factors every polynomial into query-side ($A$) and key-side ($B$) projections through a reduced inner geometry $G = B^\top A$.
-Input-dependent coefficients select how deeply each token engages with $G$'s spectral structure---a template selector, not a complexity estimator.
+Input-dependent coefficients select how deeply each token engages with $G$'s spectral structure, a template selector, not a complexity estimator.
 The polynomial operates in $r$-dimensional space (cheap), the asymmetry is built in ($A \neq B$), and re-coupling after nonlinear response lets the model see what the FFN discovered before routing again through the same geometry.
 
 Experiments show: coupling is the bottleneck, not response depth.
 Two FFN layers match four.
-The value is not in deeper response but in re-coupling---evaluating the geometry again after transformation.
+The value is not in deeper response but in re-coupling, evaluating the geometry again after transformation.
 This is the ORN's coupling-response decomposition taken to its limit: the coupling IS the geometry, and the geometry is what you learn.
 \end{abstract}
 
@@ -92,7 +92,7 @@ That the network's job is to hold on to what it has seen.
 
 We propose a different framing.
 The network does not hold information.
-It holds a \emph{rule}---a relational grammar encoded as an operator $\M$---from which the appropriate response to any input can be \emph{inferred}.
+It holds a \emph{rule}, a relational grammar encoded as an operator $\M$, from which the appropriate response to any input can be \emph{inferred}.
 The coupling pattern at position 50 is not a memory of positions 1--49.
 It is a consequence of applying the grammar to whatever appears at positions 1--49.
 The operator did not see those tokens and store a summary.
@@ -101,15 +101,15 @@ It defines a geometry, and the geometry determines what must follow.
 This is the difference between a lookup table and a function.
 A lookup table stores entries.
 A function generates them.
-The function never ``had'' the entries---it computes them on demand from its rule.
+The function never ``had'' the entries, it computes them on demand from its rule.
 A trained operator $\M$ is a function over token relationships, not a table of stored states.
 
 \paragraph{Why this matters for architecture.}
 If inference replaces memory, then the sequential state-to-state computation in every existing architecture is doing unnecessary work.
-Each layer materialises an intermediate state $\h_l$, but that state is largely determined by $\M$ applied to the input---the intermediate values are not independent contributions, they are waypoints along an orbit that the operator defines.
+Each layer materialises an intermediate state $\h_l$, but that state is largely determined by $\M$ applied to the input, the intermediate values are not independent contributions, they are waypoints along an orbit that the operator defines.
 
 An architecture built on this principle would not compute states layer by layer.
-It would compose the operator with itself---algebraically, in operator space---and produce a state only when one is needed for readout.
+It would compose the operator with itself, algebraically, in operator space, and produce a state only when one is needed for readout.
 The depth of computation would be a property of the operator (its spectral structure, its polynomial degree), not a count of sequential passes through a layer.
 
 
@@ -170,14 +170,14 @@ The next section states the conjecture precisely.
 \subsection{What We Are Trying to Build}
 
 We are not optimising loss on TinyStories.
-We are trying to build a new type of circuit: one where an operator $T(\M)$---a learned functional of the coupling geometry $\M$---encodes a \emph{relational world model}, and a nonlinear readout (FFN) interprets that model to produce specific outputs.
+We are trying to build a new type of circuit: one where an operator $T(\M)$, a learned functional of the coupling geometry $\M$, encodes a \emph{relational world model}, and a nonlinear readout (FFN) interprets that model to produce specific outputs.
 
 The relational world model is not a set of facts.
 It is a geometry of relationships: which concepts relate to which, through what templates, at what nesting depth.
 ``Vindicate'' activates a three-party judgment template.
 ``Despite'' activates an expectation-violation template.
 The operator encodes these templates in its spectral structure.
-The FFN's job is to interpret the activated templates in context---to fill the slots, resolve the references, produce the tokens.
+The FFN's job is to interpret the activated templates in context, to fill the slots, resolve the references, produce the tokens.
 
 The operator builds a simulacrum of relational structure.
 The FFN wraps it in specifics.
@@ -191,15 +191,15 @@ These invariants:
 \begin{enumerate}[nosep]
 \item Are discoverable by gradient descent from raw data.
 \item Can be decoupled from the context-specific processing that uses them.
-\item Are significant---they carry enough of the data's structure that context-specific processing reduces to slot-filling given the invariants.
+\item Are significant, they carry enough of the data's structure that context-specific processing reduces to slot-filling given the invariants.
 \end{enumerate}
 \end{conjecture}
 
 \noindent This is a claim about language, not about any specific parameter matrix.
 SharedM and SharedFFN are one possible implementation.
-The crystallisation, transfer, and parameter sharing results are evidence that such invariants exist (Part~1), are separable (Part~2), and carry substantial information (Part~3---though the evidence here is weaker).
+The crystallisation, transfer, and parameter sharing results are evidence that such invariants exist (Part~1), are separable (Part~2), and carry substantial information (Part~3, though the evidence here is weaker).
 
-If Conjecture~\ref{conj:structural} only held, it would motivate parameter sharing but nothing more---a bag of reusable features, a lookup table of relational patterns.
+If Conjecture~\ref{conj:structural} only held, it would motivate parameter sharing but nothing more, a bag of reusable features, a lookup table of relational patterns.
 The second conjecture says something stronger about the \emph{mathematical form} of the invariants.
 
 \begin{conjecture}[Operator Representation]
@@ -244,23 +244,23 @@ where $\varepsilon$ depends on:
 \end{conjecture}
 
 \noindent The conjecture says: the state trajectory of an $L$-layer network can be \emph{recovered} by an operator acting on the initial state, modulo a readout.
-The recovery is not exact---$\varepsilon > 0$---but the error is bounded relative to the total orbit distance.
+The recovery is not exact, $\varepsilon > 0$, but the error is bounded relative to the total orbit distance.
 
 \paragraph{Epsilon is not uniform.}
 $\varepsilon$ should not be thought of as a blanket error across all inputs and all tasks.
-Think of $\M$'s eigenspace as a small-world network: a few high-eigenvalue modes are \textbf{hubs}---they connect many concepts through short relational paths (subject-verb, cause-effect, agent-patient).
+Think of $\M$'s eigenspace as a small-world network: a few high-eigenvalue modes are \textbf{hubs}, they connect many concepts through short relational paths (subject-verb, cause-effect, agent-patient).
 These hubs account for most of the predictive value of language, because relational patterns follow a power law.
 
-For anything on the structural backbone---anything reachable through the major relational highways---$\varepsilon$ is small.
+For anything on the structural backbone, anything reachable through the major relational highways, $\varepsilon$ is small.
 For rare specific associations (``the butler's name was Jenkins'') that lie off any highway, $\varepsilon$ is large.
 The FFN handles these: it fills the specific slot once the operator has established which slot exists.
 
 $\varepsilon$ is inversely weighted by importance: small where it matters (structural backbone, high-frequency patterns), large where it doesn't (long-tail specifics).
-The Krylov measurement (36\% trajectory recovery) may capture a much larger fraction of the \emph{predictive value}---because the structural part is disproportionately valuable for next-token prediction.
+The Krylov measurement (36\% trajectory recovery) may capture a much larger fraction of the \emph{predictive value}, because the structural part is disproportionately valuable for next-token prediction.
 
 \paragraph{What ``recovery'' means.}
 We are not asking whether $T(\M) \h_0 = \h_L$.
-We are asking whether $T(\M) \h_0$ lands in the \emph{same neighbourhood} of representation space as $\h_L$---close enough that a nonlinear readout $g$ can extract the same predictions.
+We are asking whether $T(\M) \h_0$ lands in the \emph{same neighbourhood} of representation space as $\h_L$, close enough that a nonlinear readout $g$ can extract the same predictions.
 The quality of recovery should be measured not by trajectory norm but by \textbf{downstream prediction accuracy}: does $g(T(\M) \h_0)$ produce the same output distribution as the $L$-layer network?
 The answer can be ``yes'' even when the trajectory error is large, if the error lies in dimensions that are orthogonal to the prediction task.
 
@@ -275,7 +275,7 @@ Predicting ``Lily'' given the template ``a female name goes here'' is much easie
 The operator builds the world; the FFN lives in it.
 
 \paragraph{The Lie--Trotter connection.}
-The relationship between the operator-space architecture and the standard ORN is not an analogy---it is a mathematical identity.
+The relationship between the operator-space architecture and the standard ORN is not an analogy, it is a mathematical identity.
 The Lie--Trotter product formula states:
 \begin{equation}
 \exp(t(A + B)) = \lim_{n \to \infty} \left[\exp\!\left(\frac{tA}{n}\right) \exp\!\left(\frac{tB}{n}\right)\right]^n
@@ -291,7 +291,7 @@ As the commutator grows, more splitting steps (more layers) are needed.
 \paragraph{The commutator crystallises.}
 We have measured this: the commutator rank $[\M, W_V W_O]$ traces $3 \to 150 \to 65$ during training.
 Coupling and response are \textbf{becoming more commutative} as $\M$ crystallises.
-This predicts: as training progresses (and possibly as scale increases), fewer Lie--Trotter splittings---fewer coupling stages---are needed for the same accuracy.
+This predicts: as training progresses (and possibly as scale increases), fewer Lie--Trotter splittings, fewer coupling stages, are needed for the same accuracy.
 
 Our two-stage architecture (couple $\to$ FFN $\to$ re-couple $\to$ FFN) is the $n = 2$ Lie--Trotter splitting.
 The standard ORN with $L = 8$ is the $n = 8$ splitting.
@@ -299,7 +299,7 @@ If the commutator continues to shrink during training, the $n = 2$ splitting sho
 This is testable: measure $\norm{[\M, \mathrm{FFN}]}$ at different training stages and scales.
 
 \paragraph{Why this matters for the architecture.}
-The Lie--Trotter connection transforms the question ``how many coupling stages?'' from an empirical guess into a \textbf{measurable quantity}---the commutator norm.
+The Lie--Trotter connection transforms the question ``how many coupling stages?'' from an empirical guess into a \textbf{measurable quantity}, the commutator norm.
 \begin{itemize}[nosep]
 \item Small commutator $\to$ few coupling stages needed $\to$ the operator-space architecture works with 1--2 stages.
 \item Large commutator $\to$ many stages needed $\to$ the architecture converges back toward the ORN (many interleaved coupling-response steps).
@@ -307,7 +307,7 @@ The Lie--Trotter connection transforms the question ``how many coupling stages?'
 \end{itemize}
 
 \paragraph{Why recovery is hard.}
-The conjecture requires that $T(\M)$---a function of a single shared operator---recovers what $L$ layers of input-dependent, nonlinear, sequential computation produce.
+The conjecture requires that $T(\M)$, a function of a single shared operator, recovers what $L$ layers of input-dependent, nonlinear, sequential computation produce.
 The $L$-layer network sees intermediate states: layer~5 knows what layer~4 discovered.
 The operator composes $\M$'s eigenmodes algebraically.
 Whether the algebraic advantage compensates for the loss of intermediate states depends on the commutator: if coupling and response nearly commute, the intermediate states add little information, and the algebraic composition suffices.
@@ -359,28 +359,28 @@ Z = \underbrace{\int \mathcal{D}\phi \, e^{iS_0[\phi]}}_{\text{free theory (Gaus
 \end{equation}
 The free theory $S_0$ is quadratic and exactly solvable.
 The interaction terms $V_n$ are perturbative corrections controlled by a coupling constant $\lambda$.
-Perturbation theory works when $\lambda$ is small---when the interactions are genuinely perturbative.
+Perturbation theory works when $\lambda$ is small, when the interactions are genuinely perturbative.
 
 In the ORN:
 \begin{itemize}[nosep]
-\item The \textbf{free theory} is $T(\h_0) = \exp(L \cdot \M) \h_0$---the linear semigroup propagation.
+\item The \textbf{free theory} is $T(\h_0) = \exp(L \cdot \M) \h_0$, the linear semigroup propagation.
 \item The \textbf{interactions} are the per-layer FFN and gated corrections.
 \item The \textbf{coupling constant} is the correction-to-orbit ratio $\rho$.
 \end{itemize}
 
 Conjecture~\ref{conj:dominance} states that $\rho$ is small: the ORN operates in the perturbative regime.
-This is not guaranteed---if $\rho \approx 1$, the corrections are doing as much work as the operator, and the decomposition is meaningless.
+This is not guaranteed, if $\rho \approx 1$, the corrections are doing as much work as the operator, and the decomposition is meaningless.
 
 
 % ======================================================================
 \section{What ``Learning in Operator Space'' Means}
 
 The conjecture is not merely about approximation.
-It is about what the network \emph{learns}---and whether an entirely new kind of architecture is justified.
+It is about what the network \emph{learns}, and whether an entirely new kind of architecture is justified.
 
 The current ORN is a state-space machine that happens to share an operator.
 It does not compose operators, defer materialisation, or exploit semigroup structure computationally.
-But if the conjecture holds---if $\rho$ is small and the linear operator does the heavy lifting---then the state-space computation is \emph{redundant overhead}.
+But if the conjecture holds, if $\rho$ is small and the linear operator does the heavy lifting, then the state-space computation is \emph{redundant overhead}.
 The $L$ sequential layers are laboriously materialising intermediate states that are largely determined by a single linear operator $\M$.
 An architecture that computes $T = f(\M)$ directly and materialises state once would produce the same outputs with less computation and richer algebraic structure.
 
@@ -474,7 +474,7 @@ Measure $\rho$ at each scale after convergence.
 
 \subsection{Group II: Can We Compute Directly in Operator Space? (Experiments 6--10)}
 
-These experiments test whether practical architectures can compute in operator space---applying $\M$'s semigroup structure without materialising intermediate states---while matching state-space quality.
+These experiments test whether practical architectures can compute in operator space, applying $\M$'s semigroup structure without materialising intermediate states, while matching state-space quality.
 
 \paragraph{Experiment 6: Matrix Exponential ORN.}
 Replace $L$ layers with $\h = \exp(\alpha \M) \cdot \h_0$ plus a single nonlinear readout.
@@ -547,7 +547,7 @@ The literature is organised by what it supports or challenges, not by field.
 \paragraph{Weight sharing improves compositional generalisation.}
 Csordas et al.~\cite{csordas2021compositional} show that Universal Transformer variants (which share all weights across layers) dramatically improve compositional generalisation on COGS and SCAN, from 35\% to 81\%.
 The paper demonstrates that weight sharing broadly helps composition, supporting Conjecture~\ref{conj:structural}: relational invariants exist and sharing them improves generalisation.
-However, Csordas et al.\ share \emph{all} weights (like ALBERT); the specific ORN decomposition---share only coupling ($A, B$), keep response ($W_V, W_O$, FFN) per-layer---has not been independently discovered.
+However, Csordas et al.\ share \emph{all} weights (like ALBERT); the specific ORN decomposition, share only coupling ($A, B$), keep response ($W_V, W_O$, FFN) per-layer, has not been independently discovered.
 The ORN's contribution is identifying \emph{which} parameters encode the invariant, based on spectral invariance measurements.
 
 \paragraph{The Platonic Representation Hypothesis.}
@@ -556,7 +556,7 @@ Their metric (mutual $k$-nearest-neighbour alignment) reaches 0.16 out of 1.0 cr
 They measure representation alignment at the \emph{kernel} level (distance structures between embeddings) but do not analyse attention patterns, spectral structure, or coupling geometry.
 
 Our spectral invariance measurement operates at a deeper level: the coupling \emph{operator's} spectrum, not the embedding distances.
-The $\sim$0.98 correlation across GPT-2, LLaMA, Mistral, Phi, and OLMo is stronger evidence for the Platonic hypothesis than anything in their paper---it shows convergence at the level of the relational operator, not just the induced kernel.
+The $\sim$0.98 correlation across GPT-2, LLaMA, Mistral, Phi, and OLMo is stronger evidence for the Platonic hypothesis than anything in their paper, it shows convergence at the level of the relational operator, not just the induced kernel.
 Our frozen-$\M$ transfer experiment ($+0.73\%$ gap) directly tests what they hypothesise but do not measure: that the coupling geometry transfers because it reflects a data invariant, not an architectural artefact.
 
 \paragraph{RRT validates low-rank corrections.}
@@ -566,22 +566,22 @@ The per-layer variation is provably low-rank: a small perturbation of a shared s
 \paragraph{Geometric deep learning framework.}
 Bronstein et al.~\cite{bronstein2021gdl} unify successful deep learning architectures as enforcing geometric priors (symmetries).
 The ORN adds a new symmetry class: depth-invariance of coupling.
-The framework predicts that architectures exploiting this symmetry will be more parameter-efficient---confirmed by the 48$\times$ compression.
+The framework predicts that architectures exploiting this symmetry will be more parameter-efficient, confirmed by the 48$\times$ compression.
 
 \paragraph{MoE expert specialisation.}
 Muennighoff et al.~\cite{muennighoff2024olmoe} analyse expert specialisation in mixture-of-experts models and find that experts specialise by \emph{syntax} (subjects, predicates, modifiers) more than semantics, and this specialisation is consistent across layers.
-This is independent evidence that syntactic coupling is an invariant---the same claim as Conjecture~\ref{conj:structural}.
+This is independent evidence that syntactic coupling is an invariant, the same claim as Conjecture~\ref{conj:structural}.
 
 \subsection{Strong Support for Operator Representation (Conjecture~\ref{conj:operator})}
 
 \paragraph{Koopman operator theory.}
-The Koopman framework~\cite{brunton2022koopman} proves that every nonlinear dynamical system has a linear (but infinite-dimensional) operator representation with composability ($K^{s+t} = K^s K^t$), continuity, and spectral decomposition---exactly the properties of Conjecture~\ref{conj:operator}.
+The Koopman framework~\cite{brunton2022koopman} proves that every nonlinear dynamical system has a linear (but infinite-dimensional) operator representation with composability ($K^{s+t} = K^s K^t$), continuity, and spectral decomposition, exactly the properties of Conjecture~\ref{conj:operator}.
 Lusch et al.~\cite{lusch2018koopman} show that autoencoders can learn finite-dimensional Koopman approximations whose eigenmodes correspond to interpretable physical modes (oscillation frequencies, decay rates).
 Their training loss enforces three constraints: reconstruction ($\|\x - \phi^{-1}(\phi(\x))\|$), linearity ($\|\phi(\x_{k+1}) - K\phi(\x_k)\|$), and prediction ($\|\x_{k+1} - \phi^{-1}(K\phi(\x_k))\|$).
 
 A critical difference: in Lusch et al., the spectral structure of $K$ is \emph{prescribed} (block-diagonal with $(\mu, \omega)$ parameterisation enforcing circular eigenfunction symmetry).
 In the ORN, $\M$'s spectral structure \emph{emerges}: rank drops from 189 to $\sim$70, condition number rises, spectral shape locks by 3B tokens.
-The emergence is stronger evidence for Conjecture~\ref{conj:structural} than prescribed structure---it means gradient descent discovers the spectral decomposition, not the architect.
+The emergence is stronger evidence for Conjecture~\ref{conj:structural} than prescribed structure, it means gradient descent discovers the spectral decomposition, not the architect.
 
 \paragraph{Koopman closure is provably impossible for language.}
 Colbrook et al.~\cite{colbrook2024limits} prove that finite-dimensional Koopman learning fails for generic nonlinear systems.
@@ -589,7 +589,7 @@ More precisely: any system with multiple fixed points (attractors) cannot have a
 Language has effectively infinite attractors (every sentence is a trajectory toward a different fixed point).
 Therefore, exact finite-dimensional Koopman closure for language is \textbf{provably impossible}.
 
-This is not a weakness of the programme---it is why the perturbative corrections exist.
+This is not a weakness of the programme, it is why the perturbative corrections exist.
 The corrections break the Koopman linearity at each layer, compensating for the closure residual that finite-rank $\M$ cannot absorb.
 Koopman theory says $\M$ captures the dynamics within its invariant subspace (the 70-dimensional coupling geometry); the corrections handle everything outside it.
 The rank-70 $\M$ is the best finite-dimensional Koopman approximation to the coupling dynamics of language.
@@ -597,18 +597,18 @@ The corrections are the theoretically necessary residual.
 
 \paragraph{The synthesis.}
 Combining the Platonic and Koopman perspectives: the Platonic hypothesis predicts that a universal coupling kernel exists (all models converge to it).
-Koopman theory predicts that this kernel has a finite-rank operator approximation with spectral decomposition---but the approximation is inexact, with a residual controlled by the closure gap.
+Koopman theory predicts that this kernel has a finite-rank operator approximation with spectral decomposition, but the approximation is inexact, with a residual controlled by the closure gap.
 $\M$ is the finite-rank Koopman approximation to the Platonic kernel.
 The corrections handle the closure residual.
 Both theories predict the same object from different directions; neither alone is sufficient.
 
 \paragraph{Semigroup spectral theory.}
 Engel \& Nagel~\cite{engel2000semigroups} prove the spectral mapping theorem for semigroups: if $\M$ has eigenvalues $\{\lambda_i\}$, then $T(t) = \exp(t\M)$ has eigenvalues $\{\exp(t\lambda_i)\}$.
-Each eigenmode evolves independently---property (c) of Conjecture~\ref{conj:operator} holds automatically for matrix-generated semigroups.
+Each eigenmode evolves independently, property (c) of Conjecture~\ref{conj:operator} holds automatically for matrix-generated semigroups.
 
 \paragraph{The Lie--Trotter product formula.}
 The ORN's alternating structure (shared attention then per-layer FFN) is the Lie--Trotter decomposition~\cite{trotter1959product} of $\exp(t(\M_{\mathrm{coupling}} + \M_{\mathrm{response}}))$ into alternating applications of the coupling and response semigroups.
-This is not an approximation discovered by gradient descent---it is the standard numerical method for operator splitting, built into the architecture.
+This is not an approximation discovered by gradient descent, it is the standard numerical method for operator splitting, built into the architecture.
 
 \paragraph{DAT confirms asymmetry.}
 Altabaa \& Lafferty~\cite{altabaa2024dat} (ICML 2025) independently decompose attention into tensor products and prove that asymmetric factorisation ($A \neq B$) is essential for autoregressive tasks.
@@ -628,7 +628,7 @@ At $L = 8$: error $\approx 0.004$, consistent with the $+0.73\%$ frozen-$\M$ tra
 
 \paragraph{ChebNet and CayleyNet.}
 Defferrard et al.~\cite{defferrard2016chebnet} and Levie et al.~\cite{levie2017cayleynet} prove that polynomial and rational filters of a shared operator (the graph Laplacian) are universal for graph signal processing.
-Our polynomial functional $T(\M)$ is structurally identical---a ChebNet filter applied in the depth dimension rather than the graph dimension.
+Our polynomial functional $T(\M)$ is structurally identical, a ChebNet filter applied in the depth dimension rather than the graph dimension.
 
 \paragraph{MERA and tensor networks.}
 Vidal's MERA~\cite{vidal2007mera} decomposes quantum states into hierarchical operators: shared disentanglers (coupling) and per-scale isometries (response).
@@ -650,7 +650,7 @@ Conjecture~\ref{conj:recovery} holds only with corrections included in $g$.
 
 \paragraph{Our own Krylov measurement.}
 36\% recovery, 92\% residual.
-The polynomial of $\M$ captures only the coupling component---the structural fraction---not the full computation.
+The polynomial of $\M$ captures only the coupling component, the structural fraction, not the full computation.
 Conjecture~\ref{conj:recovery}'s $\varepsilon$ is bounded below by the FFN's structural contribution ($\sim$64\% of the trajectory).
 The conjecture should be understood as: $T(\M)$ captures the \emph{relational structure}, not the full state.
 
@@ -661,7 +661,7 @@ Several results suggest structural parallels that have not been previously noted
 \begin{itemize}[nosep]
 \item \textbf{Renormalisation group:} $\M$'s crystallisation (liberation $\to$ crystallisation dynamics, rank 534 $\to$ 69) IS an RG flow.
       The spectral modes of $\M$ decompose into relevant (survive across depth) and irrelevant (wash out).
-      Koch-Janusz \& Ringel~\cite{kochjanusz2018rg} prove that RG maximises mutual information between the coarse description and long-range structure---$\M$'s crystallisation may be optimal in this information-theoretic sense.
+      Koch-Janusz \& Ringel~\cite{kochjanusz2018rg} prove that RG maximises mutual information between the coarse description and long-range structure, $\M$'s crystallisation may be optimal in this information-theoretic sense.
 
 \item \textbf{Gauge theory:} $\M$ is a gauge connection on a fibre bundle where the base space is the token sequence and the fibres are representation spaces.
       Spectral invariance across layers IS gauge invariance.
@@ -684,7 +684,7 @@ Several results suggest structural parallels that have not been previously noted
 Every existing architecture entangles depth and width.
 Each layer performs both token-token interaction (attention, convolution, recurrence) and per-token transformation (FFN, projection, nonlinearity), repeated $L$ times.
 Token 5 at layer 1 sees token 3's raw embedding; token 5 at layer 8 sees token 3's representation after 7 layers of transformation.
-The two operations are inseparable---you cannot have deeper representations without re-routing between tokens at every stage.
+The two operations are inseparable, you cannot have deeper representations without re-routing between tokens at every stage.
 
 The Orbital Network untangles them.
 
@@ -719,7 +719,7 @@ The depth pass has no recurrence, no fixed-point iteration, no intermediate stat
 It is a closed-form algebraic evaluation.
 
 \paragraph{This is deliberately extreme.}
-The purpose of flattening---collapsing $L$ layers into one polynomial plus one attention layer---is diagnostic, not architectural.
+The purpose of flattening, collapsing $L$ layers into one polynomial plus one attention layer, is diagnostic, not architectural.
 We flatten to learn the decomposition: which component carries coupling, which carries response, where the bottleneck is, what breaks.
 The flattening experiments teach us the decomposition.
 The scaling experiments will teach us how to re-stack.
@@ -748,10 +748,10 @@ It is a lookup table of couplings.
 
 \paragraph{But attention is not a table.}
 When you read a sentence, your visual system does not compute a matrix of pairwise relevances over every word on the page.
-Your reading is guided by a trained dynamical system---saccade patterns shaped by years of experience---that moves through the text, slowing on unfamiliar constructions, skipping predictable ones.
+Your reading is guided by a trained dynamical system, saccade patterns shaped by years of experience, that moves through the text, slowing on unfamiliar constructions, skipping predictable ones.
 The ``attention'' to the next word is not computed from a coupling matrix.
 It emerges from the reading system's trained geometry interacting with the current input.
-It changes with every fixation, but the underlying system does not change---only the state moving through it.
+It changes with every fixation, but the underlying system does not change, only the state moving through it.
 
 This is the difference between Newtonian gravity (compute an $N \times N$ force matrix between all bodies) and general relativity (define a metric and let bodies follow geodesics).
 In GR, there is no force matrix.
@@ -768,7 +768,7 @@ C_{ij} &= \h_{\text{warped},i}^\top \h_{\text{warped},j} \label{eq:implicit-attn
 \end{align}
 
 No $W_Q$, no $W_K$.
-The coupling matrix $C$ is never explicitly parameterised---it emerges from the geometry of the warped space.
+The coupling matrix $C$ is never explicitly parameterised, it emerges from the geometry of the warped space.
 Tokens that $\M$'s polynomial brings close together (high inner product) couple strongly.
 Tokens that remain far apart couple weakly.
 
@@ -788,13 +788,13 @@ The $S \times S$ coupling pattern emerges from $d \times d$ operator geometry.
 \subsection{Why This Is Different from Attention with Shared Q/K}
 
 The Orbital Network (Section~\ref{sec:orbital-network}) uses $\M$ for Q and K: $q = \h @ A$, $k = \h @ B$.
-This is still explicit attention---it computes $Q K^\top$, materialises the coupling matrix, applies softmax.
+This is still explicit attention, it computes $Q K^\top$, materialises the coupling matrix, applies softmax.
 $\M$ provides the projection but the mechanism is unchanged.
 
 Geometric attention is structurally different.
 The coupling is not $(\h A)(\h B)^\top = \h \M \h^\top$ (a bilinear form applied to the \emph{current} state).
 It is $p(\M)\h_0 \cdot (p(\M)\h_0)^\top$ (inner products of \emph{operator-transformed} embeddings).
-The polynomial warp means different tokens are transformed by different effective operators---because $\M^k \h_{0,i}$ projects token $i$ onto $\M$'s eigenmodes with position-dependent coefficients.
+The polynomial warp means different tokens are transformed by different effective operators, because $\M^k \h_{0,i}$ projects token $i$ onto $\M$'s eigenmodes with position-dependent coefficients.
 
 The coupling at token 50 differs from token 5 not because the coupling rule changed but because the accumulated context (earlier tokens in the causal mask) projects differently onto $\M$'s eigenvectors.
 \textbf{The field is invariant; the state moving through it evolves.}
@@ -803,13 +803,13 @@ The coupling at token 50 differs from token 5 not because the coupling rule chan
 
 The degree $K$ of the polynomial controls the complexity of the coupling field:
 \begin{itemize}[nosep]
-\item $K = 1$: $\h_w = c_0 \h_0 + c_1 \M \h_0$. The field is nearly flat---coupling is determined by raw embedding similarity plus a single linear warp. This captures bigram-level patterns.
-\item $K = 3$: the field has curvature. Tokens couple through three levels of $\M$'s spectral structure---enough for syntactic patterns (subject-verb agreement, modifier binding).
+\item $K = 1$: $\h_w = c_0 \h_0 + c_1 \M \h_0$. The field is nearly flat, coupling is determined by raw embedding similarity plus a single linear warp. This captures bigram-level patterns.
+\item $K = 3$: the field has curvature. Tokens couple through three levels of $\M$'s spectral structure, enough for syntactic patterns (subject-verb agreement, modifier binding).
 \item $K = 8$: the field has rich topology. Long-range dependencies, nested constructions, narrative arcs.
 \end{itemize}
 
 The degree is not ``depth'' in the transformer sense (number of sequential processing stages).
-It is the \textbf{resolution of the coupling field}---how many of $\M$'s eigenmodes contribute to the geometry through which tokens interact.
+It is the \textbf{resolution of the coupling field}, how many of $\M$'s eigenmodes contribute to the geometry through which tokens interact.
 
 \subsection{Capacity and Learnability}
 
@@ -818,22 +818,22 @@ The same two challenges apply.
 \paragraph{Capacity.}
 Can geometric attention match explicit softmax attention?
 Softmax can produce arbitrarily sharp coupling (one token attends to exactly one other).
-Inner products in warped space produce smoother coupling---proximity is gradual, not binary.
+Inner products in warped space produce smoother coupling, proximity is gradual, not binary.
 Can the polynomial warp produce sharp enough geometry?
 
 The polynomial has $K \times d$ parameters controlling the warp.
 Softmax attention has $2 d^2$ parameters ($W_Q, W_K$).
-For $K \ll d$, the polynomial has fewer parameters---but it operates on the full spectral structure of $\M$, which may compress the coupling more efficiently than explicit projections.
+For $K \ll d$, the polynomial has fewer parameters, but it operates on the full spectral structure of $\M$, which may compress the coupling more efficiently than explicit projections.
 
 If $\M$ has effective rank $r$, the coupling field lives in an $r$-dimensional subspace.
-The $S \times S$ coupling matrix has rank at most $r$---which is a strong structural prior.
+The $S \times S$ coupling matrix has rank at most $r$, which is a strong structural prior.
 Explicit attention has no such constraint (it can produce full-rank $S \times S$ matrices).
 Whether rank-$r$ coupling suffices for language modelling is an empirical question.
 
 \paragraph{Learnability.}
 $\M$ must learn a geometry that produces useful coupling patterns through inner products alone, without the help of separate Q/K projections.
 This is a harder optimisation target than learning Q/K matrices, because the coupling is an indirect consequence of the warp rather than a directly parameterised quantity.
-The gradients flow through $p(\M)$, through the inner product, through softmax, through the value gather---a longer path than standard attention.
+The gradients flow through $p(\M)$, through the inner product, through softmax, through the value gather, a longer path than standard attention.
 
 The degree curriculum and two-timescale learning apply here as well.
 Low-degree coupling (nearly linear, easy to learn) first; high-degree coupling (complex field topology) after $\M$ has crystallised.
@@ -844,7 +844,7 @@ Low-degree coupling (nearly linear, easy to learn) first; high-degree coupling (
 Equations~\ref{eq:warp}--\ref{eq:implicit-attn} have a fatal flaw: inner products are symmetric.
 $C_{ij} = \h_{w,i}^\top \h_{w,j} = C_{ji}$.
 But language coupling is directed: ``the'' attends to ``cat'' differently than ``cat'' attends to ``the.''
-Relationships are directed---``vindicate'' implies an arbiter judging a claimant, not vice versa.
+Relationships are directed, ``vindicate'' implies an arbiter judging a claimant, not vice versa.
 
 The fix comes from $\M$'s own structure.
 $\M = AB^\top$ is already asymmetric (asymmetry ratio 1.41 in V2; symmetric $LL^\top$ fails on autoregressive tasks).
@@ -857,7 +857,7 @@ So any polynomial of $\M$ factors as:
 \begin{equation}
 p(\M) = A \cdot q(G) \cdot B^\top, \qquad G = B^\top A
 \end{equation}
-where $G \in \R^{r \times r}$ is the \textbf{inner geometry}---the coupling structure in the reduced space defined by $A$ and $B$.
+where $G \in \R^{r \times r}$ is the \textbf{inner geometry}, the coupling structure in the reduced space defined by $A$ and $B$.
 
 The coupling between tokens becomes:
 \begin{equation}
@@ -872,7 +872,7 @@ The polynomial $q(G)$ composes relational templates \emph{between} them in the r
 \paragraph{Efficiency.}
 If $A, B \in \R^{d \times r}$, then $G \in \R^{r \times r}$.
 The polynomial operates in $r$-dimensional space, not $d$-dimensional.
-For $r = 64$, $d = 576$: the polynomial is $64 \times 64$ instead of $576 \times 576$---$80\times$ cheaper.
+For $r = 64$, $d = 576$: the polynomial is $64 \times 64$ instead of $576 \times 576$, $80\times$ cheaper.
 The query and key projections are standard matrix multiplications.
 
 \paragraph{Input-dependent depth on the query side.}
@@ -885,7 +885,7 @@ Each token \emph{as a query} selects how deeply to probe the relational geometry
 \item ``Vindicate'' at position $i$: high-degree polynomial, activates the three-party template.
 \item ``The'' at position $i$: degree 0--1, basic adjacency.
 \end{itemize}
-The key side ($B^\top \h_j$) is passive---it presents what the token is.
+The key side ($B^\top \h_j$) is passive, it presents what the token is.
 The query side decides how deeply to engage with $G$'s spectral structure.
 
 \paragraph{The ORN decomposition, completed.}
@@ -916,7 +916,7 @@ Three comparisons:
 (c)~explicit M-coupled attention ($q = \h A$, $k = \h B$, standard softmax) as control.
 If (b) $>$ (a): asymmetry is the missing ingredient.
 If (b) $\approx$ (c): the polynomial depth in $G$-space doesn't add beyond what explicit attention provides.
-If (b) $>$ (c): asymmetric geometric attention with polynomial depth outperforms explicit attention---the geometric field carries real capacity.
+If (b) $>$ (c): asymmetric geometric attention with polynomial depth outperforms explicit attention, the geometric field carries real capacity.
 
 \subsection{The Capacity Problem: Global Polynomials Are Linear Maps}
 \label{sec:capacity-problem}
@@ -951,7 +951,7 @@ The coupling in geometric attention becomes:
 \begin{equation}
 C_{ij} = (\h_{0,i})^\top \, p_i(\M)^\top \, p_j(\M) \, \h_{0,j}
 \end{equation}
-This is a product of two input-dependent polynomials of $\M$---a degree-$2K$ polynomial with position-dependent coefficients.
+This is a product of two input-dependent polynomials of $\M$, a degree-$2K$ polynomial with position-dependent coefficients.
 This IS richer than standard attention ($\h^\top \M \h$, one bilinear form).
 Different tokens engage different eigenmodes of $\M$ at different intensities.
 The coupling depends on \emph{how each token projects through its own spectral filter}.
@@ -959,7 +959,7 @@ This is genuine computation with capacity proportional to the coefficient networ
 
 \subsection{The Harder Constraint: Re-Coupling After Transformation}
 
-Even with input-dependent coefficients, the polynomial applies to $\h_0$---it never sees intermediate states.
+Even with input-dependent coefficients, the polynomial applies to $\h_0$, it never sees intermediate states.
 In a transformer, layer 3 sees the result of layers 1--2 including their FFN transformations.
 The attention at layer 3 is conditioned on what layers 1--2 discovered.
 The polynomial $p(\M) \h_0$ bypasses this: it transforms $\h_0$ directly, regardless of what any FFN has done.
@@ -973,13 +973,13 @@ The coupling at layer 6 depends on the FFN transformation at layer 5.
 This means: \textbf{the architecture needs re-coupling after transformation.}
 Not once.
 Not eight times.
-But at the transition point---around layers 4--5, where nonlinearity becomes load-bearing.
+But at the transition point, around layers 4--5, where nonlinearity becomes load-bearing.
 
 \subsection{The Theoretically Honest Architecture}
 
 Two coupling stages, four FFN stages.
 $\M$ is shared between both couplings.
-The polynomial coefficients are different---stage~1 uses $c_k(\h_0)$, stage~2 uses $c'_k(\h)$ where $\h$ includes the FFN-transformed state.
+The polynomial coefficients are different, stage~1 uses $c_k(\h_0)$, stage~2 uses $c'_k(\h)$ where $\h$ includes the FFN-transformed state.
 
 \begin{enumerate}[nosep]
 \item \textbf{Input-dependent warp}: $c_k = g(\h_0)$; \quad $\h_w = \sum c_k \odot \M^k \h_0$.
@@ -987,7 +987,7 @@ The polynomial coefficients are different---stage~1 uses $c_k(\h_0)$, stage~2 us
 \item \textbf{Geometric coupling}: $C = \h_w \h_w^\top / \sqrt{d}$ (causal-masked); value gather via $W_V$, $W_O$.
 \item \textbf{Nonlinear response}: FFN$_1$, FFN$_2$. Transform the coupled representation.
 \item \textbf{Re-couple}: $c'_k = g'(\h)$; \quad $\h'_w = \sum c'_k \odot \M^k \h$.
-      Re-warp using the \emph{transformed} state---the second coupling sees what the FFN discovered.
+      Re-warp using the \emph{transformed} state, the second coupling sees what the FFN discovered.
 \item \textbf{Nonlinear response}: FFN$_3$, FFN$_4$. Final transformation.
 \item \textbf{Readout}: $\text{head}(\text{LN}(\h))$.
 \end{enumerate}
@@ -1007,8 +1007,8 @@ The second coupling sees the FFN-transformed state, providing the compositional 
 \end{itemize}
 
 The coefficient networks must have enough capacity to produce input-dependent spectral filters comparable to the transformer's per-layer Q/K projections.
-Each coefficient network maps $\R^d \to \R^{K+1}$---a small MLP with $\sim d \times K$ parameters.
-For $K = 6$ and $d = 192$, that is $\sim$1,200 parameters per stage---far fewer than the $2d^2 \approx 74,000$ parameters in a standard attention layer's Q/K projections.
+Each coefficient network maps $\R^d \to \R^{K+1}$, a small MLP with $\sim d \times K$ parameters.
+For $K = 6$ and $d = 192$, that is $\sim$1,200 parameters per stage, far fewer than the $2d^2 \approx 74,000$ parameters in a standard attention layer's Q/K projections.
 Whether this compression is sufficient is what the experiment tests.
 
 \subsection{What This Would Mean for the ORN Programme}
@@ -1022,18 +1022,18 @@ It is a \textbf{two-stage coupled system}: operator builds the field (algebraic,
 Both do real work.
 The operator carries capacity through input-dependent spectral filtering.
 The FFN carries capacity through nonlinear transformation.
-The re-coupling after transformation is the key ingredient that a pure polynomial lacks---it lets the second coupling see what the first coupling and FFN discovered together.
+The re-coupling after transformation is the key ingredient that a pure polynomial lacks, it lets the second coupling see what the first coupling and FFN discovered together.
 
 \subsection{The Two-Channel Design and the Self-Measuring Gate}
 \label{sec:two-channel}
 
 There is a tension in the architecture.
-If the FFN sees the raw residual stream (including token embeddings), it can bypass the operator entirely---access information that $\M$ never coupled, and render the operator decorative.
+If the FFN sees the raw residual stream (including token embeddings), it can bypass the operator entirely, access information that $\M$ never coupled, and render the operator decorative.
 This is why rank-1 collapse occurs: the FFN learns to do everything itself, removing gradient pressure on $\M$.
 
 But if we constrain the FFN to see \emph{only} the operator's output, we lose information.
 $\M$ has rank $\sim$70 out of $d = 576$.
-Language has aspects that are not relational---token frequency, morphological features, rare factual associations.
+Language has aspects that are not relational, token frequency, morphological features, rare factual associations.
 These live in the 83\% of representation space orthogonal to $\M$'s eigenspace.
 Projecting through $\M$ discards them.
 
@@ -1045,7 +1045,7 @@ The resolution: \textbf{two channels with a learned gate.}
 \end{align}
 The world-model channel (eq.~\ref{eq:world-channel}) forces the FFN to interpret the operator's coupling.
 The direct channel (eq.~\ref{eq:direct-channel}) provides raw token features for what the operator cannot represent.
-The gate $\sigma(g)$ is a function of the operator's output---it measures whether the world model suffices for this token.
+The gate $\sigma(g)$ is a function of the operator's output, it measures whether the world model suffices for this token.
 
 \paragraph{The architecture measures itself.}
 The gate is not added for diagnosis.
@@ -1074,7 +1074,7 @@ The two-channel design makes this self-measurement explicit and structural.
 
 \paragraph{Design principle.}
 Any architecture that is also a probe is worth pursuing.
-If the architecture can tell you, during normal inference, how much each component contributes, then you never need to run ablations---the model's own gates, routing decisions, and channel allocations are the ablation, performed on every token.
+If the architecture can tell you, during normal inference, how much each component contributes, then you never need to run ablations, the model's own gates, routing decisions, and channel allocations are the ablation, performed on every token.
 
 
 % ======================================================================
@@ -1086,7 +1086,7 @@ There are exactly two ways this bet can fail: insufficient \textbf{capacity}, or
 
 \subsection{Capacity: Does the Operator Have Enough Room?}
 
-A standard transformer with $L$ layers stores $\bigO(L \cdot S \cdot d)$ values in its KV cache at inference---that is the ``memory'' of what computation has been done.
+A standard transformer with $L$ layers stores $\bigO(L \cdot S \cdot d)$ values in its KV cache at inference, that is the ``memory'' of what computation has been done.
 The Orbital Network has one $\M$ ($d \times d$) and $K$ polynomial coefficients ($K \times d$).
 Where does equivalent capacity come from?
 
@@ -1094,7 +1094,7 @@ Where does equivalent capacity come from?
 $\M$'s eigenvectors form a basis.
 Each power $\M^k$ amplifies different eigenmodes by different amounts: if $\M$ has eigenvalues $\lambda_1, \ldots, \lambda_d$, then $p(\M)$ has eigenvalues $p(\lambda_1), \ldots, p(\lambda_d)$.
 A degree-$K$ polynomial can implement $K$ independent spectral filters over this basis.
-This is $K$ virtual layers of spectral processing---not stored as states but recoverable from the polynomial and $\M$'s spectrum.
+This is $K$ virtual layers of spectral processing, not stored as states but recoverable from the polynomial and $\M$'s spectrum.
 
 The KV cache stores $L \cdot S \cdot d$ numbers explicitly.
 The polynomial stores $K \cdot d$ coefficients and recovers equivalent information by computing $\M^k \h_0$ on demand.
@@ -1109,12 +1109,12 @@ Capacity exists in theory.
 
 \paragraph{The honest caveat.}
 The capacity is \emph{different}, not the same.
-$p(\M) \h_0$ can represent any polynomial function of $\M$'s eigenvalues applied to $\h_0$---things that align with $\M$'s spectral structure are easy; things that require intermediate nonlinear routing between tokens are hard.
+$p(\M) \h_0$ can represent any polynomial function of $\M$'s eigenvalues applied to $\h_0$, things that align with $\M$'s spectral structure are easy; things that require intermediate nonlinear routing between tokens are hard.
 The single attention layer handles routing, but only once.
 A transformer routes $L$ times at different depths, seeing progressively transformed representations.
 
 The question is whether language modelling needs multi-stage routing or single-stage routing.
-The ORN's success (matching transformers with shared $\M$) suggests that the coupling rule is depth-invariant---the same $\M$ applies at every layer.
+The ORN's success (matching transformers with shared $\M$) suggests that the coupling rule is depth-invariant, the same $\M$ applies at every layer.
 If the rule is invariant, multi-stage routing is redundant: one stage with the right operator suffices.
 But if the ORN's per-layer FFN and corrections are secretly performing depth-dependent routing, then the single-stage design will fail.
 This is what the experiments test.
@@ -1136,7 +1136,7 @@ Spectral normalisation ($\M \leftarrow \M / \norm{\M}_2$) keeps eigenvalues $\le
 The polynomial coefficients $c_k$ can compensate by amplifying the signal at each degree, but there is a tension: the normalisation and the coefficients are fighting for control of the eigenvalue magnitudes.
 
 \paragraph{2. Coupled optimisation: $\M$ and coefficients.}
-In ChebNet~\cite{defferrard2016chebnet}, the graph Laplacian is \emph{fixed}---only the polynomial coefficients are learned.
+In ChebNet~\cite{defferrard2016chebnet}, the graph Laplacian is \emph{fixed}, only the polynomial coefficients are learned.
 In the Orbital Network, $\M$ is \emph{learned simultaneously} with the coefficients.
 Changing $\M$ changes the spectral basis, which changes what the coefficients should be.
 This is a coupled optimisation, harder than either sub-problem alone.
@@ -1147,7 +1147,7 @@ Less signal, harder problem.
 
 \paragraph{The argument for learnability.}
 The ORN demonstrates that SGD \emph{can} learn coupling operators.
-$\M$ crystallises to rank 69--71, locks its asymmetry at 1.41, and stabilises its spectral structure---all via standard backpropagation.
+$\M$ crystallises to rank 69--71, locks its asymmetry at 1.41, and stabilises its spectral structure, all via standard backpropagation.
 The polynomial coefficients add structure to this process: low-degree terms ($c_0, c_1$) are easy to learn (identity and linear), high-degree terms ($c_7, c_8$) are harder but contribute less (they operate in $\M$'s low-energy spectral tail).
 The polynomial provides a natural curriculum: learn the easy terms first, refine with harder terms later.
 
@@ -1159,7 +1159,7 @@ The hard part is crystallising $\M$; the easy part is learning what to do with i
 Capacity is fine in theory.
 Learnability is the open question.
 The polynomial parameterisation may provide insufficient gradient signal for $\M$ to crystallise, or the coupled optimisation may converge to a bad local minimum.
-If $\M$ fails to develop spectral structure in the Orbital Network, the whole programme fails---not because operator-space computation is wrong, but because the parameterisation doesn't let SGD find the right operator.
+If $\M$ fails to develop spectral structure in the Orbital Network, the whole programme fails, not because operator-space computation is wrong, but because the parameterisation doesn't let SGD find the right operator.
 
 The response to this risk is not to hope, but to design the optimiser around the structure of the problem.
 
@@ -1199,7 +1199,7 @@ Critical period & Degree curriculum & Training schedule & Scheduler \\
 
 The Muon optimiser~\cite{jordan2024muon} was designed for matrix-valued parameters.
 It orthogonalises the momentum matrix via Newton--Schulz iterations, producing spectrally normalised update directions.
-Where AdamW updates each element of a matrix independently, Muon updates the matrix \emph{as a geometric object}---the update respects the spectral structure rather than treating it as a bag of scalars.
+Where AdamW updates each element of a matrix independently, Muon updates the matrix \emph{as a geometric object}, the update respects the spectral structure rather than treating it as a bag of scalars.
 
 This is exactly what $\M$ needs:
 \begin{itemize}[nosep]
@@ -1222,7 +1222,7 @@ Attention, FFN, embeddings, head & AdamW & $3 \times 10^{-4}$ & 0.1 \\
 \end{center}
 
 $\M$ learns $30\times$ slower than the polynomial coefficients.
-The coefficients have no weight decay---they are scaling factors, not connection weights, and should be free to take any value.
+The coefficients have no weight decay, they are scaling factors, not connection weights, and should be free to take any value.
 The Muon optimiser ensures that $\M$'s updates preserve spectral structure; AdamW ensures the coefficients adapt quickly.
 
 \subsection{Degree Curriculum}
@@ -1251,7 +1251,7 @@ Each new degree adds a finer spectral filter on top of an already-stable base.
 
 This is a curriculum in operator space, not data space.
 The ``easy examples'' are low polynomial degrees; the ``hard examples'' are high degrees.
-$\M$ is never asked to solve the full polynomial problem from random initialisation---it builds up to it, one spectral level at a time.
+$\M$ is never asked to solve the full polynomial problem from random initialisation, it builds up to it, one spectral level at a time.
 
 \paragraph{The critical period analogy.}
 In neurodevelopment, cortical connectivity forms coarse structure first (long-range connections, low spatial frequency) and fine structure later (local circuits, high spatial frequency).
@@ -1260,7 +1260,7 @@ The degree curriculum enforces the same ordering: $\M$'s coarse spectral structu
 
 \subsection{Spectral Crystallisation Pressure}
 
-In the ORN, $\M$ crystallises spontaneously---the loss landscape pushes it toward low-rank structure.
+In the ORN, $\M$ crystallises spontaneously, the loss landscape pushes it toward low-rank structure.
 In the Orbital Network, with less gradient signal (one polynomial evaluation instead of $L$ layers), $\M$ may not crystallise on its own.
 An explicit regularisation term can provide the pressure:
 
@@ -1279,7 +1279,7 @@ The regularisation provides pressure during the critical period and releases it 
 
 \paragraph{Connection to continual learning.}
 Spectral regularisation for neural networks has precedent: keeping the maximum singular value of each layer near 1 improves training stability and prevents catastrophic forgetting in continual learning~\cite{titsias2025spectral}.
-Our application is different---we want to \emph{encourage} low rank, not preserve full rank---but the mechanism is the same: control the eigenspectrum to control learning dynamics.
+Our application is different, we want to \emph{encourage} low rank, not preserve full rank, but the mechanism is the same: control the eigenspectrum to control learning dynamics.
 
 
 % ======================================================================
@@ -1298,7 +1298,7 @@ They arrive at this prediction through fundamentally different computations.
 
 A transformer processes this prefix through $L$ layers of interleaved attention and FFN.
 At each layer, the state at every position is updated: attention mixes information between tokens, FFN transforms each token's representation.
-After $L$ layers, the state at position~10 has accumulated enough context---from ``Once'' through ``named''---to place high probability on names.
+After $L$ layers, the state at position~10 has accumulated enough context, from ``Once'' through ``named'', to place high probability on names.
 
 The knowledge that ``named'' is followed by a name is not stored in any single place.
 It is distributed across $L$ layers of attention patterns and FFN weights.
@@ -1312,16 +1312,16 @@ But it is brute force: the same $L$-step computation runs for ``the cat sat'' (t
 \subsection{The Operator: Attractor Basins in Spectral Space}
 
 An operator-space model would work differently.
-$\M$'s eigenstructure defines a landscape---a space with basins, ridges, and valleys.
+$\M$'s eigenstructure defines a landscape, a space with basins, ridges, and valleys.
 Training shapes this landscape so that:
 
 \begin{itemize}[nosep]
 \item \textbf{Character introduction} is an attractor basin.
       After ``there was a little [noun],'' the state flows toward a region where names, descriptions, and attributes are geometrically accessible.
-      Not specific names---the \emph{structural slot} for a name.
+      Not specific names, the \emph{structural slot} for a name.
 
 \item \textbf{Conflict initiation} is another basin.
-      After a character is established, $\M$'s geometry warps so that ``but,'' ``one day,'' and ``suddenly'' become accessible---not because the model memorised these words, but because $\M$'s spectral structure creates a valley the state flows into.
+      After a character is established, $\M$'s geometry warps so that ``but,'' ``one day,'' and ``suddenly'' become accessible, not because the model memorised these words, but because $\M$'s spectral structure creates a valley the state flows into.
 
 \item \textbf{Resolution} is a third basin.
       After conflict, the geometry channels the state toward ``and they lived'' / ``she was happy'' / ``he learned that.''
@@ -1340,16 +1340,16 @@ When the model reads ``Once upon a time there was a,'' two things happen simulta
 \paragraph{Comprehension.}
 The state is pulled toward the appropriate basin.
 $\M$ acts as a lens: it resolves the diffuse input embedding into a structured region of representation space.
-Reading is the operator decomposing the input into its spectral components---projecting the prefix onto $\M$'s eigenbasis to determine which narrative pattern is active.
+Reading is the operator decomposing the input into its spectral components, projecting the prefix onto $\M$'s eigenbasis to determine which narrative pattern is active.
 
 \paragraph{Imagination.}
 Before the next token arrives, the operator has already shaped the space of what \emph{could} come next.
-``Little girl,'' ``big bear,'' ``kind old man''---all of these live in the same attractor basin.
+``Little girl,'' ``big bear,'' ``kind old man'', all of these live in the same attractor basin.
 The model has not predicted one token; it has prepared a \emph{landscape} of likely continuations.
 The landscape is the imagined space.
 Generation means sampling from this landscape.
 
-In a transformer, comprehension and imagination are the same operation---the forward pass both processes what came before and sets up what comes next.
+In a transformer, comprehension and imagination are the same operation, the forward pass both processes what came before and sets up what comes next.
 In operator space, they separate:
 \begin{itemize}[nosep]
 \item \textbf{Comprehension} = projecting the input onto $\M$'s eigenbasis.
@@ -1364,13 +1364,13 @@ Degree~8 = anticipate narrative arcs that haven't started yet.
 
 \subsection{The Bootstrapping Problem}
 
-At the start of training, $\M$ is random---no basins, no structure.
+At the start of training, $\M$ is random, no basins, no structure.
 The landscape is flat.
 But the model can do shallow comprehension: bigrams, trigrams, simple co-occurrences.
 These gradients slowly shape $\M$, creating the first attractor basins.
 
 As $\M$ crystallises, the basins deepen.
-The model starts to ``expect'' certain structures---not specific words but narrative patterns.
+The model starts to ``expect'' certain structures, not specific words but narrative patterns.
 The crystallisation IS the bootstrapping.
 $\M$ goes from a flat random landscape to a structured one with valleys (common patterns), ridges (transitions), and peaks (impossible sequences).
 
@@ -1382,27 +1382,27 @@ The operator provides narrative grammar; the corrections provide lexical specifi
 
 \subsection{The Gap}
 
-A transformer does all of this---comprehension, imagination, narrative structure---but through $L$ layers of sequential state transformation.
+A transformer does all of this, comprehension, imagination, narrative structure, but through $L$ layers of sequential state transformation.
 The knowledge is there but not \emph{in} any one place.
 
 The operator-space claim is that this knowledge CAN be concentrated into $\M$'s spectral structure, because the narrative grammar is:
 \begin{itemize}[nosep]
-\item Low-dimensional (rank 70 of 576 in V2---only 70 eigenmodes carry coupling structure).
-\item Layer-invariant (spectral correlation $\sim$0.98---the same coupling at every depth).
-\item Task-transferable ($+0.73\%$ frozen-$\M$ gap---the grammar works across datasets).
+\item Low-dimensional (rank 70 of 576 in V2, only 70 eigenmodes carry coupling structure).
+\item Layer-invariant (spectral correlation $\sim$0.98, the same coupling at every depth).
+\item Task-transferable ($+0.73\%$ frozen-$\M$ gap, the grammar works across datasets).
 \end{itemize}
 
 The Krylov measurement (Section~\ref{sec:experiment-log}) asks: does the transformer's state trajectory stay close to $\M$'s algebraic subspace?
-The attractor basin picture predicts yes---because moving between basins is a transition defined by $\M$'s eigenvectors, and $\M$'s powers ARE these transitions.
+The attractor basin picture predicts yes, because moving between basins is a transition defined by $\M$'s eigenvectors, and $\M$'s powers ARE these transitions.
 $c_0$ (stay in current basin) + $c_1\M$ (one transition) + $c_2\M^2$ (two transitions) + \ldots
 
 But this only works if the basins are \emph{linear} in $\M$'s eigenbasis.
-If the basins are defined by nonlinear interactions between eigenvectors---if the FFN at each layer is what creates the basin structure, not $\M$---then the Krylov subspace misses them.
+If the basins are defined by nonlinear interactions between eigenvectors, if the FFN at each layer is what creates the basin structure, not $\M$, then the Krylov subspace misses them.
 The per-layer nonlinearity is not correction; it is structural.
 And the operator-space programme fails.
 
 That is what the measurement determines.
-Not a theoretical argument---an empirical one.
+Not a theoretical argument, an empirical one.
 
 
 % ======================================================================
@@ -1422,7 +1422,7 @@ The rest of the sentence is slot-filling.
 ``Committee'' fills the claimant slot.
 ``Board'' fills the challenger slot.
 ``Independent analysis'' fills the arbiter slot.
-``Subsequently'' makes the implied temporal order explicit---it is padding, not information.
+``Subsequently'' makes the implied temporal order explicit, it is padding, not information.
 
 \textbf{The sentence is low-information, high-structure.}
 A single word carries the relational template; the remaining words fulfil roles within it.
@@ -1431,7 +1431,7 @@ A single word carries the relational template; the remaining words fulfil roles 
 
 This observation generalises.
 Most of language is structure, not content.
-Words are not atomic symbols to be predicted---they are compressed relational templates:
+Words are not atomic symbols to be predicted, they are compressed relational templates:
 \begin{itemize}[nosep]
 \item ``Vindicate'' $\to$ three-party judgment template
 \item ``Despite'' $\to$ expectation-violation template
@@ -1443,20 +1443,20 @@ Each word, when read, \emph{warps the coupling field} in a specific way.
 ``Vindicate'' opens three relational slots and establishes temporal ordering.
 ``Despite'' creates a tension between an expectation and its violation.
 The word IS the operator.
-The embedding of a word is its operator signature---how it transforms $\M$'s coupling geometry.
+The embedding of a word is its operator signature, how it transforms $\M$'s coupling geometry.
 
 \subsection{Nested Composition: Metaphors All the Way Down}
 
 Relational templates are not flat.
 They compose hierarchically, in the sense of Lakoff and Johnson's \emph{Metaphors We Live By}~\cite{lakoff1980metaphors}.
-``Argument is war''---we \emph{attack} positions, \emph{defend} claims, \emph{shoot down} ideas.
+``Argument is war'', we \emph{attack} positions, \emph{defend} claims, \emph{shoot down} ideas.
 This is not decorative language; it is the structure of thought.
 And it nests:
 
 \begin{enumerate}[nosep]
-\item \textbf{Spatial templates} (in/out, up/down, near/far)---embodied, universal.
-\item \textbf{Force templates} (push, pull, resist, yield)---built on spatial + causation.
-\item \textbf{Container templates} (inside/outside, boundary, containment)---spatial + boundary.
+\item \textbf{Spatial templates} (in/out, up/down, near/far), embodied, universal.
+\item \textbf{Force templates} (push, pull, resist, yield), built on spatial + causation.
+\item \textbf{Container templates} (inside/outside, boundary, containment), spatial + boundary.
 \item \textbf{Abstract templates} (judgment = container + agent + temporal; causation = force + sequence; argument = conflict + container + resolution).
 \end{enumerate}
 
@@ -1467,10 +1467,10 @@ Each level is a relational template composed from simpler templates.
 \paragraph{The polynomial degree as nesting depth.}
 This hierarchy maps directly onto the polynomial:
 \begin{itemize}[nosep]
-\item Degree 1: $c_1 \M \h_0$---basic spatial/relational templates.
-\item Degree 2: $c_2 \M^2 \h_0$---composed templates (two relational steps).
-\item Degree 3: $c_3 \M^3 \h_0$---abstract templates (three levels of composition).
-\item Degree $K$: $c_K \M^K \h_0$---$K$ levels of metaphor nesting.
+\item Degree 1: $c_1 \M \h_0$, basic spatial/relational templates.
+\item Degree 2: $c_2 \M^2 \h_0$, composed templates (two relational steps).
+\item Degree 3: $c_3 \M^3 \h_0$, abstract templates (three levels of composition).
+\item Degree $K$: $c_K \M^K \h_0$, $K$ levels of metaphor nesting.
 \end{itemize}
 
 $\M^1$ gives basic relational structure.
@@ -1495,17 +1495,17 @@ Many words share the same base templates:
 \item ``Because,'' ``since,'' ``therefore'' $\to$ same causal template.
 \end{itemize}
 
-The number of \emph{unique} fundamental templates may be small---perhaps 50--100 base relational patterns from which all others compose.
+The number of \emph{unique} fundamental templates may be small, perhaps 50--100 base relational patterns from which all others compose.
 $\M$'s effective rank of 69--71 (at $d = 576$, V2) aligns with this: \textbf{one eigenmode per fundamental template.}
 
 \paragraph{The capacity prediction.}
 At $d = 192$ (our experiments), $\M$ crystallised to rank $\sim$25.
-This is insufficient for the full template vocabulary---only the most common patterns fit.
+This is insufficient for the full template vocabulary, only the most common patterns fit.
 The 36\% Krylov recovery may be low not because language is mostly content, but because $\M$ was \textbf{too small} to encode all the relational templates it needed.
 
 At $d = 576$ (V2 scale), rank 69--71 accommodates more templates.
 At $d = 2048$ (V3 scale), the rank should increase further.
-\textbf{Prediction: Krylov recovery increases with $d$}---not because the polynomial computes more, but because $\M$ has room for more templates.
+\textbf{Prediction: Krylov recovery increases with $d$}, not because the polynomial computes more, but because $\M$ has room for more templates.
 If most of language is relational structure (and we argue it is), then at sufficient $d$, the operator captures the majority of the computation.
 
 This is testable: run the Krylov measurement at $d \in \{64, 128, 192, 384\}$ and measure recovery as a function of model dimension.
@@ -1519,7 +1519,7 @@ If it saturates at 36\% regardless of $d$, then 64\% of language genuinely requi
 An honest assessment based on all experiments to date.
 
 \paragraph{Conjecture~\ref{conj:structural} (Structural Invariance): STRONG.}
-SharedM works---the ORN matches or beats per-layer coupling at matched parameters.
+SharedM works, the ORN matches or beats per-layer coupling at matched parameters.
 Spectral invariance ($\sim$0.98 across five architecture families) is stronger evidence for a universal coupling kernel than anything in the Platonic Representation literature.
 Frozen-$\M$ transfers ($+0.73\%$ gap).
 Wide shared FFN beats per-layer FFN.
@@ -1527,18 +1527,18 @@ Literature supports this from multiple directions (Koopman theory, compositional
 This conjecture is the most established part of the programme.
 
 \paragraph{Conjecture~\ref{conj:operator} (Operator Representation): MIXED.}
-$\M$ has composability and spectral decomposition by construction---any matrix generates a semigroup (Hille--Yosida).
+$\M$ has composability and spectral decomposition by construction, any matrix generates a semigroup (Hille--Yosida).
 But we have not yet shown that the \emph{computation} uses these properties.
 Polynomial degrees above 1 do not activate in our experiments.
 $\M$ collapses to rank 1 when unconstrained.
-The Lie--Trotter connection (ORN layer structure = operator splitting) is mathematically precise, and the commutator $[\M, \mathrm{FFN}]$ drops from rank 150 to 65 during training---suggesting the coupling and response become more commutative as $\M$ crystallises.
+The Lie--Trotter connection (ORN layer structure = operator splitting) is mathematically precise, and the commutator $[\M, \mathrm{FFN}]$ drops from rank 150 to 65 during training, suggesting the coupling and response become more commutative as $\M$ crystallises.
 Whether the spectral modes correspond to interpretable relational templates remains untested (eigenmode probing experiment pending).
 
 \paragraph{Conjecture~\ref{conj:recovery} (Operator Recovery): WEAK.}
 Krylov recovery is 36\% (residual 92\%).
-A polynomial of $\M$ in embedding space is just a linear map---zero additional capacity.
+A polynomial of $\M$ in embedding space is just a linear map, zero additional capacity.
 Even with input-dependent coefficients and constrained rank, the two-stage architecture (val~3.93) underperforms a simple one-layer ORN with deep FFN (val~3.80).
-The polynomial of the \emph{coupling pattern} $C$ (multi-hop attention) is a more promising direction---it provides genuinely compositional depth that single-hop + FFN cannot express---but this has not yet been tested.
+The polynomial of the \emph{coupling pattern} $C$ (multi-hop attention) is a more promising direction, it provides genuinely compositional depth that single-hop + FFN cannot express, but this has not yet been tested.
 
 \paragraph{Best confirmed architecture.}
 One $\M$-coupled attention layer ($Q = \h A$, $K = \h B$, same $A, B$ as SharedM) plus four FFN layers.
@@ -1579,7 +1579,7 @@ Five operator-space candidates replace the 8 layers with different algebraic com
 \toprule
 \textbf{Model} & \textbf{Mechanism} & \textbf{Val Loss} & \textbf{Gap} \\
 \midrule
-A. StandardORN (8 layers) & State-space baseline & 4.355 & --- \\
+A. StandardORN (8 layers) & State-space baseline & 4.355 & ,  \\
 B. MatExpORN & $\exp(\alpha \M) \cdot \h_0$ & 4.589 & +5.4\% \\
 C. SpectralORN & Per-eigenmode scaling & 4.740 & +8.8\% \\
 D. PolyORN & $\sum c_k \M^k \h_0$ & 4.614 & +6.0\% \\
@@ -1591,27 +1591,27 @@ F. DeferredORN & Composed low-rank updates & 4.638 & +6.5\% \\
 
 All operator-space models are 5--9\% worse than the baseline.
 None collapse to random.
-MatExpORN is closest at 5.4\% gap, but learned $\alpha = 0.134$---so small that $\exp(\alpha \M) \approx I + 0.134\M$, effectively a linear layer.
+MatExpORN is closest at 5.4\% gap, but learned $\alpha = 0.134$, so small that $\exp(\alpha \M) \approx I + 0.134\M$, effectively a linear layer.
 PolyORN's coefficients appeared stuck at $c_0 = 1, c_1 = 0$ (a logging bug: the model used per-dimension weights, not scalar coefficients, and the logged parameter was unused).
 
 \paragraph{Assessment.}
 The operator-space models work (they learn, they generate text) but they don't match 8-layer depth.
 The single attention layer + two FFN layers are doing most of the work.
-The operator contribution is unclear---it may be decorative.
+The operator contribution is unclear, it may be decorative.
 
 \subsection{OrbitalNetV2: The Clean Test (12K steps, d=192)}
 
-A redesigned architecture incorporating three innovations: M-coupled attention (Q = h@A, K = h@B, using the same A, B that define M---no separate coupling), degree curriculum (K=1$\to$3$\to$5$\to$8 over training), and two-timescale learning rates (M at $10^{-4}$, polynomial coefficients at $3 \times 10^{-3}$).
+A redesigned architecture incorporating three innovations: M-coupled attention (Q = h@A, K = h@B, using the same A, B that define M, no separate coupling), degree curriculum (K=1$\to$3$\to$5$\to$8 over training), and two-timescale learning rates (M at $10^{-4}$, polynomial coefficients at $3 \times 10^{-3}$).
 
 \begin{center}\small
 \begin{tabular}{llrr}
 \toprule
 \textbf{Model} & \textbf{Config} & \textbf{Val Loss} & \textbf{vs Baseline} \\
 \midrule
-A. StandardORN & 8 layers, 5K steps & 4.355 & --- \\
+A. StandardORN & 8 layers, 5K steps & 4.355 & ,  \\
 B. OrbitalNetV2 & Curriculum + two-timescale, 12K & \textbf{3.822} & $-$12.2\% \\
 C. OrbitalPlain & No innovations, 12K & 4.08* & $-$6.3\% \\
-D. LinearControl & Plain W (no M), 12K & pending & --- \\
+D. LinearControl & Plain W (no M), 12K & pending & ,  \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1634,10 +1634,10 @@ The loss improvement (3.82 vs 4.35) is real, but may reflect the longer training
 
 \paragraph{What rank-1 means for capacity.}
 With rank-1 $\M$, the Krylov subspace $\mathcal{K}(\M, \h_0)$ is at most 2-dimensional: $\text{span}\{\h_0, \M \h_0\}$.
-Higher powers $\M^k \h_0$ are scalar multiples of $\M \h_0$---they add no new dimensions.
+Higher powers $\M^k \h_0$ are scalar multiples of $\M \h_0$, they add no new dimensions.
 A polynomial of any degree reduces to $\h \approx c_0 \h_0 + c_1 \M \h_0$: identity plus a learned linear projection.
 
-For the operator to provide genuine depth---for degree $K$ to add information that degree $K{-}1$ cannot---$\M$ needs rank $\geq K$.
+For the operator to provide genuine depth, for degree $K$ to add information that degree $K{-}1$ cannot, $\M$ needs rank $\geq K$.
 The rank-1 collapse means the polynomial cannot access deeper computation even though the parameters exist to do so.
 
 \paragraph{Why rank-1?}
@@ -1674,7 +1674,7 @@ Given a trained ORN ($d{=}192$, $L{=}8$, 5K steps, TinyStories), project the fin
 
 \textbf{The Krylov subspace recovers only 36\% of the orbit. Residual: 92\%.}
 The state trajectory massively escapes $\M$'s algebraic structure.
-Adding polynomial degrees beyond 10 contributes nothing---the subspace saturates.
+Adding polynomial degrees beyond 10 contributes nothing, the subspace saturates.
 $\M$ has effective rank 25, but the useful Krylov dimension is approximately 10.
 
 \paragraph{Per-layer analysis reveals why.}
@@ -1701,37 +1701,37 @@ Layers 1--4: corrections are 4--8\% of displacement. Genuinely perturbative.
 Layers 5--6: corrections are 16--24\%. Significant but secondary.
 Layers 7--8: corrections are 34--50\%. \textbf{Load-bearing.}
 
-Overall $\rho = 0.34$---in the contested zone, not perturbative ($< 0.15$) but not dominant ($> 0.50$).
+Overall $\rho = 0.34$, in the contested zone, not perturbative ($< 0.15$) but not dominant ($> 0.50$).
 
 \paragraph{Interpretation: the right decomposition, not a failure.}
 The initial reading of this result is negative: the Krylov subspace misses 64\% of the orbit.
 But look at what the per-layer data actually shows.
 Layers 1--4 are 92--96\% linear in $\M$.
-The operator \emph{dominates} the early computation---the coupling geometry, the ``what relates to what.''
+The operator \emph{dominates} the early computation, the coupling geometry, the ``what relates to what.''
 Then layers 5--8 require increasing nonlinearity: the FFN and corrections are building on top of the structure that $\M$ established.
 
 This is the coupling-response decomposition working exactly as designed.
 $\M$ builds the relational structure.
 FFN responds to it.
-The FFN doing real work is not a failure---it is correct, as long as it is \emph{responding to a rich field} rather than building the field from scratch.
+The FFN doing real work is not a failure, it is correct, as long as it is \emph{responding to a rich field} rather than building the field from scratch.
 
 The difference between architectures:
 \begin{itemize}[nosep]
-\item \textbf{Transformer}: every layer builds AND responds. Attention computes coupling, FFN transforms state, next layer starts over. The ``world model'' is never a separable object---it is smeared across all $L$ layers.
+\item \textbf{Transformer}: every layer builds AND responds. Attention computes coupling, FFN transforms state, next layer starts over. The ``world model'' is never a separable object, it is smeared across all $L$ layers.
 \item \textbf{What the data suggests}: $\M$ builds the coupling field (layers 1--4, 92--96\% linear). FFN responds to it (layers 5--8, 50--76\% nonlinear). In the current ORN these are interleaved. In the right architecture they would be sequential: build the field first, respond to it second.
 \end{itemize}
 
-The question is not ``can $p(\M)$ replace all $L$ layers?'' (no---the 92\% residual proves this).
+The question is not ``can $p(\M)$ replace all $L$ layers?'' (no, the 92\% residual proves this).
 The question is: \textbf{can $p(\M)$ build a coupling field rich enough that a nonlinear readout stack matches $L$-layer interleaved processing?}
 
 This is a much more reasonable claim.
 The polynomial builds the geometry; the FFN navigates it.
 Both do real work, but they do \emph{different} work.
-The operator-space contribution is not the entire computation---it is the \emph{structural} computation, the world model that the nonlinear layers react to.
+The operator-space contribution is not the entire computation, it is the \emph{structural} computation, the world model that the nonlinear layers react to.
 
 \paragraph{The architectural implication.}
 The OrbitalNetV2 had two FFN layers as readout.
-The Krylov data says: the nonlinear response needs to be \emph{deep}---at least 4 layers of FFN to match what layers 5--8 of the ORN contribute.
+The Krylov data says: the nonlinear response needs to be \emph{deep}, at least 4 layers of FFN to match what layers 5--8 of the ORN contribute.
 But crucially, these FFN layers do not need their own attention.
 They respond to the coupling field that $p(\M)$ already built.
 
@@ -1739,7 +1739,7 @@ The architecture becomes:
 \begin{enumerate}[nosep]
 \item \textbf{Build the field}: $\h_w = p(\M) \h_0$ (algebraic, composable, $K \approx 4$--$8$).
 \item \textbf{Geometric coupling}: inner products in warped space define which tokens relate (Section~\ref{sec:geometric-attention}).
-\item \textbf{Deep nonlinear response}: 4+ layers of FFN operating on the field-coupled representation. No additional attention---the coupling is already established. The FFN stack interprets and transforms, it does not re-couple.
+\item \textbf{Deep nonlinear response}: 4+ layers of FFN operating on the field-coupled representation. No additional attention, the coupling is already established. The FFN stack interprets and transforms, it does not re-couple.
 \end{enumerate}
 
 This is not operator-space replacing state-space.
@@ -1747,11 +1747,11 @@ It is operator-space building the world model, and state-space responding to it.
 The operator provides the geometry; the FFN provides the content.
 
 \paragraph{The rank-1 collapse, revisited.}
-The OrbitalNetV2's rank-1 collapse was initially attributed to shallow readout---the hypothesis being that with only two FFN layers, the model could not exploit high-rank $\M$ structure, so $\M$ collapsed.
+The OrbitalNetV2's rank-1 collapse was initially attributed to shallow readout, the hypothesis being that with only two FFN layers, the model could not exploit high-rank $\M$ structure, so $\M$ collapsed.
 
 The geometric attention experiment \textbf{falsifies this hypothesis.}
 GeometricDeep (4 FFN layers) shows identical rank-1 collapse: same result as GeometricShallow (2 FFN layers), same val loss (3.900 vs 3.899).
-Doubling response depth adds nothing---literally zero improvement.
+Doubling response depth adds nothing, literally zero improvement.
 
 This means the bottleneck is not response capacity.
 It is the coupling.
@@ -1766,10 +1766,10 @@ More FFN is like chewing the same food longer: if the coupling did not bring the
 \midrule
 B. GeometricDeep & Symm.\ coupling + 4 FFN & 3.900 & $+$0.078 \\
 C. GeometricShallow & Symm.\ coupling + 2 FFN & 3.899 & $+$0.077 \\
-D. ExplicitDeep & M-coupled attn + 4 FFN & pending & --- \\
+D. ExplicitDeep & M-coupled attn + 4 FFN & pending & ,  \\
 \midrule
-ref: OrbitalNetV2 & M-coupled attn + 2 FFN & 3.822 & --- \\
-ref: StandardORN & 8-layer state-space & 4.355 & --- \\
+ref: OrbitalNetV2 & M-coupled attn + 2 FFN & 3.822 & ,  \\
+ref: StandardORN & 8-layer state-space & 4.355 & ,  \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1777,10 +1777,10 @@ ref: StandardORN & 8-layer state-space & 4.355 & --- \\
 \paragraph{Finding: coupling is the bottleneck, not response depth.}
 GeometricShallow (2 FFN) $=$ GeometricDeep (4 FFN) within noise.
 This confirms the V2 shared-FFN finding at a new level: one wide FFN suffices for response.
-The scarce resource is coupling---how many times the model can re-evaluate which tokens relate to which.
-The commodity is transformation---FFN processing of coupled representations.
+The scarce resource is coupling, how many times the model can re-evaluate which tokens relate to which.
+The commodity is transformation, FFN processing of coupled representations.
 
-This directly motivates the two-stage architecture: the value is not in deeper FFN but in \textbf{re-coupling}---seeing the FFN-transformed state and routing again through $\M$'s geometry.
+This directly motivates the two-stage architecture: the value is not in deeper FFN but in \textbf{re-coupling}, seeing the FFN-transformed state and routing again through $\M$'s geometry.
 
 \paragraph{Rank-1 collapse persists.}
 Both geometric models collapse $\M$ to rank 1, despite 4 FFN layers of response capacity.
@@ -1997,13 +1997,13 @@ Meta-attention resolves this by separating the geometry into two components:
 \M_{\mathrm{effective}} = \underbrace{\M_{\mathrm{base}}}_{\text{the grammar}} + \underbrace{\Delta\M(\mathrm{context})}_{\text{the warp}}
 \end{equation}
 
-$\M_{\mathrm{base}} = AB^\top$ is the learned grammar---the coupling geometry crystallised during training, shared across all positions and layers.
+$\M_{\mathrm{base}} = AB^\top$ is the learned grammar, the coupling geometry crystallised during training, shared across all positions and layers.
 This is what the ORN already learns.
 
-$\Delta\M = \sum_{i} \mathbf{u}(x_i) \mathbf{v}(x_i)^\top$ is the \textbf{accumulated context warp}---each token contributes a rank-1 update to the geometry.
+$\Delta\M = \sum_{i} \mathbf{u}(x_i) \mathbf{v}(x_i)^\top$ is the \textbf{accumulated context warp}, each token contributes a rank-1 update to the geometry.
 ``The'' barely warps it.
 ``Vindicate'' warps it significantly, opening three-party coupling channels.
-The accumulated warp IS the world model state---the context built from reading.
+The accumulated warp IS the world model state, the context built from reading.
 
 The coupling pattern falls out:
 \begin{equation}
@@ -2070,7 +2070,7 @@ The warp modifies the inner geometry: the effective coupling in $r$-space is $(I
 
 All previous designs share a common structure: compute the coupling field (once or per-layer), then read from it.
 The computation is in the READING, not in the field itself.
-The field is passive---a lookup table that the response heads query.
+The field is passive, a lookup table that the response heads query.
 
 The abelian sandpile model~\cite{bak1987self} suggests a radically different structure.
 In the sandpile, the field is an active dynamical system:
@@ -2080,23 +2080,23 @@ In the sandpile, the field is an active dynamical system:
 \item \textbf{Read:} the equilibrium state is the representation.
 \end{enumerate}
 
-The computation IS the avalanche---the cascading relaxation that propagates the perturbation through the geometry.
-The depth of computation is not $L$ (a fixed number of layers) but the \textbf{cascade length}---how many toppling steps occur before equilibrium.
+The computation IS the avalanche, the cascading relaxation that propagates the perturbation through the geometry.
+The depth of computation is not $L$ (a fixed number of layers) but the \textbf{cascade length}, how many toppling steps occur before equilibrium.
 This is adaptive: some tokens trigger massive avalanches (deep computation), others barely disturb the field (shallow computation).
 
 \paragraph{The toppling rule is the operator.}
 $\M$ defines how perturbations propagate.
-When a position's coupling energy exceeds a learned threshold, it ``topples''---redistributing energy to coupled positions according to $\M$'s geometry.
+When a position's coupling energy exceeds a learned threshold, it ``topples'', redistributing energy to coupled positions according to $\M$'s geometry.
 The redistribution is \textbf{nonlinear} (only above-threshold positions topple), which prevents over-smoothing.
 Sub-threshold positions are stable and retain their coupling.
 
 \paragraph{The abelian property is composition.}
 In the abelian sandpile, the final state depends on \emph{what} was added, not the \emph{order} of addition.
 For language: the coupling field after processing tokens $\{A, B, C\}$ is the same regardless of processing order.
-This is composition in the strongest sense---the field is a function of the token SET, computed incrementally through cascades.
+This is composition in the strongest sense, the field is a function of the token SET, computed incrementally through cascades.
 
 \paragraph{Self-organised criticality.}
-The sandpile naturally evolves to a \textbf{critical state}---poised at the edge where small perturbations can cause cascades of any size.
+The sandpile naturally evolves to a \textbf{critical state}, poised at the edge where small perturbations can cause cascades of any size.
 If the coupling field self-organises to criticality during training, then:
 \begin{itemize}[nosep]
 \item Function words (``the,'' ``a'') cause small cascades (the field is already well-configured for common patterns).
@@ -2112,7 +2112,7 @@ The coupling field is not recomputed from scratch (transformer), not computed on
 \paragraph{Implementation.}
 The field is an $S \times d$ persistent state.
 At each token, the field is driven (token embedding added) and relaxed (iterated toppling through $\M$'s geometry until stable).
-Relaxation recomputes the coupling $C = \mathrm{softmax}(\h \M \h^\top / \sqrt{d})$ at each step, so the coupling EVOLVES as the field relaxes---this is the cascade.
+Relaxation recomputes the coupling $C = \mathrm{softmax}(\h \M \h^\top / \sqrt{d})$ at each step, so the coupling EVOLVES as the field relaxes, this is the cascade.
 Training uses backpropagation through the unrolled relaxation steps (or implicit differentiation at equilibrium, as in DEQ models).
 
 \paragraph{Open questions.}
@@ -2148,19 +2148,19 @@ The innovation is in the \emph{properties}, not the loss.
 
 \subsection{Variant A: Additive Warp (Tested)}
 
-$W_j = \sum_{i \leq j} \mathbf{wk}_i \mathbf{wv}_i^\top$ --- each token contributes a rank-1 update, warps accumulate by addition.
+$W_j = \sum_{i \leq j} \mathbf{wk}_i \mathbf{wv}_i^\top$ ,  each token contributes a rank-1 update, warps accumulate by addition.
 \begin{itemize}[nosep]
 \item Composability: abelian by construction (addition commutes). Measured: 0.998 similarity under token reordering.
 \item Result: val 4.32, beating both base-only (4.75) and warp-only (4.47). Both components needed.
-\item Limitation: each token's warp is context-independent --- ``vindicate'' produces the same $\mathbf{wk}\mathbf{wv}^\top$ regardless of what came before. No iterative evolution.
+\item Limitation: each token's warp is context-independent ,  ``vindicate'' produces the same $\mathbf{wk}\mathbf{wv}^\top$ regardless of what came before. No iterative evolution.
 \end{itemize}
 
 \subsection{Variant B: Iterative Field Evolution (Testing)}
 
-$W_t = \lambda (G \, W_{t-1} \, G^\top) + \mathbf{wk}_t \mathbf{wv}_t^\top$ --- the field evolves through $\M$'s inner geometry $G = B^\top A$ at each token.
+$W_t = \lambda (G \, W_{t-1} \, G^\top) + \mathbf{wk}_t \mathbf{wv}_t^\top$ ,  the field evolves through $\M$'s inner geometry $G = B^\top A$ at each token.
 \begin{itemize}[nosep]
 \item Composability: not strictly abelian (the transition $G W G^\top$ is non-commutative), but the field evolution is structured through $\M$'s spectral geometry.
-\item The field state $W_t$ reflects the accumulated \emph{transformation} of the coupling by all previous tokens --- not just their sum. Token 50's effect depends on the field shaped by tokens 1--49.
+\item The field state $W_t$ reflects the accumulated \emph{transformation} of the coupling by all previous tokens ,  not just their sum. Token 50's effect depends on the field shaped by tokens 1--49.
 \item Self-measuring: the learned decay $\lambda$ reports how fast context fades. The field norm $\|W_t\|$ reports how much context has accumulated. Both are inspectable during inference.
 \item Honest critique: if flattened, this is an SSM with Kronecker-structured transition ($G \otimes G$) on an $r^2$-dimensional state. It is sequential. But the differences from a standard SSM are real: the state is a \emph{coupling matrix} (not a feature vector), it feeds into \emph{attention logits} (not direct output), and each mode of $G$ interacts with others through the Kronecker structure (not diagonal).
 \item \textbf{Variant B2 (co-evolution):} The drive comes from the \emph{attention output}, not the raw token:
@@ -2171,7 +2171,7 @@ W_t &= \lambda \, G \, W_{t-1} \, G^\top + \mathbf{wk}_t \, \mathbf{wv}_t^\top
 \end{align}
 The field evolves based on what the model FOUND RELEVANT, not what tokens are present.
 This creates a feedback loop: the field shapes attention ($W \to C$), and attention shapes the field ($C \to W$).
-This is NOT an SSM --- the ``input'' to the recurrence is the attention output, which itself depends on the field state.
+This is NOT an SSM ,  the ``input'' to the recurrence is the attention output, which itself depends on the field state.
 The field and the attention co-evolve.
 \item Mamba suffers because it \emph{replaces} attention with recurrence.
 We \emph{keep} attention but borrow the SSM's context compression dynamics.
@@ -2203,13 +2203,13 @@ Cascading toppling through $\M$'s geometry until equilibrium.
 Not which variant gets the lowest loss.
 We are looking for a variant where:
 \begin{itemize}[nosep]
-\item The field dynamics are \textbf{interpretable} --- different inputs produce visibly different field states.
-\item The context \textbf{accumulates meaningfully} --- later positions carry richer field structure than early positions.
-\item The base grammar and context warp are \textbf{both necessary} --- neither alone suffices (already demonstrated for additive warp).
-\item The architecture \textbf{measures itself} --- decay, gates, and field norms report on the computation during normal inference.
+\item The field dynamics are \textbf{interpretable} ,  different inputs produce visibly different field states.
+\item The context \textbf{accumulates meaningfully} ,  later positions carry richer field structure than early positions.
+\item The base grammar and context warp are \textbf{both necessary} ,  neither alone suffices (already demonstrated for additive warp).
+\item The architecture \textbf{measures itself} ,  decay, gates, and field norms report on the computation during normal inference.
 \end{itemize}
 
-If any variant satisfies these while remaining in the performance ballpark, it is a viable foundation for the programme --- an architecture that is both a model and a probe of relational computation.
+If any variant satisfies these while remaining in the performance ballpark, it is a viable foundation for the programme ,  an architecture that is both a model and a probe of relational computation.
 
 
 \section{Two Fields: Cold Geometry and Hot Context}
@@ -2222,13 +2222,13 @@ The coupling geometry.
 Learned slowly through gradient descent.
 Changes only during training.
 At inference, $\M$ is frozen.
-It IS the learned knowledge---the relational grammar, the structural invariants, the ``muscle memory'' of how language works.
+It IS the learned knowledge, the relational grammar, the structural invariants, the ``muscle memory'' of how language works.
 
 \paragraph{The hot field ($W$).}
 The context state.
 Evolves forward through operator dynamics as tokens are consumed.
 Changes at every token, \textbf{both during training and at inference}.
-It IS the active comprehension---the accumulated relational structure of what has been read.
+It IS the active comprehension, the accumulated relational structure of what has been read.
 
 \paragraph{The invariance property.}
 The hot field works \textbf{identically at training and inference}.
@@ -2259,10 +2259,10 @@ It trains $\M$ to be a geometry that makes the hot field \emph{work well}:
 \item SGD adjusts $\M$ so that $W$'s dynamics improve.
 \end{enumerate}
 
-The gradient through $W$ tells $\M$: ``when the hot field evolved this way through your geometry $G$, predictions at position 100 were wrong---adjust $G$ so the field evolves better.''
+The gradient through $W$ tells $\M$: ``when the hot field evolved this way through your geometry $G$, predictions at position 100 were wrong, adjust $G$ so the field evolves better.''
 
 This is meta-learning: the outer loop (SGD on $\M$) optimises the inner loop ($W$ evolution through tokens).
-Like MAML, but the inner loop uses operator dynamics, not gradients---cheaper, structured, and identical at train and test time.
+Like MAML, but the inner loop uses operator dynamics, not gradients, cheaper, structured, and identical at train and test time.
 
 \paragraph{What good $\M$ looks like.}
 Through training, $\M$ learns to define a geometry where:
@@ -2282,7 +2282,7 @@ In a standard transformer, there is no ``hot field.''
 The KV cache at inference is structurally different from training (training sees the whole sequence in parallel via causal masking; inference builds token by token).
 The mechanism simulates autoregressive processing but is not genuinely sequential.
 
-In our design, the hot field is genuinely sequential---it evolves token by token through operator dynamics.
+In our design, the hot field is genuinely sequential, it evolves token by token through operator dynamics.
 Training and inference use the same mechanism.
 No simulation, no masking approximation.
 The model is always doing the real thing.
@@ -2302,14 +2302,14 @@ If quality degrades: the hot field was secretly depending on the gradient signal
 A stronger test: freeze $\M$ from one dataset, run the hot field on a \emph{different} dataset.
 If the hot field transfers: $\M$ learned a universal geometry.
 If it fails: $\M$ was dataset-specific.
-This is the frozen-$\M$ transfer experiment---already tested at $+0.73\%$ gap in the ORN, and now applicable to the spectral field architecture.
+This is the frozen-$\M$ transfer experiment, already tested at $+0.73\%$ gap in the ORN, and now applicable to the spectral field architecture.
 
 
 \section{On Depth: Criticality, Toppling, and Adaptive Computation}
 \label{sec:on-depth}
 
 The operator programme began by trying to replace depth with algebra: compute $p(\M)$ instead of $L$ layers.
-This failed because depth provides multi-level indirection---each layer's routing decisions depend on previous layers' processing.
+This failed because depth provides multi-level indirection, each layer's routing decisions depend on previous layers' processing.
 The correct response is not to abandon depth but to understand what depth \emph{does} in operator terms.
 
 \subsection{Depth as Height in a Sandpile}
@@ -2317,7 +2317,7 @@ The correct response is not to abandon depth but to understand what depth \emph{
 The abelian sandpile model provides the right metaphor, but applied to the \textbf{vertical} dimension (layers) rather than the horizontal (tokens within a layer).
 
 Each layer adds ``processing height'' to each position.
-Most layers are \emph{quiet}---the representation changes gradually, coupling barely shifts.
+Most layers are \emph{quiet}, the representation changes gradually, coupling barely shifts.
 Occasionally, accumulated processing crosses a threshold and the coupling \emph{reorganises} dramatically.
 This is a toppling event: the relational structure undergoes a phase transition.
 The reorganisation cascades through positions via attention.
@@ -2351,7 +2351,7 @@ $\M$ plays a dual role determined by the state height:
 
 Same operator, different mode.
 The mode is determined by the accumulated processing, not by a per-layer parameter.
-This is why SharedM works: the geometry IS the same at both modes---it defines both how to gather and how to reorganise.
+This is why SharedM works: the geometry IS the same at both modes, it defines both how to gather and how to reorganise.
 
 \subsection{The Warp as Height}
 
@@ -2366,7 +2366,7 @@ When the warp exceeds a learned threshold $\theta$, the coupling reorganises thr
 After toppling, the warp relaxes (the accumulated ``sand'' is redistributed).
 
 The number of toppling events is \textbf{adaptive}: simple inputs trigger few (the field stabilises early), complex inputs trigger many (multiple reorganisation cascades are needed).
-This gives variable-depth computation---not from a halting probability (Universal Transformer) but from \textbf{self-organised criticality}: the field naturally evolves to a state where toppling occurs when and where it is needed.
+This gives variable-depth computation, not from a halting probability (Universal Transformer) but from \textbf{self-organised criticality}: the field naturally evolves to a state where toppling occurs when and where it is needed.
 
 \subsection{Composability Across Depth}
 
@@ -2375,14 +2375,14 @@ Within each layer: the warp accumulates abelianly across tokens (horizontal comp
 Across layers: the warp accumulates toward toppling thresholds (vertical composability through criticality).
 The composition of relational templates happens through toppling events: ``the committee'' is accumulated at layers 1--3, ``vindicate'' adds critical height at layer 4, the toppling at layer 5 reorganises the coupling into a three-party judgment structure.
 The composition is not algebraic (polynomial of $\M$).
-It is \textbf{dynamical}---driven by the accumulation and release of relational information through a critical system.
+It is \textbf{dynamical}, driven by the accumulation and release of relational information through a critical system.
 
 \subsection{The Architecture}
 
 \begin{enumerate}[nosep]
 \item Stack $L$ layers with SharedM.
 \item Each layer has the spectral warp (context compression within the layer) from Section~\ref{sec:meta-attention}.
-\item The warp CARRIES ACROSS LAYERS---it is the accumulated processing height.
+\item The warp CARRIES ACROSS LAYERS, it is the accumulated processing height.
 \item Each layer has a learned toppling threshold $\theta_l$.
 \item When the warp exceeds $\theta_l$: the coupling reorganises (large correction, attention pattern changes significantly).
 \item When below threshold: quiet accumulation (small correction, coupling barely changes).
@@ -2393,7 +2393,7 @@ It is \textbf{dynamical}---driven by the accumulation and release of relational 
 The experiment trains two variants:
 \begin{itemize}[nosep]
 \item \textbf{Carry-warp}: the warp persists across layers, accumulating toward toppling.
-\item \textbf{Reset-warp}: the warp resets at each layer (the standard approach---each layer is independent).
+\item \textbf{Reset-warp}: the warp resets at each layer (the standard approach, each layer is independent).
 \end{itemize}
 
 If carry-warp outperforms reset-warp: the vertical accumulation toward criticality adds value.
@@ -2409,14 +2409,14 @@ This would be the sandpile self-organising to the critical state we observed emp
 \label{sec:beyond}
 
 The operator programme tried to replace depth with algebra.
-Every attempt failed---not because the idea of relational computation is wrong, but because we used the wrong tools.
+Every attempt failed, not because the idea of relational computation is wrong, but because we used the wrong tools.
 Every architecture we built was a transformer variant with a shared matrix.
 We applied polynomials, eigendecompositions, spectral rotations, and measured val loss.
 This is \emph{left hemisphere} thinking applied to a \emph{right hemisphere} problem.
 
 The operator programme says: we must learn metaphor, and we must move by composition in abstract relational space.
 ``Vindicate'' does not activate eigenmode 5.
-It MAPS a relational template from one context to another---preserving three-party judgment structure while changing the specific parties.
+It MAPS a relational template from one context to another, preserving three-party judgment structure while changing the specific parties.
 We looked for this in matrix spectra.
 We should have been looking for it in the \textbf{interaction between two different modes of processing}.
 
@@ -2436,7 +2436,7 @@ The operator's value is richer representation: transfer, composition, generalisa
 We never measured these.
 \end{enumerate}
 
-This does not mean the programme failed---it means it hasn't started.
+This does not mean the programme failed, it means it hasn't started.
 The next section outlines where it goes from here: a fundamentally different architecture inspired by the biological existence proof.
 
 
@@ -2455,7 +2455,7 @@ Remove the cache and the model knows nothing.
 The memory is the comprehension.
 
 But a human reading the same novel does not store 100,000 words.
-You build a world---characters, relationships, tensions, settings, narrative arcs.
+You build a world, characters, relationships, tensions, settings, narrative arcs.
 When asked ``what happens next?'', you do not search through stored words.
 You consult your world model and generate what must follow from the structure.
 
@@ -2464,7 +2464,7 @@ You consult your world model and generate what must follow from the structure.
 In the operator framework, reading a book would not fill a cache.
 It would warp the coupling geometry.
 
-The base grammar $G = B^\top A$ is frozen---the relational structure learned during training.
+The base grammar $G = B^\top A$ is frozen, the relational structure learned during training.
 But as you read, the \emph{effective} geometry changes:
 \begin{equation}
 G_{\mathrm{eff}} = G + \Delta(\text{context})
@@ -2492,7 +2492,7 @@ G_T = G + \sum_{t=1}^{T} \alpha_t \, \mathbf{u}_t \mathbf{v}_t^\top
 
 This is structurally identical to the fast-weight update in linear attention ($W_t = W_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top$).
 But the object being updated is not a hidden state or a KV cache.
-It is the \textbf{coupling geometry itself}---the relational structure of the world model.
+It is the \textbf{coupling geometry itself}, the relational structure of the world model.
 
 \subsection{Fixed-Size World Model}
 
@@ -2502,13 +2502,13 @@ At $r = 64$: 4,096 values store the relational structure of an arbitrarily long 
 
 This is possible because the geometry stores \emph{relationships}, not tokens.
 After reading a mystery novel, you do not need ``the word at position 47,392 was `butler'.''
-You need ``the butler is suspected, has a motive, was near the library''---three relational links, three rank-1 updates.
+You need ``the butler is suspected, has a motive, was near the library'', three relational links, three rank-1 updates.
 The specific positions do not matter.
 The structure does.
 
 Old relationships that conflict with new ones are overwritten through competing rank-1 updates.
 The geometry self-organises as you read: early impressions are reinforced or revised by later evidence.
-This is how comprehension works---you do not remember everything, but you remember the relationships that matter.
+This is how comprehension works, you do not remember everything, but you remember the relationships that matter.
 
 \subsection{Generation from the Warped Geometry}
 
@@ -2530,9 +2530,9 @@ Higher degrees traverse longer relational chains through the world model.
 \subsection{The Brain Analogy}
 
 When you read a novel, you build a world model.
-The world model is not a transcript---it is a web of relationships.
+The world model is not a transcript, it is a web of relationships.
 The grammar of English is fixed (learned in childhood, crystallised).
-The world of the story is what you build by reading---a geometry warped by every sentence.
+The world of the story is what you build by reading, a geometry warped by every sentence.
 
 When you imagine what happens next, you traverse this geometry.
 The traversal depth depends on the question: ``what colour was the house?'' is shallow (degree 1, direct recall), while ``who benefits from the murder?'' is deep (degree 4+, multi-hop relational inference through motives, opportunities, and evidence).

@@ -46,7 +46,7 @@
     {\small Percolation Labs}\\
     {\small \url{https://github.com/Percolation-Labs/orn}}%
 }
-\date{March 2026 \quad{\small\textnormal{--- Theory Document, v2}}}
+\date{March 2026 \quad{\small\textnormal{,  Theory Document, v2}}}
 
 \begin{document}
 \maketitle
@@ -61,7 +61,7 @@ Preliminary results at toy scale confirm viability: the ORN matches or beats the
 But beating the transformer is not the claim.
 The claim is that we have found the \emph{generators}, not just the local trajectories.
 A trajectory records what coupling looked like at each depth; a generator encodes the law that produces all of them.
-This is a stronger form of knowledge, and it reveals structure---the approximate universality of coupling geometry across depth---that the transformer learns implicitly but never makes explicit.
+This is a stronger form of knowledge, and it reveals structure, the approximate universality of coupling geometry across depth, that the transformer learns implicitly but never makes explicit.
 \end{abstract}
 
 \tableofcontents
@@ -78,12 +78,12 @@ A transformer with $L$ layers, vocabulary $V$, and model dimension $d$ stores tw
 
 \paragraph{The embedding table.}
 A dense lookup: $E \in \R^{V \times d}$, mapping each token ID to a $d$-dimensional vector.
-At GPT-2 scale ($V{=}50{,}257$, $d{=}768$), this is 38.6M parameters---31\% of the entire model.
+At GPT-2 scale ($V{=}50{,}257$, $d{=}768$), this is 38.6M parameters, 31\% of the entire model.
 Each token's vector is stored independently; any cluster structure (``Emma'', ``Max'', ``Lily'' grouping near each other) is an accident of co-occurrence statistics, not a learned abstraction.
 
 \paragraph{The coupling projections.}
 At each of $L$ layers, separate $W_Q^{(l)}, W_K^{(l)}$ matrices ($2d^2$ parameters per layer) encode the rule: ``which tokens should attend to which?''
-At GPT-3 scale ($L{=}96$, $d{=}12{,}288$), this is approximately 28 billion parameters dedicated to answering one question---independently at every layer.
+At GPT-3 scale ($L{=}96$, $d{=}12{,}288$), this is approximately 28 billion parameters dedicated to answering one question, independently at every layer.
 Layer 47 does not know what layer 46 concluded.
 It re-derives the coupling from scratch.
 
@@ -108,7 +108,7 @@ Regularity is enforced by the shared generator $g$.
 \end{definition}
 
 In group theory terms: the integers under addition have infinitely many elements, but two generators suffice ($+1$ and $-1$).
-We conjecture that both the embedding structure and the coupling geometry of transformers have low generator rank---a small number of geometric primitives, composed differently by the evolving residual stream, account for the full structure.
+We conjecture that both the embedding structure and the coupling geometry of transformers have low generator rank, a small number of geometric primitives, composed differently by the evolving residual stream, account for the full structure.
 
 \subsection{The Memoisation Programme}
 
@@ -144,7 +144,7 @@ This is not a bug.
 
 \begin{claim}
 The brain stores the \emph{generator} of memories, not the memories themselves.
-Recall is a generative act---running the generator forward from a partial cue to reconstruct the full state.
+Recall is a generative act, running the generator forward from a partial cue to reconstruct the full state.
 \end{claim}
 
 A concept like ``justice'' or ``momentum'' is not stored as a fixed vector.
@@ -154,7 +154,7 @@ You do not store the orbit.
 You store the generators.
 You recover any point by applying generators from wherever you currently are.
 
-The transformer stores trajectory fragments---enough sampled points from enough orbits to approximate the full orbit structure by interpolation.
+The transformer stores trajectory fragments, enough sampled points from enough orbits to approximate the full orbit structure by interpolation.
 And it works.
 At internet scale, with hundreds of billions of parameters and trillions of tokens, the trajectory sampling becomes dense enough that interpolation covers essentially all of natural language.
 The transformer does not fail; it succeeds impressively.
@@ -166,9 +166,9 @@ Every increase in coverage requires proportionally more parameters.
 The scaling laws reflect this directly: capability grows as a power law of parameters because you are buying more trajectory fragments, and each fragment covers only its local neighbourhood.
 
 The generator, if found, changes the scaling regime.
-A system that stores the rule rather than the instances does not need more parameters to cover more of the orbit space---the rule already covers all of it.
+A system that stores the rule rather than the instances does not need more parameters to cover more of the orbit space, the rule already covers all of it.
 The cost is compute (running the rule), not storage (enumerating the outputs).
-The question is not whether the transformer works---it does---but whether it is the right trade.
+The question is not whether the transformer works, it does, but whether it is the right trade.
 On modern hardware where compute is cheap and memory is expensive, the answer may be no.
 
 
@@ -186,7 +186,7 @@ Given a pure function $f: X \to Y$, memoisation is the transformation:
 The function is computed once per unique input; subsequent calls with the same input return the cached result.
 \end{definition}
 
-The precondition is \textbf{referential transparency}: $f$ must be a pure function---same input, same output.
+The precondition is \textbf{referential transparency}: $f$ must be a pure function, same input, same output.
 Memoisation exploits the assumption that the same computation will be requested multiple times.
 
 \subsection{Memoising the Coupling Rule}
@@ -204,7 +204,7 @@ If so, we replace $L$ separate matrices with a single shared $\M$:
     s(i,j) = \frac{\x_i^\top \M\, \x_j}{\sqrt{d}}
 \end{equation}
 
-We are not memoising the \emph{scores} $s(i,j)$---those change every layer because $\x_i$ and $\x_j$ evolve.
+We are not memoising the \emph{scores} $s(i,j)$, those change every layer because $\x_i$ and $\x_j$ evolve.
 We are memoising the \emph{rule}: the matrix $\M$ that defines how any two token representations interact.
 
 \paragraph{Why Q and K are two matrices.}
@@ -214,7 +214,7 @@ A single projection $W \in \R^{r \times d}$ suffices:
 \[
 \text{score}_{ij} = (Wx_i)^\top(Wx_j) = x_i^\top W^\top W \, x_j
 \]
-This selects an $r$-dimensional subspace---but $W^\top W$ is symmetric, so $\text{score}_{ij} = \text{score}_{ji}$ always.
+This selects an $r$-dimensional subspace, but $W^\top W$ is symmetric, so $\text{score}_{ij} = \text{score}_{ji}$ always.
 The \emph{only} reason attention needs two projections is to break this symmetry: ``what I'm looking for'' (query) differs from ``what I'm advertising'' (key).
 $W_Q$ and $W_K$ exist because the attention graph is directed, not because subspace selection requires two matrices.
 
@@ -227,7 +227,7 @@ Symmetric $\M = LL^\top$ fails catastrophically on autoregressive tasks (confirm
 The same logic applies to the embedding table.
 $E \in \R^{V \times d}$ maps each token to an independent vector.
 But most tokens are not independent: ``happy'', ``glad'', ``pleased'' share a semantic role.
-The table stores $V$ points that largely lie on a low-dimensional manifold---PCA of GPT-2 embeddings shows ${\sim}90\%$ of variance in the top ${\sim}50$ of 768 dimensions.
+The table stores $V$ points that largely lie on a low-dimensional manifold, PCA of GPT-2 embeddings shows ${\sim}90\%$ of variance in the top ${\sim}50$ of 768 dimensions.
 
 The intensional replacement: each token receives a minimal \textbf{seed} $\s_w \in \R^{d_s}$ ($d_s \ll d$), and a shared dynamical system $\Phi$ unfolds seeds into full representations:
 \begin{equation}
@@ -240,14 +240,14 @@ A memoised embedding is a representation system where:
 (1) each token has a minimal code $c_w$ (the seed);
 (2) a shared function $\Phi$ (the same dynamical system for all tokens) unfolds codes into representations;
 (3) the representation is $\Phi^T(c_w)$: $T$ iterations of $\Phi$ on the code.
-The token's meaning is not stored---it is computed by running a shared function on a compressed address.
+The token's meaning is not stored, it is computed by running a shared function on a compressed address.
 \end{claim}
 
 \paragraph{The generative view.}
 The obvious reading of $f(D) \approx E$ is: ``$D$ is a compressed version of $E$, and $f$ decompresses it.''
 This misses the deeper point.
-$D$ (the seed codes) is the \emph{native} representation---the natural coordinate system of the vocabulary.
-$f$ (the shared dynamics) is the physics---the shared law that unfolds compressed identity into usable representation.
+$D$ (the seed codes) is the \emph{native} representation, the natural coordinate system of the vocabulary.
+$f$ (the shared dynamics) is the physics, the shared law that unfolds compressed identity into usable representation.
 $E$ (the lookup table) is the \emph{materialised cache} of $f(D)$.
 
 In this view, the lookup table is the approximation.
@@ -260,7 +260,7 @@ Modern GPU performance is dominated by \textbf{memory bandwidth}, not arithmetic
 An A100 has 312 TFLOPS arithmetic but only 2~TB/s HBM bandwidth: for every byte loaded, the GPU can perform ${\sim}156$ operations.
 
 Embedding lookup is pure memory access: load one row of $E$ per token, zero compute.
-Orbital computation loads $\Phi$ once (shared across all tokens) and runs $T$ iterations of matrix multiplications---converting a memory-bound operation into a compute-bound one.
+Orbital computation loads $\Phi$ once (shared across all tokens) and runs $T$ iterations of matrix multiplications, converting a memory-bound operation into a compute-bound one.
 
 Similarly, the standard transformer loads $2d^2$ fresh coupling parameters from HBM at every layer.
 The ORN loads $\M$ once and reuses it across all $L$ layers.
@@ -291,9 +291,9 @@ No computation at inference.
 \paragraph{Program (intensional).}
 Store a compact program that \emph{computes} $f(x)$ for any $x$.
 Space: $\bigO(K(f))$.
-Computation at inference---run the program.
+Computation at inference, run the program.
 
-For a random function, $K(f) \approx |X|$---no compression possible.
+For a random function, $K(f) \approx |X|$, no compression possible.
 But for a structured function, $K(f) \ll |X|$.
 
 \begin{claim}[Capacity equivalence]
@@ -320,7 +320,7 @@ The total computational capacity is the product, not either factor alone.
 
 \paragraph{Depth is valuable, but transformers cannot afford it.}
 The scaling laws literature establishes that depth is more parameter-efficient than width for compositionality~\cite{levine2020depth}: each additional layer adds compositional capacity that width cannot replicate.
-Kaplan et al.~\cite{kaplan2020scaling} and Hoffmann et al.~\cite{hoffmann2022chinchilla} find that optimal model shape scales depth and width together, but within a fixed parameter budget, depth yields diminishing returns because each layer is expensive---a standard transformer layer costs $4d^2$ coupling parameters ($W_Q, W_K, W_V, W_O$) plus the FFN.
+Kaplan et al.~\cite{kaplan2020scaling} and Hoffmann et al.~\cite{hoffmann2022chinchilla} find that optimal model shape scales depth and width together, but within a fixed parameter budget, depth yields diminishing returns because each layer is expensive, a standard transformer layer costs $4d^2$ coupling parameters ($W_Q, W_K, W_V, W_O$) plus the FFN.
 At 10M total parameters with $d = 176$, the budget affords only $L = 3$ transformer layers.
 
 SharedM changes this tradeoff.
@@ -337,7 +337,7 @@ ORN is to the transformer as JPEG is to bitmap.
 A bitmap stores every pixel: $\bigO(n^2)$ bits.
 JPEG stores DCT coefficients: $\bigO(K)$ bits where $K \ll n^2$ for natural images.
 JPEG requires computation (inverse DCT) to reconstruct.
-The image's complexity is the same---the representation has changed.
+The image's complexity is the same, the representation has changed.
 
 \subsection{Theoretical Performance (TBD)}
 
@@ -352,7 +352,7 @@ In our experiments these approximately cancel: both architectures complete 5000 
 
 \paragraph{Inference latency.}
 For autoregressive generation, each token requires a full forward pass through all $L$ layers.
-SharedM's depth advantage becomes a latency cost: at 1B parameters, SharedM might achieve $L = 80$ where the transformer gets $L = 24$---roughly $3\times$ more sequential steps.
+SharedM's depth advantage becomes a latency cost: at 1B parameters, SharedM might achieve $L = 80$ where the transformer gets $L = 24$, roughly $3\times$ more sequential steps.
 Each step is cheaper (fewer unique weights to load), but the sequential depth is the bottleneck.
 Time-to-first-token and tokens-per-second both degrade proportionally to the depth ratio.
 
@@ -368,7 +368,7 @@ If the orbit converges early (easy, predictable tokens like ``the'', ``and''), t
 Hard tokens (rare words, ambiguous contexts) run the full depth.
 This is the adaptive halting mechanism of the Universal Transformer~\cite{dehghani2019universal} applied to SharedM, and it connects directly to our perturbative correction architecture: if the context gate $g \approx 0$ for a token at some layer, the orbital trajectory has already converged and further iteration adds nothing.
 
-The user experience this implies: \emph{fast for predictable text, slower for surprising text}---which mirrors how human reading works.
+The user experience this implies: \emph{fast for predictable text, slower for surprising text}, which mirrors how human reading works.
 Formalising the convergence criterion (when is the orbit ``done''?) and measuring the practical speedup from early exit at scale are open problems for the experimental programme.
 
 \subsection{When Memoisation Fails}
@@ -382,10 +382,10 @@ Define the \textbf{coupling variance}:
 
 If $V / \|\bar{\M}\|_F^2$ is small, memoisation incurs small loss.
 If large, layers need specialised coupling and shared $\M$ underfits.
-This is directly measurable on pretrained transformers---a scalar that predicts, before we build anything, how much quality memoisation will cost.
+This is directly measurable on pretrained transformers, a scalar that predicts, before we build anything, how much quality memoisation will cost.
 
 For embeddings, memoisation fails when the targets are unstructured.
-If $V$ target embeddings are drawn i.i.d.\ from $\mathcal{N}(0, I_d)$, any orbital embedding achieving $\epsilon$-reconstruction requires $V \times d_s + |\Phi| \geq V \times d - \bigO(V \log(1/\epsilon))$---no compression possible.
+If $V$ target embeddings are drawn i.i.d.\ from $\mathcal{N}(0, I_d)$, any orbital embedding achieving $\epsilon$-reconstruction requires $V \times d_s + |\Phi| \geq V \times d - \bigO(V \log(1/\epsilon))$, no compression possible.
 But real embeddings have massive structure: they cluster by semantic role, syntactic category, and topic, concentrating on low-dimensional manifolds.
 
 
@@ -428,7 +428,7 @@ The representation at depth $t$ is $\Phi^t(\s_w)$.
 \begin{definition}[Orbit equivalence]
 Two tokens $w_1, w_2$ are orbitally equivalent if their orbits converge:
 $w_1 \sim w_2 \iff \lim_{t \to \infty} \|\Phi^t(\s_{w_1}) - \Phi^t(\s_{w_2})\| = 0$.
-Orbitally equivalent tokens are functionally interchangeable---they reach the same attractor regardless of their surface form.
+Orbitally equivalent tokens are functionally interchangeable, they reach the same attractor regardless of their surface form.
 \end{definition}
 
 In a children's story dataset, ``Emma'', ``Max'', ``Lily'' should be orbitally equivalent: they fill the CHILD-CHARACTER role.
@@ -450,7 +450,7 @@ For orbital embeddings to work, we need:
     \item \textbf{Neutral/expanding directions} for distinguishing features (Emma $\neq$ Max in surface form).
 \end{itemize}
 
-This is a \emph{mixed-stability} regime---attractor dynamics on dissipative systems that collapse trajectories onto low-dimensional manifolds while preserving information along the manifold.
+This is a \emph{mixed-stability} regime, attractor dynamics on dissipative systems that collapse trajectories onto low-dimensional manifolds while preserving information along the manifold.
 
 \subsection{Memory as Attractor, Not Storage}
 
@@ -469,7 +469,7 @@ The dynamical system $\Phi$ generates a semigroup of operators $\{\Phi^0, \Phi^1
 Chen \& Wu~\cite{chen2023deeposg} showed that explicitly embedding the semigroup property $T(s+t) = T(s) \circ T(t)$ into neural architectures dramatically reduces data dependency and improves long-time prediction.
 This parallels our finding: memoisation (shared $\M$) works with no quality loss because we are implicitly enforcing algebraic consistency on the coupling dynamics.
 
-The group $G$ generated by $\Phi$ is the same for all tokens---it is determined by $\M$ and the shared block.
+The group $G$ generated by $\Phi$ is the same for all tokens, it is determined by $\M$ and the shared block.
 Different tokens explore different parts of the same group's action.
 This is the ``generators, not trajectories'' idea made precise: $G$ is compact (one shared block), but the orbits $G \cdot \s_w$ can be arbitrarily complex.
 
@@ -489,7 +489,7 @@ Specialisation emerges from simple local read-write rules.
 The transformer's residual stream maps onto this pattern:
 \begin{enumerate}[nosep]
     \item Each layer reads the stream, makes a small additive contribution, and passes it on.
-    \item Layer $k$ does not need to know what layer $k{-}3$ intended---it reads the current field state.
+    \item Layer $k$ does not need to know what layer $k{-}3$ intended, it reads the current field state.
     \item Features coexist in superposition within a single shared channel.
     \item Adding layers does not require redesigning earlier layers.
 \end{enumerate}
@@ -500,7 +500,7 @@ We propose: \textbf{the reading rule is a property of the field geometry, not of
 
 \subsection{The Residual Stream as Shared Geometric Medium}
 
-When the coupling geometry is shared ($\M$ is the same at every layer), the residual stream becomes more than a data bus---it becomes a \textbf{manifold with known metric structure}.
+When the coupling geometry is shared ($\M$ is the same at every layer), the residual stream becomes more than a data bus, it becomes a \textbf{manifold with known metric structure}.
 Every layer, every expert, every device that reads the stream agrees on what ``nearby'' means, what directions are important for coupling, and how to measure relevance.
 
 This has three practical consequences:
@@ -522,24 +522,24 @@ When processing is distributed across devices, the shared geometry provides a co
 \subsection{Renormalisation Group Flow as Depth}
 
 The renormalisation group (RG) from statistical physics provides the mathematical framework for understanding depth as coarse-graining.
-The RG iteratively integrates out fine degrees of freedom, obtaining an effective theory at coarser scale with fewer parameters, until convergence to a \textbf{fixed point}---a maximally compact description.
+The RG iteratively integrates out fine degrees of freedom, obtaining an effective theory at coarser scale with fewer parameters, until convergence to a \textbf{fixed point}, a maximally compact description.
 
 Applied to neural sequence processing:
 \begin{align*}
     \text{Fine scale:}    & \quad \text{tokens, subwords, local context} \\
     \text{Medium scale:}  & \quad \text{phrases, entities, local structure} \\
     \text{Coarse scale:}  & \quad \text{propositions, relations, causal structure} \\
-    \text{Abstract:}      & \quad \text{symmetries, invariances, rules --- the fixed point}
+    \text{Abstract:}      & \quad \text{symmetries, invariances, rules ,  the fixed point}
 \end{align*}
 
 Mehta \& Schwab~\cite{mehta2014exact} established an exact mapping between the RG and restricted Boltzmann machines.
 Lin, Tegmark, \& Rolnick~\cite{lin2017does} argued that deep learning succeeds because natural data has hierarchical, local, symmetric structure that RG-like operations exploit.
 
 \paragraph{The standard transformer as unrenormalised field theory.}
-In the standard transformer, each layer has its own coupling matrices $W_Q^{(\ell)}, W_K^{(\ell)}$---its own ``theory at that scale.''
+In the standard transformer, each layer has its own coupling matrices $W_Q^{(\ell)}, W_K^{(\ell)}$, its own ``theory at that scale.''
 There is no constraint that the theory at scale $\ell$ should relate to the theory at scale $\ell{+}1$.
 This is analogous to computing a quantum field theory without renormalisation: evaluating the full theory at every energy scale independently.
-It works---you get the right answers---but it is wasteful because it does not exploit the fact that the underlying theory may be the same at every scale.
+It works, you get the right answers, but it is wasteful because it does not exploit the fact that the underlying theory may be the same at every scale.
 
 \paragraph{SharedM as renormalised field theory.}
 SharedM forces the coupling rule to be the same at every scale.
@@ -547,52 +547,52 @@ The \emph{same} $\M$ operates at layer~1 (local correlations: ``the'' next to ``
 
 \begin{remark}[Connections to prior work]
 The shared coupling geometry has structural analogues in several independent lines of work.
-Neural Sheaf Diffusion~\cite{bodnar2022sheaf} uses shared restriction maps (transport operators on graph edges) to define a sheaf Laplacian that drives diffusion---structurally identical to SharedM in the graph setting, though sheaf Laplacians are symmetric where $\M = AB^\top$ is asymmetric.
-ALBERT~\cite{lan2020albert} showed that sharing attention weights costs only $-0.7$ points (near zero)---empirical confirmation of coupling redundancy, though ALBERT does not analyse the geometric structure.
-Mingard et al.~\cite{louis2025occam} showed SGD has an inbuilt Occam's razor favouring low-complexity solutions---theoretical backing for why SGD should discover shared $\M$ rather than $2L$ independent matrices.
+Neural Sheaf Diffusion~\cite{bodnar2022sheaf} uses shared restriction maps (transport operators on graph edges) to define a sheaf Laplacian that drives diffusion, structurally identical to SharedM in the graph setting, though sheaf Laplacians are symmetric where $\M = AB^\top$ is asymmetric.
+ALBERT~\cite{lan2020albert} showed that sharing attention weights costs only $-0.7$ points (near zero), empirical confirmation of coupling redundancy, though ALBERT does not analyse the geometric structure.
+Mingard et al.~\cite{louis2025occam} showed SGD has an inbuilt Occam's razor favouring low-complexity solutions, theoretical backing for why SGD should discover shared $\M$ rather than $2L$ independent matrices.
 MASA~\cite{masa2025} is the closest concurrent work: it decomposes Q, K, V, O matrices into shared dictionary atoms with per-layer scalar coefficients ($\hat{W}_\ell = \sum_s c_{\ell s} \cdot D_s$), achieving 66.7\% attention compression at 729M scale.
 Notably, MASA finds Q,K are more compressible than O (``compressing O introduces a bottleneck''), independently confirming our choice to share coupling but not response.
-However, MASA's sharing is \emph{static}---each layer independently combines atoms with no inter-layer dynamics---while the ORN's sharing is \emph{dynamic}: one $\M$ applied to an evolving field state where each layer's coupling depends on all previous layers.
-MASA notes ``spectral clustering is left for future work''---the spectral invariance that explains why their sharing works is exactly our contribution.
+However, MASA's sharing is \emph{static}, each layer independently combines atoms with no inter-layer dynamics, while the ORN's sharing is \emph{dynamic}: one $\M$ applied to an evolving field state where each layer's coupling depends on all previous layers.
+MASA notes ``spectral clustering is left for future work'', the spectral invariance that explains why their sharing works is exactly our contribution.
 What is new in the ORN is the identification of the \emph{specific} invariant (the eigenvalue spectrum of $W_Q^\top W_K$, confirmed across five model families), the dynamic mechanism (field-state rotation by per-layer response heads), the semigroup interpretation, spectral crystallisation during training, and the transfer results showing the shared geometry generalises across domains.
 \end{remark}
-What changes between layers is the field state---the residual stream has been progressively coarse-grained by previous iterations.
+What changes between layers is the field state, the residual stream has been progressively coarse-grained by previous iterations.
 
-The analogy to a Hamiltonian is not merely rhetorical---it is structurally justified.
+The analogy to a Hamiltonian is not merely rhetorical, it is structurally justified.
 We have constructed a semigroup-like operator ($\M = AB^\top$) that is shared at all scales and iterated, with per-layer response heads providing the scale-dependent transformation.
 This is the defining property of a Hamiltonian in the RG sense: a single rule that governs the dynamics at every scale, with the effective theory at each scale obtained by applying the rule to the coarse-grained degrees of freedom.
 The perturbative ontological corrections (Section~\ref{sec:perturbative}) complete the picture: they are the quantum corrections around the classical path defined by the Hamiltonian, gated by context (the boundary conditions of the path integral).
-The full architecture---shared generator, per-layer response, context-gated perturbations---maps onto the structure of a renormalised field theory with perturbative corrections.
+The full architecture, shared generator, per-layer response, context-gated perturbations, maps onto the structure of a renormalised field theory with perturbative corrections.
 
 In RG, the Hamiltonian is the same at every scale, but the effective degrees of freedom differ because finer-scale fluctuations have been integrated out.
 The coupling constants ``flow'' not because the rule changes, but because the system the rule acts on has changed.
 
 Our spectral invariance finding maps onto this picture.
 A universality study across five pretrained models (GPT-2 at three scales, SmolLM2, Qwen2.5) confirms this is not a GPT-2 artifact: the mean spectrum correlation is \textbf{0.966} while raw cosine similarity is \textbf{0.004}.
-Every model tested shows $> 0.93$ spectral correlation with $< 0.01$ raw cosine---the coupling shape is invariant across layers in all trained transformers we examined.
+Every model tested shows $> 0.93$ spectral correlation with $< 0.01$ raw cosine, the coupling shape is invariant across layers in all trained transformers we examined.
 \begin{itemize}[nosep]
     \item The \textbf{eigenvalue distribution} of $W_Q^\top W_K$ is invariant across layers (spectrum correlation $0.94$--$0.99$ across five models).
-    This is the \emph{universality class}---the structural signature that is preserved under the RG flow.
+    This is the \emph{universality class}, the structural signature that is preserved under the RG flow.
     \item The \textbf{eigenvector orientations} differ across layers (cosine sim ${\sim}0.004$).
-    This is the \emph{RG rescaling}---the coordinate rotation needed to express the same theory in the effective variables at each scale.
+    This is the \emph{RG rescaling}, the coordinate rotation needed to express the same theory in the effective variables at each scale.
     \item The \textbf{response heads} $W_V, W_O$ (per-layer) perform this rotation.
-    They are the \emph{beta functions}---describing how the effective coupling runs with scale without changing the underlying theory.
+    They are the \emph{beta functions}, describing how the effective coupling runs with scale without changing the underlying theory.
 \end{itemize}
 
 The rotation interpretation is precise: per-layer coupling matrices may not encode independent rules at all.
 Each layer's response heads transform the residual stream, rotating the coordinate frame for the next layer's coupling.
 Layer $\ell$'s coupling $M_\ell$ may be approximately $M_\ell \approx R_\ell M_1 R_\ell^\top$, where $R_\ell$ is the cumulative rotation from response heads $1$ through $\ell{-}1$.
-Eigenvalues are preserved under similarity transformation---$M_\ell$ and $M_1$ have the same spectrum, only different eigenvectors---which is exactly the universality finding.
+Eigenvalues are preserved under similarity transformation, $M_\ell$ and $M_1$ have the same spectrum, only different eigenvectors, which is exactly the universality finding.
 The transformer stores $L$ rotated copies of one coupling rule; SharedM eliminates this by sharing the rule and letting the rotation arise from the field state.
 
 \paragraph{Implicit vs explicit semigroup.}
 An important clarification: the ORN's semigroup is \emph{emergent}, not coded.
-The implementation is simple parameter sharing---one $A$, one $B$, referenced by every layer.
+The implementation is simple parameter sharing, one $A$, one $B$, referenced by every layer.
 We do not compute $\M^L$ or compose coupling matrices explicitly.
 The semigroup arises because per-layer response heads transform the field state between applications of the same $\M$, producing $L$ distinct coupling patterns from one shared rule.
 This is architecturally identical to ALBERT's weight sharing, except that ALBERT shares everything (including response heads) while the ORN shares only the coupling and keeps response heads per-layer.
-The per-layer response heads are what make the semigroup rich---they rotate the coordinate frame so that one coupling rule produces diverse patterns.
-Explicit semigroup computation---composing $\M$ in coupling space rather than through the field state---is a direction explored in the companion technical report (\textit{Path Integrals and the ORN}), where it enables exact physics computation but does not improve language modelling.
+The per-layer response heads are what make the semigroup rich, they rotate the coordinate frame so that one coupling rule produces diverse patterns.
+Explicit semigroup computation, composing $\M$ in coupling space rather than through the field state, is a direction explored in the companion technical report (\textit{Path Integrals and the ORN}), where it enables exact physics computation but does not improve language modelling.
 
 \paragraph{The path integral connection.}
 In quantum field theory:
@@ -612,38 +612,38 @@ Universality class & Spectral structure of $\M$ \\
 \end{tabular}
 \end{center}
 
-\begin{remark}[The ORN is not a path integral---and should not be]
+\begin{remark}[The ORN is not a path integral, and should not be]
 Computational experiments (companion document: \textit{Path Integrals and the ORN}) establish an important distinction.
 The ORN has composable coupling kernels (Chapman-Kolmogorov correlation ${\sim}0.99$) but does not use this composability to compute the propagator $T^L$.
 Instead, deeper layers \emph{refine} the prediction rather than \emph{compose} it.
 This is the correct behaviour for contextual prediction: the path integral computes $T^L$, which at large $L$ converges to the stationary distribution (averaging over all possible futures), while the ORN preserves the starting context via the residual connection and sharpens the specific prediction.
 
-The semigroup structure of $\M$ serves as a \textbf{geometric scaffold}---a shared grammar for coupling at every depth---while the per-layer response heads and perturbative corrections do the actual work of context-dependent refinement.
+The semigroup structure of $\M$ serves as a \textbf{geometric scaffold}, a shared grammar for coupling at every depth, while the per-layer response heads and perturbative corrections do the actual work of context-dependent refinement.
 The path integral describes the grammar; the ORN speaks the language.
 
 The complete picture (demonstrated computationally in the companion technical report \textit{Path Integrals and the ORN}): the ORN computes a path integral along an orbit in representation space, where the ``action'' is determined by the shared coupling geometry $\M$, the ``renormalisation'' is performed by per-layer response heads, and the ``quantum corrections'' are supplied by the perturbative gate.
 \end{remark}
 
-The coupling constants in QFT ``run'' with energy scale---the fine-structure constant $\alpha$ depends on the scale you probe.
+The coupling constants in QFT ``run'' with energy scale, the fine-structure constant $\alpha$ depends on the scale you probe.
 But the \emph{theory} (QED) is the same at every scale.
 In SharedM: $\M$ is the theory.
-The effective coupling pattern (attention matrix) runs with depth---different at layer~2 vs.\ layer~10.
+The effective coupling pattern (attention matrix) runs with depth, different at layer~2 vs.\ layer~10.
 The running is a consequence of the residual stream being progressively coarse-grained, not of the coupling rule changing.
 
 \paragraph{Universality classes and domain structure.}
 If the RG analogy is more than suggestive, it predicts a notion of \textbf{universality classes for language domains}.
-In physics, systems near a critical point show universal behaviour---different materials (water, magnets, percolation) exhibit the same critical exponents if they belong to the same universality class.
+In physics, systems near a critical point show universal behaviour, different materials (water, magnets, percolation) exhibit the same critical exponents if they belong to the same universality class.
 The microscopic details do not matter; only the symmetry class does.
 
-The analogue: different \emph{texts} within the same domain (stories, code, legal documents) may require the same spectral structure in $\M$---the same universality class of coupling geometry.
-``All stories share the same narrative coupling structure''---the spectral signature of $\M$ is the universality class.
+The analogue: different \emph{texts} within the same domain (stories, code, legal documents) may require the same spectral structure in $\M$, the same universality class of coupling geometry.
+``All stories share the same narrative coupling structure'', the spectral signature of $\M$ is the universality class.
 The specific tokens and their meanings are the microscopic details that get integrated out across layers.
 
-If this analogy is real (not just suggestive), it predicts measurable observables---and we have now confirmed several of them directly on a 50M-parameter SharedM model (see companion document, \textit{The Coupling Semigroup in Practice}):
+If this analogy is real (not just suggestive), it predicts measurable observables, and we have now confirmed several of them directly on a 50M-parameter SharedM model (see companion document, \textit{The Coupling Semigroup in Practice}):
 \begin{enumerate}[nosep]
     \item \textbf{Fixed-point convergence (confirmed).}
     $\M$ should develop fixed-point structure over training: its eigenspectrum should converge to a stable configuration that reflects the universality class of the data.
-    \textit{Measurement:} tracking $\M$'s singular values across four checkpoints (steps 2K--8K), the effective rank sharpens from 66 to 51, the top singular value grows from 9.5 to 11.9, and asymmetry stabilises by step 4{,}000---well before the loss plateaus at step~6{,}000.
+    \textit{Measurement:} tracking $\M$'s singular values across four checkpoints (steps 2K--8K), the effective rank sharpens from 66 to 51, the top singular value grows from 9.5 to 11.9, and asymmetry stabilises by step 4{,}000, well before the loss plateaus at step~6{,}000.
     The geometry crystallises first; the loss catches up.
 
     \item \textbf{Spectral gap controls convergence rate.}
@@ -653,7 +653,7 @@ If this analogy is real (not just suggestive), it predicts measurable observable
 
     When the field iterates through $\M$, each iteration amplifies the dominant direction ($\sigma_1$) relative to all others.
     After $L$ iterations, the ratio between the projection onto the top singular direction and the second direction scales as $(\sigma_1 / \sigma_2)^L$.
-    A \textbf{large gap} ($\sigma_1 \gg \sigma_2$) means the dominant direction takes over quickly---the orbit converges in few iterations; $L = 3$ may suffice.
+    A \textbf{large gap} ($\sigma_1 \gg \sigma_2$) means the dominant direction takes over quickly, the orbit converges in few iterations; $L = 3$ may suffice.
     A \textbf{small gap} ($\sigma_1 \approx \sigma_2$) means many directions compete and the field takes many iterations to settle; deep networks ($L = 13{+}$) are needed.
 
     This is precisely the \textbf{correlation length} $\xi$ from statistical physics.
@@ -663,7 +663,7 @@ If this analogy is real (not just suggestive), it predicts measurable observable
     The number of SharedM layers $L$ plays the role of the number of RG steps, and $\M$'s spectral gap determines how many are needed.
 
     \item \textbf{Phase transitions in training.}
-    As the model discovers the right universality class, there should be a sharp transition in $\M$'s spectrum---analogous to the order parameter emerging at a critical point.
+    As the model discovers the right universality class, there should be a sharp transition in $\M$'s spectrum, analogous to the order parameter emerging at a critical point.
     Before the transition, $\M$'s spectrum is diffuse (no clear structure).
     After the transition, a few dominant directions emerge (the universality class crystallises).
     This would be visible as a sudden increase in $\M$'s condition number during training.
@@ -672,38 +672,38 @@ If this analogy is real (not just suggestive), it predicts measurable observable
     Transfer should be easier within a universality class than between classes, because $\M$ captures the class, not the instances.
 
     \textit{Experimental confirmation:} a 50M ORN trained on OpenWebText, with $\M$ frozen, transfers to WikiText-103 at \textbf{1.3 nats better zero-shot} than a transformer with frozen $W_Q$, $W_K$ (5.96 vs 7.24).
-    After fine-tuning, the ORN reaches 4.19 vs the transformer's 4.78---a 0.59 nat advantage.
+    After fine-tuning, the ORN reaches 4.19 vs the transformer's 4.78, a 0.59 nat advantage.
     Transfer to Python code is even stronger: ORN zero-shot 3.89 vs transformer 5.93 (\textbf{2.04 nats better}).
-    After fine-tuning, ORN reaches 1.94 vs transformer's 2.39---a 0.45 nat advantage that persists.
+    After fine-tuning, ORN reaches 1.94 vs transformer's 2.39, a 0.45 nat advantage that persists.
     Code's structural regularity (brackets, scope, function calls) aligns closely with $\M$'s learned coupling geometry, producing the largest zero-shot transfer advantage of any domain tested.
 
-    $\M$'s effective rank on OWT is 71 (vs 51 on TinyStories)---the coupling geometry is richer for more complex data, consistent with the ``universality class'' interpretation: OWT spans more coupling dimensions than a single narrative domain.
+    $\M$'s effective rank on OWT is 71 (vs 51 on TinyStories), the coupling geometry is richer for more complex data, consistent with the ``universality class'' interpretation: OWT spans more coupling dimensions than a single narrative domain.
     The claim is that \emph{structurally similar} texts should share a spectral signature in $\M$.
     The effective rank of $\M$ is the order parameter that distinguishes classes.
-    How many universality classes language has, and how they relate to genre, register, and domain, is an empirical question---but the transfer results confirm that web text and code belong to \emph{overlapping} classes (shared $\M$ transfers between them).
+    How many universality classes language has, and how they relate to genre, register, and domain, is an empirical question, but the transfer results confirm that web text and code belong to \emph{overlapping} classes (shared $\M$ transfers between them).
 \end{enumerate}
 
 Prediction~1 is now confirmed at 50M scale; predictions~2--4 remain testable with current infrastructure.
-Additionally, the semigroup analysis revealed two unpredicted phenomena: (a)~Q-vectors trace smooth orbits through coupling space (adjacent-layer cosine ${\sim}0.9$, decaying to ${\sim}0.3$ across the full depth), confirming that $\M$ acts as a continuous generator rather than a discrete lookup; and (b)~coreference (``Lily'' $=$ ``She'') emerges in K-space without supervision---co-referent tokens develop similar key representations at deeper layers, providing direct evidence for the world-model interpretation of $\M$.
+Additionally, the semigroup analysis revealed two unpredicted phenomena: (a)~Q-vectors trace smooth orbits through coupling space (adjacent-layer cosine ${\sim}0.9$, decaying to ${\sim}0.3$ across the full depth), confirming that $\M$ acts as a continuous generator rather than a discrete lookup; and (b)~coreference (``Lily'' $=$ ``She'') emerges in K-space without supervision, co-referent tokens develop similar key representations at deeper layers, providing direct evidence for the world-model interpretation of $\M$.
 Prediction~2 requires measuring per-layer residual stream convergence alongside $\M$'s spectral gap.
 Prediction~4 requires training on multiple domains and comparing $\M$'s spectrum across them.
 
 \subsection{The Spectral Gap--Capacity Duality}
 
-The spectral gap controls not only convergence rate but also \emph{capacity}---and these two effects are in tension.
+The spectral gap controls not only convergence rate but also \emph{capacity}, and these two effects are in tension.
 
 \paragraph{The duality.}
 Consider $\M$'s singular value spectrum $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_d$:
 
 \begin{description}[nosep]
     \item[Huge gap ($\sigma_1 \gg \sigma_2 \gg \cdots$):]
-    Fast convergence---the orbit collapses onto a 1-dimensional subspace in few iterations.
+    Fast convergence, the orbit collapses onto a 1-dimensional subspace in few iterations.
     But low capacity: all tokens are driven toward the same dominant direction.
     The semigroup's image after $L$ iterations is essentially 1-dimensional.
     The model converges fast but cannot distinguish between tokens.
 
     \item[No gap ($\sigma_1 \approx \sigma_2 \approx \cdots \approx \sigma_d$):]
-    Slow convergence---many directions compete and the orbit takes many iterations to settle.
+    Slow convergence, many directions compete and the orbit takes many iterations to settle.
     But high capacity: $\M$ supports a $d$-dimensional orbit space.
     Every direction is equally weighted; the semigroup's image is the full space.
     The model can distinguish everything but needs enormous depth to converge.
@@ -716,16 +716,16 @@ Consider $\M$'s singular value spectrum $\sigma_1 \geq \sigma_2 \geq \cdots \geq
 \end{description}
 
 This is what we observe in practice.
-GPT-2's coupling matrices have a few large eigenvalues followed by a long tail---the graded spectrum.
+GPT-2's coupling matrices have a few large eigenvalues followed by a long tail, the graded spectrum.
 Our trained SharedM models develop similar spectral profiles (condition number $> 10$, non-trivial rank).
 
 \paragraph{The fundamental tradeoff: depth buys capacity.}
-A model with a moderate spectral gap needs depth to resolve the slow directions---the ones with smaller singular values that carry the fine-grained distinctions.
+A model with a moderate spectral gap needs depth to resolve the slow directions, the ones with smaller singular values that carry the fine-grained distinctions.
 Each additional layer gives the semigroup one more iteration to amplify these weaker directions.
 After $L$ iterations, the effective capacity is determined by how many singular values satisfy $\sigma_i^L > \epsilon$ for some task-relevant threshold $\epsilon$.
 
 This reframes the SharedM depth advantage.
-SharedM's deeper architectures ($L = 13$ vs.\ $L = 3$) are not merely more compositional---they exploit more of $\M$'s spectral capacity.
+SharedM's deeper architectures ($L = 13$ vs.\ $L = 3$) are not merely more compositional, they exploit more of $\M$'s spectral capacity.
 The slow singular directions, which carry the fine distinctions, only become active after enough iterations.
 The standard transformer at $L = 3$ has access to only the top few directions of its (per-layer) coupling matrices; the long tail is wasted.
 SharedM at $L = 13$ has access to the full graded spectrum.
@@ -735,7 +735,7 @@ $\M$'s condition number $\kappa = \sigma_1 / \sigma_d$ measures the span of the 
 \begin{itemize}[nosep]
     \item $\kappa \approx 1$: $\M$ is near-isotropic.
     No preferred directions, no structure.
-    Kill criterion B3 (condition number $< 2$) flags this---$\M$ has collapsed to a scaled identity.
+    Kill criterion B3 (condition number $< 2$) flags this, $\M$ has collapsed to a scaled identity.
     \item $\kappa = 10$--$100$: healthy graded spectrum.
     A few dominant structural axes plus a tail of finer distinctions.
     The semigroup has moderate capacity, exploitable with moderate depth.
@@ -757,7 +757,7 @@ If the universality class picture is correct, it implies that the orbital progra
 \label{sec:scope}
 
 Analysis of trained transformers reveals a refined picture of coupling invariance.
-Raw coupling matrices $\M_l = W_Q^{(l)\top} W_K^{(l)}$ differ across layers: cosine similarity of flattened matrices averages $0.19$---well below na\"ive sharing thresholds.
+Raw coupling matrices $\M_l = W_Q^{(l)\top} W_K^{(l)}$ differ across layers: cosine similarity of flattened matrices averages $0.19$, well below na\"ive sharing thresholds.
 But their \emph{eigenvalue spectra} correlate at $>0.97$ across all layers and heads.
 
 The coupling \emph{shape} (eigenvalues) is invariant; the coupling \emph{orientation} (eigenvectors) rotates with depth.
@@ -811,26 +811,26 @@ Natural language mixes two fundamentally different kinds of information:
 
 \paragraph{Structural.}
 ``A character wanted something, faced an obstacle, resolved it.''
-This is orbital---it is a path through narrative phase space, invariant across specific instances.
+This is orbital, it is a path through narrative phase space, invariant across specific instances.
 No amount of geometric iteration derives that the character is Caesar or the date is 49~BC.
 
 \paragraph{Referential.}
 ``Caesar crossed the Rubicon in 49~BC.''
-This is discrete---it binds a specific name to a specific event.
+This is discrete, it binds a specific name to a specific event.
 A dense embedding table handles both, badly: it wastes capacity on redundant structural representations in order to store the occasional specific fact.
 
 \subsection{Perturbative Corrections Around the Orbital Path}
 \label{sec:perturbative}
 
 The analogy to path integrals is precise.
-The semigroup generated by $\M$ defines the \textbf{classical path}---the dominant trajectory through coupling geometry.
+The semigroup generated by $\M$ defines the \textbf{classical path}, the dominant trajectory through coupling geometry.
 Without context, this is the best the model can do: the generic structural prediction (``a noun follows this preposition'').
 Context provides the boundary conditions that select a specific trajectory from the family of reachable orbits.
 
 \paragraph{The orbital model as mean field.}
 The SharedM forward pass produces what we might call the \textbf{mean-field prediction}: the most probable trajectory given only the structural rules encoded in $\M$.
 ``The cat sat on the \_\_\_'' $\to$ the orbit produces the generic noun-after-preposition region, where ``mat'', ``floor'', ``chair'' are roughly equiprobable.
-This is correct---and sufficient if we have no further context.
+This is correct, and sufficient if we have no further context.
 
 \paragraph{The perturbation: context-dependent corrections.}
 When preceding text provides specific context (``the cat sat on the warm red \_\_\_''), the prediction should \emph{tighten}: ``mat'' should be boosted, ``floor'' suppressed.
@@ -843,7 +843,7 @@ The architecture this implies:
 where $\x^{(\ell)}_{\text{orbital}}$ is the standard SharedM layer output, $\delta(\cdot)$ is a small correction network (MLP), and $g(\cdot)$ is a \textbf{context gate} that controls the perturbation magnitude.
 
 \paragraph{Why additive corrections are natural.}
-This is not an exotic operation---it is how transformers already work.
+This is not an exotic operation, it is how transformers already work.
 Every layer in a standard transformer is a residual connection: $\x = \x + \text{attn}(\x) + \text{ffn}(\x)$.
 The residual stream is a space where additive contributions accumulate from many sources.
 Our perturbation is one more additive term in this stream.
@@ -858,15 +858,15 @@ In principle, the correction can be generalised to a \emph{sum} of independent p
 \end{equation}
 Each gate independently controls whether its correction fires.
 This opens a natural surface for fine-tuning and adaptation: freeze the orbital core ($\M$ and response heads), add a new correction term for a new domain or task.
-Different corrections can be composed, swapped, or ablated independently---a modular architecture where structure (orbital) and specificity (perturbations) are cleanly separated.
+Different corrections can be composed, swapped, or ablated independently, a modular architecture where structure (orbital) and specificity (perturbations) are cleanly separated.
 
 \paragraph{The context gate is the key design element.}
-The gate $g: \R^d \to \R^+$ reads the residual stream---which encodes accumulated context from prior tokens via $\M$'s coupling---and outputs a scalar controlling how much correction to apply:
+The gate $g: \R^d \to \R^+$ reads the residual stream, which encodes accumulated context from prior tokens via $\M$'s coupling, and outputs a scalar controlling how much correction to apply:
 \begin{itemize}[nosep]
     \item \textbf{No context} (first token, generic position): $g \approx 0$. Pure orbital output. The model samples from the structural prior.
     \item \textbf{Rich context} (late in sequence, specific preceding tokens): $g > 0$. The perturbation tightens the prediction beyond what the orbit alone provides.
 \end{itemize}
-This behaviour is \emph{desired}: without context, we do not care about specific details---a sample from the orbit is the honest answer.
+This behaviour is \emph{desired}: without context, we do not care about specific details, a sample from the orbit is the honest answer.
 As context accumulates, the prediction should tighten.
 The perturbation is what provides this tightening.
 
@@ -878,40 +878,40 @@ Despite losing 20\% of its orbital depth, it \textbf{recovered to match SharedM}
 All three developmental predictions from Section~\ref{sec:perturbative} are confirmed:
 \begin{enumerate}[nosep]
     \item \textbf{Gate opens over training:} $\bar{g}$ increased from 0.05 (step~1) to 0.36 (step~4{,}000), then plateaued. The corrections start dormant and activate as the orbital core matures.
-    \item \textbf{Perturbation stays small:} $\|\delta\|/\|\x_{\text{orbital}}\|$ settled at ${\sim}0.57$ after an initial overshoot (0.80 at step~500). The effective contribution is $g \times \delta/h \approx 0.20$---a genuine correction, not a replacement.
+    \item \textbf{Perturbation stays small:} $\|\delta\|/\|\x_{\text{orbital}}\|$ settled at ${\sim}0.57$ after an initial overshoot (0.80 at step~500). The effective contribution is $g \times \delta/h \approx 0.20$, a genuine correction, not a replacement.
     \item \textbf{Gate tracks attention confidence:} gate magnitude anticorrelates with attention entropy. The gate opens when attention sharpens (low entropy $=$ confident, context-rich coupling) and stays closed when attention is diffuse. This was first observed at CPU toy scale ($r = -0.95$) and is confirmed at 10M.
 \end{enumerate}
 
 The crossover dynamics match the predicted developmental trajectory: early training develops the orbital core (corrections dormant); mid training shows the perturbative model falling behind (missing layer hurts); late training shows corrections catching up as the gate opens and context-dependent refinement activates.
 This is the same ``structural investment pays off late'' signature seen in SharedM vs transformer (Exp~3, crossover at step~${\sim}2{,}800$).
 
-An ablation study on the trained perturbative model provides the strongest evidence: disabling the corrections at inference (forcing $g{=}0$) increases val loss from 2.755 to 3.204---a gap of \textbf{0.449 nats}.
+An ablation study on the trained perturbative model provides the strongest evidence: disabling the corrections at inference (forcing $g{=}0$) increases val loss from 2.755 to 3.204, a gap of \textbf{0.449 nats}.
 This is larger than the entire improvement from step~1{,}000 to step~5{,}000 for SharedM alone.
 The corrections are not a minor refinement; they carry nearly half a nat of the model's predictive capacity.
 
 Per-position analysis confirms the context-dependence prediction (iii): late positions benefit more (+0.440 nats) than early positions (+0.392 nats), though the early benefit is also substantial.
-Critically, the ablation reveals that the orbital backbone \emph{co-adapted} with the corrections---it offloaded work to the correction pathway and reorganised accordingly.
+Critically, the ablation reveals that the orbital backbone \emph{co-adapted} with the corrections, it offloaded work to the correction pathway and reorganised accordingly.
 The perturbative model learned a different orbital solution than standalone SharedM.
 
 The matched-depth follow-up (Exp~8b: same backbone d=168, L=5 as SharedM, corrections as +1.1\% extra params) is the clean test that will determine whether corrections genuinely add value beyond compensating for lost depth.
 
 \paragraph{Constraints.}
 \begin{enumerate}[nosep]
-    \item The perturbation acts on the \textbf{value stream only}---it modifies what information flows through the coupling, never the coupling geometry itself. $\M$ remains the sole authority on who attends to whom.
-    \item The perturbation is \textbf{small}---it is a correction around the classical path, not an alternative path. If $\|\delta\| \gg \|\x_{\text{orbital}}\|$, the perturbation has overwhelmed the orbital signal and the architecture has degenerated into a standard network with extra steps.
-    \item The perturbation is \textbf{context-dependent, not token-dependent}---it reads from the residual stream (which carries contextual information), not from a per-token lookup table. The same token in different contexts should receive different corrections.
+    \item The perturbation acts on the \textbf{value stream only}, it modifies what information flows through the coupling, never the coupling geometry itself. $\M$ remains the sole authority on who attends to whom.
+    \item The perturbation is \textbf{small}, it is a correction around the classical path, not an alternative path. If $\|\delta\| \gg \|\x_{\text{orbital}}\|$, the perturbation has overwhelmed the orbital signal and the architecture has degenerated into a standard network with extra steps.
+    \item The perturbation is \textbf{context-dependent, not token-dependent}, it reads from the residual stream (which carries contextual information), not from a per-token lookup table. The same token in different contexts should receive different corrections.
 \end{enumerate}
 
 \paragraph{Relation to prior onto design.}
 Our earlier experiments (Exp~4d, Exp~7) used a parallel ontological attention pathway with its own $W_Q, W_K, W_V, W_O$ at rank $r{=}4$.
 This was architecturally wrong: it introduced competing coupling alongside $\M$ and consumed parameter budget without contributing proportionally (onto\_gap ${\sim}1.5\%$ at 10M).
-The perturbative design eliminates the separate coupling entirely---the correction is a residual perturbation on the SharedM output, gated by context, with no attention mechanism of its own.
+The perturbative design eliminates the separate coupling entirely, the correction is a residual perturbation on the SharedM output, gated by context, with no attention mechanism of its own.
 
 \subsection{Developmental Trajectory}
 
 Under the perturbative design, training should exhibit:
 \begin{enumerate}[nosep]
-    \item \textbf{Early training:} the orbital core discovers coupling geometry. The gate $g$ is near zero because the residual stream carries little useful context. The perturbation contributes nothing---training focuses on $\M$.
+    \item \textbf{Early training:} the orbital core discovers coupling geometry. The gate $g$ is near zero because the residual stream carries little useful context. The perturbation contributes nothing, training focuses on $\M$.
     \item \textbf{Mid training:} the orbital core is functional. Context begins to accumulate meaningfully in the residual stream. The gate opens; the perturbation begins learning context-dependent corrections.
     \item \textbf{Late training:} the orbital core handles structure; the perturbation handles specificity. The gate magnitude is a learned function of context richness.
 \end{enumerate}
@@ -936,11 +936,11 @@ Failure mode & Can't remember names & Can't generalise \\
 \end{center}
 
 The transformer collapses both into a single system (dense weight matrices) and asks gradient descent to sort out the mix.
-This works---transformers are powerful---but it is inefficient: the storage format is wrong for both jobs.
+This works, transformers are powerful, but it is inefficient: the storage format is wrong for both jobs.
 
 \paragraph{A hemispheric parallel.}
 The cortex--hippocampus division is a memory-system distinction.
-McGilchrist~\cite{mcgilchrist2009master, mcgilchrist2021matter} identifies a deeper complementarity at the level of \emph{modes of knowing}: the brain's right hemisphere engages the world holistically---grasping context, relationship, pattern, the interconnectedness of things---while the left hemisphere excels at narrow focus, categorical precision, and the manipulation of things already known.
+McGilchrist~\cite{mcgilchrist2009master, mcgilchrist2021matter} identifies a deeper complementarity at the level of \emph{modes of knowing}: the brain's right hemisphere engages the world holistically, grasping context, relationship, pattern, the interconnectedness of things, while the left hemisphere excels at narrow focus, categorical precision, and the manipulation of things already known.
 
 The mapping to our architecture is structural:
 
@@ -958,13 +958,13 @@ Role & Primary world model & Serving complement \\
 \end{tabular}
 \end{center}
 
-The parallel extends to the developmental trajectory: the ontological layer starts dominant (bootstrapping the orbital core, as the left hemisphere scaffolds early learning) and thins as the orbital core matures---the right hemisphere providing the ground from which the left operates as a focused instrument.
+The parallel extends to the developmental trajectory: the ontological layer starts dominant (bootstrapping the orbital core, as the left hemisphere scaffolds early learning) and thins as the orbital core matures, the right hemisphere providing the ground from which the left operates as a focused instrument.
 
-McGilchrist argues that the highest forms of thought---metaphor, irony, moral reasoning---require integration of both modes.
+McGilchrist argues that the highest forms of thought, metaphor, irony, moral reasoning, require integration of both modes.
 Metaphor requires grasping structural similarity (orbital/right) across domains whose specific contents differ (ontological/left).
 Understanding that ``Juliet is the sun'' requires both the relational insight (warmth, centrality, life-giving) and the knowledge that Juliet and the sun are distinct entities.
 
-This is speculative---McGilchrist's distinction concerns modes of attention and engagement with reality, not information formats, and the biological hemispheres are far messier than our clean architectural split.
+This is speculative, McGilchrist's distinction concerns modes of attention and engagement with reality, not information formats, and the biological hemispheres are far messier than our clean architectural split.
 But the convergence is suggestive: any system that must both generalise over structure and bind specific instances seems to require at least two complementary representations.
 Whether this reflects deep necessity or recurrent engineering convenience remains open.
 
@@ -977,7 +977,7 @@ Whether this reflects deep necessity or recurrent engineering convenience remain
 
 \paragraph{ALBERT}~\cite{lan2020albert} demonstrated that sharing all parameters across BERT layers causes surprisingly small quality loss ($2$--$3\%$) while reducing parameters $4$--$12\times$.
 Direct evidence that per-layer parameterisation is largely redundant.
-ALBERT also introduced factorised embedding parameterisation ($V \times d_s + d_s \times d$ instead of $V \times d$), a direct predecessor to our orbital embedding approach---though ALBERT uses a linear projection where we use nonlinear iterative dynamics.
+ALBERT also introduced factorised embedding parameterisation ($V \times d_s + d_s \times d$ instead of $V \times d$), a direct predecessor to our orbital embedding approach, though ALBERT uses a linear projection where we use nonlinear iterative dynamics.
 
 \paragraph{Universal Transformer}~\cite{dehghani2019universal} tied weights and added Adaptive Computation Time~\cite{graves2016adaptive}.
 The crucial insight: weight tying forces the model to learn a reusable rule rather than specialised per-layer transformations.
@@ -985,7 +985,7 @@ Results were mixed: improvements on algorithmic tasks but regression on standard
 
 \paragraph{What remains open:}
 Both tie \emph{all} weights.
-We propose tying only the coupling geometry while allowing response heads to vary---a more surgical sharing that targets the specific redundancy.
+We propose tying only the coupling geometry while allowing response heads to vary, a more surgical sharing that targets the specific redundancy.
 
 \subsection{Implicit Depth and Fixed-Point Models}
 
@@ -1027,31 +1027,31 @@ Our shared $\M$ is exactly such a metric: it defines the coupling geometry that 
 
 \paragraph{Training shapes geometry.}
 Recent work~\cite{training2023geometry} demonstrates that training \emph{breaks the symmetric metric} of initialisation, developing anisotropic structure precisely where it matters for the task.
-This matches our observation: $\M$ develops non-trivial spectral structure (condition number $> 10$) via standard SGD---a geometric signature of learned structure, not an artefact.
+This matches our observation: $\M$ develops non-trivial spectral structure (condition number $> 10$) via standard SGD, a geometric signature of learned structure, not an artefact.
 
 \paragraph{Singular Riemannian geometry.}
-Benfenati \& Marta~\cite{benfenati2022singular} extended this to the degenerate metrics that arise at saddle points and representation collapse regions---precisely the regimes our orbital dynamics must navigate.
+Benfenati \& Marta~\cite{benfenati2022singular} extended this to the degenerate metrics that arise at saddle points and representation collapse regions, precisely the regimes our orbital dynamics must navigate.
 Katsman et al.~\cite{katsman2023riemannian} explicitly enforce manifold structure in residual updates, supporting the principle that geometric priors help.
 
 \paragraph{Intrinsic dimensionality.}
-Ansuini et al.~\cite{ansuini2019intrinsic} showed that intrinsic dimensionality of representations \emph{progressively decreases} through network layers---the network compresses data onto lower-dimensional manifolds.
+Ansuini et al.~\cite{ansuini2019intrinsic} showed that intrinsic dimensionality of representations \emph{progressively decreases} through network layers, the network compresses data onto lower-dimensional manifolds.
 This is direct evidence that trained embeddings have low intrinsic dimension and should be compressible via our orbital factorisation.
 
 \subsection{Information Geometry}
 
 \paragraph{Amari}~\cite{amari2019fisher} showed that the parameter space of neural networks is a Riemannian manifold with the Fisher information metric, and that natural gradient (steepest in this geometry) avoids plateaus that trap ordinary SGD.
-If the orbital model maps seeds to probability distributions over next tokens, $\M$ can be interpreted as an approximation to the Fisher metric on this statistical manifold---connecting coupling geometry to the information-theoretic structure of the language.
+If the orbital model maps seeds to probability distributions over next tokens, $\M$ can be interpreted as an approximation to the Fisher metric on this statistical manifold, connecting coupling geometry to the information-theoretic structure of the language.
 
 \subsection{Kolmogorov Complexity and Compression}
 
 \paragraph{Shaw et al.}~\cite{shaw2026kolmogorov} formally bridge Kolmogorov complexity and transformers, constructing asymptotically optimal description length objectives by mapping transformer weights to prefix Turing machines.
-Their result proves transformers can achieve compression quality comparable to $K(x)$ up to an additive constant---validating our search for compressed representations.
+Their result proves transformers can achieve compression quality comparable to $K(x)$ up to an additive constant, validating our search for compressed representations.
 
 \paragraph{Lotfi et al.}~\cite{lotfi2024compression} show that models which compress training data more achieve better generalisation, obtaining non-vacuous generalisation bounds for actual LLMs.
 This directly supports our hypothesis: the ORN's structural compression (shared generators vs.\ stored trajectories) should predict better generalisation at matched parameter count.
 
 \paragraph{Grokking and complexity dynamics.}
-De~Moss et al.~\cite{demoss2024grokking} reveal that networks first memorise (high description length) then compress (low description length)---training actively reduces complexity by finding structure.
+De~Moss et al.~\cite{demoss2024grokking} reveal that networks first memorise (high description length) then compress (low description length), training actively reduces complexity by finding structure.
 Our spectral invariance finding (cosine sim 0.19 but spectrum correlation 0.98) is exactly this signature: the \emph{structure} is shared even when the \emph{representation} differs.
 
 \subsection{Semigroups and Dynamical Systems}
@@ -1070,7 +1070,7 @@ This is the ``generators, not trajectories'' idea applied to spatial symmetries.
 The learned Lie algebra generators are a compact description of the data's invariance structure.
 
 \paragraph{Relevance:}
-Our shared $\M$ is a learned inner product on the representation space---a Riemannian metric whose eigenvectors define the symmetry axes of the coupling geometry.
+Our shared $\M$ is a learned inner product on the representation space, a Riemannian metric whose eigenvectors define the symmetry axes of the coupling geometry.
 The connection to geometric deep learning is direct: we are learning the geometry of the representation space, not the attention patterns that happen to arise from it.
 
 \subsection{Modern Hopfield Networks}
@@ -1081,21 +1081,21 @@ This is exactly the ``memoised coupling rule applied to an evolving state'' pict
 
 \subsection{Renormalisation Group in Deep Learning}
 
-\paragraph{Mehta \& Schwab}~\cite{mehta2014exact} established an exact mapping between the RG and restricted Boltzmann machines---deep networks implement coarse-graining.
+\paragraph{Mehta \& Schwab}~\cite{mehta2014exact} established an exact mapping between the RG and restricted Boltzmann machines, deep networks implement coarse-graining.
 This is an analytical equivalence for a specific architecture (RBMs) on statistical physics data.
 It does not prescribe architecture for transformers or identify what should be shared.
 
 \paragraph{Lin, Tegmark, \& Rolnick}~\cite{lin2017does} argued that deep learning succeeds because natural data has hierarchical, local, symmetric structure that RG-like operations exploit.
 This provides theoretical justification for why depth works but does not identify specific architectural consequences for attention.
 
-\paragraph{Li \& Wang (2018)} trained neural networks to \emph{perform} RG transformations on lattice models---the network is a tool for physics, not the reverse.
+\paragraph{Li \& Wang (2018)} trained neural networks to \emph{perform} RG transformations on lattice models, the network is a tool for physics, not the reverse.
 Lenggenhager et al.\ (2020) extended this to optimal RG schemes via neural networks.
 
 \paragraph{Roberts et al.\ (2022)} developed a field-theoretic framework for deep networks at infinite width, connecting neural network statistics to Gaussian processes.
 This analyses networks at initialisation and large width, not the depth-sharing structure we study.
 
 \paragraph{How we differ.}
-All prior work uses RG as a \emph{lens to understand} deep learning---an analytical tool applied post hoc.
+All prior work uses RG as a \emph{lens to understand} deep learning, an analytical tool applied post hoc.
 We use RG as a \emph{design principle}: the well-known redundancy of attention coupling across layers (Lan et al.\ 2020, Bhojanapalli et al.\ 2021, Mu et al.\ 2024), which we confirm at the spectral level, reveals that the coupling rule is an approximate \emph{generator}. We exploit this architecturally by sharing the rule ($\M$) while letting the field state provide scale-dependent variation.
 The response heads are identified as the beta functions that run the effective coupling with depth.
 The spectral structure of $\M$ is identified as a universality class signature.
@@ -1104,7 +1104,7 @@ This is RG-informed architecture, not RG-interpreted analysis.
 The closest prior work architecturally is the Universal Transformer~\cite{dehghani2019universal}, which shares all weights across layers.
 But UT is motivated by Turing completeness, not by RG or spectral invariance.
 It does not decompose into coupling (shared) and response (per-layer), does not measure spectral invariance, and does not connect to universality classes.
-Our contribution is the identification of \emph{what} should be shared (coupling geometry) and \emph{why} (it is the scale-invariant quantity---the universality class of the RG flow).
+Our contribution is the identification of \emph{what} should be shared (coupling geometry) and \emph{why} (it is the scale-invariant quantity, the universality class of the RG flow).
 
 \subsection{Complementary Learning Systems}
 
@@ -1124,40 +1124,40 @@ Full details are in the companion experimental paper; here we summarise results 
 
 \subsection{Coupling Memoisation}
 
-\paragraph{Exp 0 --- Coupling invariance analysis.}
+\paragraph{Exp 0 ,  Coupling invariance analysis.}
 Extracted $\M_{l,h} = W_Q^{(l,h)\top} W_K^{(l,h)}$ from a trained 8-layer transformer.
 Raw matrices differ (cosine sim $0.19$), but eigenvalue spectra correlate at $>0.97$.
 The coupling \emph{shape} is invariant; only the \emph{orientation} varies.
 Spectral sharing (shared eigenvalues + per-layer rotations) reduces reconstruction error by $>99.9\%$.
 
-\paragraph{Exp 1 --- Colour matching.}
+\paragraph{Exp 1 ,  Colour matching.}
 Synthetic task with provably invariant coupling.
 Shared $\M$ beats per-layer $W_Q, W_K$ by $0.7\%$ with $16\times$ fewer coupling parameters.
-Tying response heads costs ${\sim}4\%$---they benefit from per-layer specialisation.
+Tying response heads costs ${\sim}4\%$, they benefit from per-layer specialisation.
 
-\paragraph{Exp B1 --- Shakespeare.}
+\paragraph{Exp B1 ,  Shakespeare.}
 Character-level language modelling.
 ORN-Asym ($\M = AB^\top$) beats the transformer by $2.6\%$ with $6\times$ fewer coupling parameters.
-Symmetric $\M = LL^\top$ is $3.6\%$ worse---asymmetry is essential for autoregressive tasks.
+Symmetric $\M = LL^\top$ is $3.6\%$ worse, asymmetry is essential for autoregressive tasks.
 $\M$ develops rich geometry (condition number ${\sim}10^5$) through standard SGD.
 
-\paragraph{Exp 2 --- Scaling protocol.}
+\paragraph{Exp 2 ,  Scaling protocol.}
 Five parameter budgets (27K--550K).
 $\beta_{\text{MEMOISE}} = 0.164$ vs.\ $\beta_{\text{STORE}} = 0.160$ ($1.02\times$).
 MEMOISE matches or beats STORE at 4/5 scales; advantage trends upward with scale.
 
 \subsection{Orbital Embeddings}
 
-\paragraph{Exp 5a --- TinyStories at 2M scale.}
+\paragraph{Exp 5a ,  TinyStories at 2M scale.}
 First end-to-end test on real language ($V{=}50{,}257$, GPT-2 tokeniser).
 Orbital-T1 ($d_{\text{seed}}{=}16$, $T{=}1$) beats the baseline by $7.7\%$ on validation loss.
 Freed embedding parameters enable $6.7\times$ wider architecture ($d_{\text{model}} = 268$ vs.\ $36$).
-No curriculum, no scaffold, no auxiliary losses---seeds and dynamics co-learn from random initialisation.
+No curriculum, no scaffold, no auxiliary losses, seeds and dynamics co-learn from random initialisation.
 
-\paragraph{Exp 5b --- TinyStories at 10M scale.}
+\paragraph{Exp 5b ,  TinyStories at 10M scale.}
 The fair test: the baseline now has $d_{\text{head}} = 44$ (genuinely functional).
 Orbital-T1 ($d = 476$, $L = 3$) reaches val loss $3.008$ vs.\ baseline $2.921$ ($-3.0\%$).
-\textsc{LowRank} ($T{=}0$, no dynamics) degrades to $-33.8\%$, confirming that compression alone fails at scale---the dynamics $\Phi$ recover 91\% of the bottleneck.
+\textsc{LowRank} ($T{=}0$, no dynamics) degrades to $-33.8\%$, confirming that compression alone fails at scale, the dynamics $\Phi$ recover 91\% of the bottleneck.
 Width beats depth: T1 ($d = 476$, $L = 3$) outperforms T2 ($d = 296$, $L = 8$), consistent with the unfolding hypothesis (the initial projection from $d_{\text{seed}} = 16$ needs room to expand).
 The residual 3\% gap traces to seed dimensionality ($d_{\text{seed}} = 16$ captures only 50\% of transition variance), not dynamics quality.
 
@@ -1166,27 +1166,27 @@ Orbital embeddings are currently the weakest component of the ORN story.
 The 2M win ($+7.7\%$) is dominated by parameter reallocation (baseline is pathologically narrow at $d{=}36$); the 10M result ($-3.0\%$) is a fairer test, and the orbital model \emph{loses}.
 Subsequent ablation (Exp~5c) shows $d_{\text{seed}}{=}64$ beats the baseline by $4.7\%$, but the winning ingredient appears to be the expansion ratio ($d/d_{\text{seed}} \approx 5$), not necessarily the iterative dynamics.
 The critical missing experiment is \textbf{LowRank at $d_{\text{seed}}{=}64$ with $T{=}0$}: if a linear projection from 64-dimensional seeds matches the orbital result, the dynamics contribute nothing and orbital embeddings reduce to a bottleneck factorisation.
-Furthermore, at 1B+ scale, embeddings are ${<}1\%$ of the model and the compression problem disappears naturally---SharedM savings (proportional to $L$) grow with depth, while embedding savings become negligible.
+Furthermore, at 1B+ scale, embeddings are ${<}1\%$ of the model and the compression problem disappears naturally, SharedM savings (proportional to $L$) grow with depth, while embedding savings become negligible.
 We position orbital embeddings as an \emph{optional extension} of the core ORN, not a co-equal pillar.
 The core innovation is the shared coupling geometry $\M = AB^\top$.
 
 \paragraph{CPU gap tests.}
 Three targeted theory validations:
-(1)~Small MLPs perfectly reconstruct structured targets (line, circle, spiral) but fail on random targets---confirming the structure/compression distinction.
+(1)~Small MLPs perfectly reconstruct structured targets (line, circle, spiral) but fail on random targets, confirming the structure/compression distinction.
 (2)~Nonlinear factorisation (MLP) outperforms linear (SVD) in 23/30 cases on clustered targets.
 (3)~$d_{\text{seed}} = 16$ captures only $50\%$ of bigram transition variance, suggesting $d_{\text{seed}} = 32$--$64$ would improve results.
 
 \subsection{Spectral Sharing}
 
-\paragraph{CPU gap test 6 --- Per-layer rotation.}
+\paragraph{CPU gap test 6 ,  Per-layer rotation.}
 Generated coupling matrices matching Exp 0's properties (spectrum correlation ${\sim}0.98$, cosine sim ${\sim}0.19$) and tested three sharing strategies:
 full sharing (baseline), low-rank correction ($-37\%$ error), spectral sharing with per-layer rotations ($-99.9\%$ error).
 Confirms the coupling geometry is shared; only the orientation varies.
 
-\paragraph{Smooth rotation hypothesis --- falsified.}
+\paragraph{Smooth rotation hypothesis ,  falsified.}
 Tested whether inter-layer eigenvector rotations form a smooth path (parameterisable by a single angular velocity generator).
 Mean cosine similarity between consecutive inter-layer rotations: $0.003$.
-The rotations are unrelated---no cheap generator exists.
+The rotations are unrelated, no cheap generator exists.
 This motivates the implicit rotation mechanism (Section~\ref{sec:implicit-rotation}) rather than explicit per-layer rotation parameters.
 
 \subsection{Summary}
@@ -1203,7 +1203,7 @@ Asymmetry is essential & Exp B1: symmetric $+3.6\%$ worse & Confirmed \\
 Scaling advantage exists & Exp 2: $\beta$ ratio $1.02\times$ & Modest \\
 Orbital embeddings work end-to-end & Exp 5a/b/c: $+7.7\%$ (2M), $-3.0\%$ (10M), $+4.7\%$ ($d_s{=}64$) & Mixed$^*$ \\
 Spectral sharing is lossless & Gap test 6: $-99.9\%$ error & Confirmed \\
-Two-system architecture & --- & Untested \\
+Two-system architecture & ,  & Untested \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1215,7 +1215,7 @@ Two-system architecture & --- & Untested \\
 \label{sec:risks}
 
 \paragraph{What we know.}
-The compressed representation exists---proven by existence (every human who learned a language).
+The compressed representation exists, proven by existence (every human who learned a language).
 Spectral coupling invariance is real ($>0.97$ correlation).
 Asymmetric shared $\M$ beats the transformer on Shakespeare and TinyStories.
 Orbital embeddings train from scratch with no curriculum.
@@ -1224,7 +1224,7 @@ The capacity argument (parameters $\times$ iterations $\geq$ circuit complexity)
 \paragraph{What we don't know.}
 All coupling experiments use synthetic or small-scale tasks; natural language at scale is untested.
 The scaling advantage ($\beta$ ratio $1.02\times$) is modest at toy scale.
-The two-system architecture (orbital + ontological) is conjectural---no experiment yet.
+The two-system architecture (orbital + ontological) is conjectural, no experiment yet.
 Whether deeper orbits ($T \geq 2$) help at larger scale is unknown.
 The output bottleneck ($d_{\text{seed}} = 16$ captures only 50\% of transition variance) may understate the orbital advantage.
 
@@ -1244,7 +1244,7 @@ Ontological collapse & $\|U_w\|$ large for all tokens & Model uses ontological l
 \end{tabular}
 \end{center}
 
-The prediction is not that the ORN will beat the transformer immediately, but that it will scale differently---steeper $\beta$---because it stores generators where the transformer stores trajectories.
+The prediction is not that the ORN will beat the transformer immediately, but that it will scale differently, steeper $\beta$, because it stores generators where the transformer stores trajectories.
 
 
 \subsection{Future Direction: RG Diagnostics as a Measurement Framework}
@@ -1256,17 +1256,17 @@ Independent of whether the RG analogy is deep or merely suggestive, it provides 
     \item \textbf{Correlation length}: compute $\xi = -1/\ln(\sigma_2/\sigma_1)$ and compare to the depth at which the residual stream empirically stabilises.
     If they match, the RG picture is quantitatively predictive.
     \item \textbf{Spectral distribution shape}: fit $\sigma_i$ vs.\ $i$ on a log-log plot.
-    A power law ($\sigma_i \propto i^{-\alpha}$) would indicate the system operates near criticality---no characteristic scale, every singular direction matters at some depth.
+    A power law ($\sigma_i \propto i^{-\alpha}$) would indicate the system operates near criticality, no characteristic scale, every singular direction matters at some depth.
     An exponential decay indicates subcriticality (ordered, fast convergence, limited capacity).
     A flat distribution indicates supercriticality (disordered, slow convergence).
     \item \textbf{Condition number dynamics}: $\kappa(t)$ over training steps.
     A sharp transition would confirm the phase transition prediction.
 \end{itemize}
 
-These measurements are straightforward---a few lines of logging in the training loop---and they apply specifically to SharedM because $\M$ is a single, inspectable object.
+These measurements are straightforward, a few lines of logging in the training loop, and they apply specifically to SharedM because $\M$ is a single, inspectable object.
 In the standard transformer, the coupling geometry is spread across $2L$ independent matrices with no unified spectral signature to measure.
 
-A speculative extension: if $\M$'s spectrum turns out to be power-law, it would connect the ORN to the critical brain hypothesis~\cite{beggs2003neuronal}---the observation that biological neural networks appear to operate near a critical point, maximising information transmission and dynamic range.
+A speculative extension: if $\M$'s spectrum turns out to be power-law, it would connect the ORN to the critical brain hypothesis~\cite{beggs2003neuronal}, the observation that biological neural networks appear to operate near a critical point, maximising information transmission and dynamic range.
 Whether gradient descent on SharedM naturally tunes toward criticality is an empirical question answerable with existing checkpoints.
 The claim is not that criticality is required for the architecture to work, but that the RG framework provides the right language and measurements for understanding what $\M$ learns.
 
@@ -1276,7 +1276,7 @@ The claim is not that criticality is required for the architecture to work, but 
 \label{sec:conclusion}
 
 The transformer stores knowledge extensionally: one vector per token, one coupling matrix per layer.
-This is the brute-force solution---throw memory at the problem, let gradient descent sort it out.
+This is the brute-force solution, throw memory at the problem, let gradient descent sort it out.
 It works, but it is the wrong representation.
 
 The ORN replaces both lookup structures with intensional representations: orbital embeddings (seeds + shared dynamics) for the embedding table, and a shared metric tensor ($\M = AB^\top$) for the coupling projections.
@@ -1292,7 +1292,7 @@ The theoretical framework connects three ideas:
 The capacity argument is precise: parameters trade for iterations at constant circuit complexity.
 The geometric picture is clear: tokens are orbits in a phase space defined by $\M$, functional equivalence is orbital convergence, and the response heads co-evolve with the coupling through the shared residual field.
 
-The two-system conjecture---orbital world model for structure, ontological layer for discrete bindings---awaits experimental test.
+The two-system conjecture, orbital world model for structure, ontological layer for discrete bindings, awaits experimental test.
 If validated, it implies a modular architecture where adaptation (RAG, fine-tuning) targets the cheap ontological surface while the expensive orbital core remains frozen.
 
 The experimental programme is designed to falsify each claim independently.
@@ -1303,11 +1303,11 @@ Claiming superiority on the basis of toy-scale experiments would be premature an
 
 What we \emph{are} claiming is more specific and, we believe, more interesting:
 \begin{enumerate}[nosep]
-    \item We can achieve \textbf{comparable results with far fewer coupling parameters}---$2d^2$ shared vs.\ $2Ld^2$ per-layer---by replacing stored coupling with orbital computation through a learned semigroup.
+    \item We can achieve \textbf{comparable results with far fewer coupling parameters}, $2d^2$ shared vs.\ $2Ld^2$ per-layer, by replacing stored coupling with orbital computation through a learned semigroup.
     \item In doing so, we learn something new about the \textbf{structure of the problem space itself}.
-    The factorisation into generator (shared coupling geometry), response (per-layer value projection), and field (evolving residual stream) is not just an engineering trick---it is a structural claim about how information couples in sequential data.
+    The factorisation into generator (shared coupling geometry), response (per-layer value projection), and field (evolving residual stream) is not just an engineering trick, it is a structural claim about how information couples in sequential data.
     \item We have \textbf{found the generators, not just the local trajectories}.
-    The standard transformer stores $L$ independent coupling matrices---$L$ snapshots of what the coupling looks like at each depth.
+    The standard transformer stores $L$ independent coupling matrices, $L$ snapshots of what the coupling looks like at each depth.
     The ORN learns the single dynamical rule that \emph{generates} all of them.
     This is a stronger form of knowledge: a trajectory tells you where you went; a generator tells you the law that produces all possible trajectories.
     Our spectral invariance measurements (on GPT-2, with the caveats noted in Section~\ref{sec:scope}) suggest that the transformer already learns an approximately invariant coupling generator and then works around it with per-layer response heads.
@@ -1316,7 +1316,7 @@ What we \emph{are} claiming is more specific and, we believe, more interesting:
 
 The prediction is not immediate superiority but different scaling: steeper $\beta$, because generators compress better than trajectories.
 If the scaling advantage is real, it will become visible at larger scale.
-If it is not, the structural insight---that coupling geometry is approximately universal and can be memoised---stands on its own as a contribution to understanding how transformers represent sequential structure.
+If it is not, the structural insight, that coupling geometry is approximately universal and can be memoised, stands on its own as a contribution to understanding how transformers represent sequential structure.
 
 
 % ======================================================================

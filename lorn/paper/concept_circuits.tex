@@ -34,9 +34,9 @@ A Small-Scale Exploration of Candidate Primitives}}
 \twocolumn[\maketitle
 \begin{abstract}
 \noindent
-The Gauge LORN programme is not a refinement of the Orbital Response Network (ORN); it is a research agenda into \emph{new circuits}. ORN is one component --- the L-hemisphere --- and the open questions concern R, the R$\leftrightarrow$L bridge, and the computational primitives that make nonlinear composition and structural invariance tractable. This paper uses the small-scale circuit methodology from \emph{Building Circuits} to explore five candidate concept circuits. Each targets a specific aspect of the LORN hypothesis and returns a dimensionless verdict on whether the primitive, at its minimal scale, can do what the programme asks of it.
+The Gauge LORN programme is not a refinement of the Orbital Response Network (ORN); it is a research agenda into \emph{new circuits}. ORN is one component ,  the L-hemisphere ,  and the open questions concern R, the R$\leftrightarrow$L bridge, and the computational primitives that make nonlinear composition and structural invariance tractable. This paper uses the small-scale circuit methodology from \emph{Building Circuits} to explore five candidate concept circuits. Each targets a specific aspect of the LORN hypothesis and returns a dimensionless verdict on whether the primitive, at its minimal scale, can do what the programme asks of it.
 
-\textbf{Results.} CC-1 (\emph{pass}): DeepSets at 25K params reaches 94\% on a permutation-invariant target; a learned-positional transformer at 100K params stalls at 56\% (base rate 52\%). CC-2 (\emph{partial}): $\Sn$-contrastive training without labels lifts a linear probe from chance 25\% to 46\% --- a real but sub-threshold signal. CC-3 (\emph{kill}): neither plain nor residual sequential stacks generalise on $S_4$ chain composition from 4K samples --- the chain-composition regime demands more than parameter capacity. CC-4 (\emph{kill}): a naïve MLP memorises $S_4$ pair composition to 100\% but generalises to 0\% on held-out pairs; non-abelian composition is \emph{not} a free-MLP property. CC-5 (\emph{strong pass}): AdaLN at a bottleneck of $k=1$ already delivers 96\% accuracy on a four-mode task; $k=2$ reaches 99\%. Two cleanly positive, one partial, two kill-criteria met. The battery maps candidate primitives onto LORN's open roles --- and the two kills are as informative as the passes, because they falsify specific assumptions about where nonlinear composition comes from.
+\textbf{Results.} CC-1 (\emph{pass}): DeepSets at 25K params reaches 94\% on a permutation-invariant target; a learned-positional transformer at 100K params stalls at 56\% (base rate 52\%). CC-2 (\emph{partial}): $\Sn$-contrastive training without labels lifts a linear probe from chance 25\% to 46\% ,  a real but sub-threshold signal. CC-3 (\emph{kill}): neither plain nor residual sequential stacks generalise on $S_4$ chain composition from 4K samples ,  the chain-composition regime demands more than parameter capacity. CC-4 (\emph{kill}): a naïve MLP memorises $S_4$ pair composition to 100\% but generalises to 0\% on held-out pairs; non-abelian composition is \emph{not} a free-MLP property. CC-5 (\emph{strong pass}): AdaLN at a bottleneck of $k=1$ already delivers 96\% accuracy on a four-mode task; $k=2$ reaches 99\%. Two cleanly positive, one partial, two kill-criteria met. The battery maps candidate primitives onto LORN's open roles ,  and the two kills are as informative as the passes, because they falsify specific assumptions about where nonlinear composition comes from.
 \end{abstract}\vspace{0.5cm}
 
 \begin{center}
@@ -58,13 +58,13 @@ Readers should defer to \emph{lorn\_gauge} v3 for the current Phase 1 architectu
 % ======================================================================
 \section{Framing: What Gauge LORN Asks For}
 
-The Gauge LORN programme proposes a two-hemisphere language architecture in which L is an autoregressive predictor and R is a structural observer that discovers $\Sn$-invariant content and feeds it back through a bounded channel~\cite{gauge-v2}. ORN --- shared $\M = AB^\top$, shared wide FFN, per-layer corrections --- is the current candidate for L. But the programme as a whole asks much more than ORN provides.
+The Gauge LORN programme proposes a two-hemisphere language architecture in which L is an autoregressive predictor and R is a structural observer that discovers $\Sn$-invariant content and feeds it back through a bounded channel~\cite{gauge-v2}. ORN ,  shared $\M = AB^\top$, shared wide FFN, per-layer corrections ,  is the current candidate for L. But the programme as a whole asks much more than ORN provides.
 
 Three families of open questions:
 
 \begin{enumerate}[nosep]
 \item \textbf{R's primitive.} What circuit inside R actually extracts $\Sn$-invariant structure? Is it Reynolds averaging, attractor convergence, slow-feature extraction, or something else?
-\item \textbf{R's objective.} Can a contrastive loss --- with no CE signal, orthogonal to L's task --- discover usable representations, or does it collapse?
+\item \textbf{R's objective.} Can a contrastive loss ,  with no CE signal, orthogonal to L's task ,  discover usable representations, or does it collapse?
 \item \textbf{The bridge and the composition backbone.} How does R's $\alpha$ reach L without overwhelming the generation? How do nonlinear components on either side compose across depth?
 \end{enumerate}
 
@@ -95,7 +95,7 @@ Implementation: a single Python file, \texttt{experiments/exp\_concept\_circuits
 
 \textbf{Task.} Predict the parity of the count of token $0$ in a length-$T$ sequence. Domain: vocab $6$, $T=10$, binary output. The target depends only on the multiset, not the order. Train set is deliberately small ($n=128$) so generalization is informative.
 
-\textbf{Variants.} Matched $d=64$, 2-layer. (a) transformer with learned positional embedding; (b) transformer with random positional embedding at training (augmentation), none at eval; (c) DeepSets~\cite{zaheer2017deepsets} --- per-element MLP, mean pool, readout MLP.
+\textbf{Variants.} Matched $d=64$, 2-layer. (a) transformer with learned positional embedding; (b) transformer with random positional embedding at training (augmentation), none at eval; (c) DeepSets~\cite{zaheer2017deepsets} ,  per-element MLP, mean pool, readout MLP.
 
 \textbf{Pass.} Invariance-enforcing architectures generalise; learned-positional transformer does not.
 
@@ -119,7 +119,7 @@ DeepSets                  & \textbf{25{,}538}  & \textbf{0.939} \\
 \paragraph{Interpretation.} A sharp, three-way separation: the learned-positional transformer stalls barely above chance at 0.562, while the random-positional variant (same topology, trained with permutation augmentation) leaps to 0.907, and DeepSets (invariance by architecture) reaches 0.939 at one quarter of the parameter count. The invariance bias is load-bearing: four times the parameters does not make up for the wrong inductive bias. For R, this is the first concrete statement of cost: an architecturally order-dependent R, trained without augmentation, is not a viable candidate at the scales where generalisation matters. The ($a \to b$) gap of 0.345 accuracy points also sets a quantitative price on ignoring the symmetry.
 
 % ======================================================================
-\section{CC-2: $\Sn$-Contrastive Coupling --- No CE Signal}
+\section{CC-2: $\Sn$-Contrastive Coupling ,  No CE Signal}
 
 \textbf{LORN role.} R's training objective. The programme's central bet is that R's objective should be \emph{orthogonal} to L's: R optimises an $\Sn$-contrastive loss rather than token prediction. This test asks whether that objective, alone, is enough.
 
@@ -135,7 +135,7 @@ DeepSets                  & \textbf{25{,}538}  & \textbf{0.939} \\
 
 \paragraph{Interpretation.} $\Sn$-contrastive training at this scale discovers \emph{some} multiset-class structure but does not converge strongly. Three candidate explanations:
 \begin{enumerate}[nosep,leftmargin=*]
-\item \textbf{Weak negatives.} Batch size 128 means each InfoNCE step has only $\sim 32$ negatives per class in expectation --- thin for four-way separation with overlapping Dirichlet-sampled bags.
+\item \textbf{Weak negatives.} Batch size 128 means each InfoNCE step has only $\sim 32$ negatives per class in expectation ,  thin for four-way separation with overlapping Dirichlet-sampled bags.
 \item \textbf{Invariance is too easy.} The encoder with positional embedding quickly learns that pool-over-positions is invariant to permutation; once the augmentation signal is absorbed, the contrastive gradient becomes weak.
 \item \textbf{The task is under-determined.} Four sparse-Dirichlet classes with overlapping support may not be linearly separable in the encoder's output space, regardless of training.
 \end{enumerate}
@@ -148,7 +148,7 @@ For the LORN programme, this result does not close the question of whether $\Sn$
 
 \textbf{Task.} Apply a length-$L$ chain of operations from $S_4$ to the identity and predict the resulting permutation. $L \in \{4, 8, 16\}$. 24-way classification.
 
-\textbf{Variants.} (a) Plain deep MLP --- no LayerNorm, no residual. (b) Residual MLP with LayerNorm, a proxy for a contractive layer. Both sweep width $w \in \{32, 64, 128, 256\}$.
+\textbf{Variants.} (a) Plain deep MLP ,  no LayerNorm, no residual. (b) Residual MLP with LayerNorm, a proxy for a contractive layer. Both sweep width $w \in \{32, 64, 128, 256\}$.
 
 \textbf{Metric.} Val accuracy.
 
@@ -175,7 +175,7 @@ width & pln. & res. & pln. & res. & pln. & res. \\
 
 \paragraph{Interpretation.} The result falsifies the na\"{i}ve form of the claim that \emph{any} sequential processor with enough width and enough depth will discover $S_4$ chain composition. The failure is not about the contractive mechanism; it is that 4096 training samples cover at most $10^{-19}$ of the $|S_4|^L \sim 10^{22}$ possible chains at $L=16$, and the model has no inductive bias toward group structure. Memorisation capacity is not the bottleneck; generalisation without a group prior is.
 
-This is a genuinely useful negative: it tells the LORN programme that a generic residual stack cannot be expected to discover non-abelian algebra from examples, and that a contractive architecture is a \emph{mechanism} for composition, not a shortcut around requiring the appropriate algebraic prior. A redesigned CC-3 should test contraction on a task where the algebraic structure is learnable (e.g., modular arithmetic, where a Fourier-like circuit exists and can be discovered at scale --- as confirmed in \emph{Building Circuits}). The task here is harder than the claim it was meant to test.
+This is a genuinely useful negative: it tells the LORN programme that a generic residual stack cannot be expected to discover non-abelian algebra from examples, and that a contractive architecture is a \emph{mechanism} for composition, not a shortcut around requiring the appropriate algebraic prior. A redesigned CC-3 should test contraction on a task where the algebraic structure is learnable (e.g., modular arithmetic, where a Fourier-like circuit exists and can be discovered at scale ,  as confirmed in \emph{Building Circuits}). The task here is harder than the claim it was meant to test.
 
 % ======================================================================
 \section{CC-4: Non-Abelian Manifold Composition}
@@ -190,11 +190,11 @@ This is a genuinely useful negative: it tells the LORN programme that a generic 
 
 \textbf{Pass.} Accuracy saturates once $e \gtrsim \lceil \log_2 24 \rceil = 5$; beyond that, increasing $e$ produces no gain. The asymptote is not gated by ambient dimension.
 
-\paragraph{Result.} \emph{Kill criterion met.} All 18 sweep cells score $\le 0.012$ val accuracy (below chance of $1/24 = 0.042$, a statistical artifact of small val set of 87 pairs). Direct diagnosis: train accuracy saturates at 1.000 on the 489 training pairs, but held-out val accuracy is 0.000. Val predictions span 22--24 of the 24 classes --- the model is not collapsing to one class; it is making diverse, wrong predictions on every held-out pair.
+\paragraph{Result.} \emph{Kill criterion met.} All 18 sweep cells score $\le 0.012$ val accuracy (below chance of $1/24 = 0.042$, a statistical artifact of small val set of 87 pairs). Direct diagnosis: train accuracy saturates at 1.000 on the 489 training pairs, but held-out val accuracy is 0.000. Val predictions span 22--24 of the 24 classes ,  the model is not collapsing to one class; it is making diverse, wrong predictions on every held-out pair.
 
 \paragraph{Interpretation.} This is the single most informative negative result in the battery. The MLP has enough capacity to \emph{memorise} all training pairs but \emph{cannot generalise} to held-out pairs of the very same group. Non-abelian composition is not a property a na\"{i}ve MLP discovers from pair examples.
 
-The implication for LORN is direct and important: R's composition mechanism cannot be ``feed embeddings through an MLP.'' It requires an architectural prior --- an equivariant layer, a structured representation (e.g., regular representation of the group), or an attractor structure that encodes the composition law in its dynamics rather than its weights. The gauge paper's theoretical story --- skew--dissipative, attractor-mediated composition --- is \emph{exactly} the right kind of structure for this. CC-4 doesn't validate that story, but it falsifies the simpler alternative of ``just let an MLP learn it.''
+The implication for LORN is direct and important: R's composition mechanism cannot be ``feed embeddings through an MLP.'' It requires an architectural prior ,  an equivariant layer, a structured representation (e.g., regular representation of the group), or an attractor structure that encodes the composition law in its dynamics rather than its weights. The gauge paper's theoretical story ,  skew--dissipative, attractor-mediated composition ,  is \emph{exactly} the right kind of structure for this. CC-4 doesn't validate that story, but it falsifies the simpler alternative of ``just let an MLP learn it.''
 
 The predicted saturation-with-intrinsic-dimension curve does not appear because we are in the pre-generalisation regime. A proper test of that prediction would need to operate on a group where generalisation is tractable (small abelian groups, or $S_n$ with structured embeddings that carry the group representation). This is a target for a future CC-4b.
 
@@ -248,22 +248,22 @@ Five circuits, five verdicts (Table~\ref{tab:summary}). Two clean positives, one
 CC & Verdict & Headline \\
 \midrule
 1 & pass         & DeepSets at 25K params beats a 100K-param transformer with learned pos. \\
-2 & partial      & contrastive-only probe at 46\% vs chance 25\% --- real but sub-threshold. \\
-3 & kill         & plain and residual both at chance on $S_4$ chain composition --- generalisation requires a group prior. \\
-4 & kill         & train=1.00, val=0.00 on $S_4$ pair composition --- na\"{i}ve MLP on embeddings cannot discover non-abelian structure. \\
+2 & partial      & contrastive-only probe at 46\% vs chance 25\% ,  real but sub-threshold. \\
+3 & kill         & plain and residual both at chance on $S_4$ chain composition ,  generalisation requires a group prior. \\
+4 & kill         & train=1.00, val=0.00 on $S_4$ pair composition ,  na\"{i}ve MLP on embeddings cannot discover non-abelian structure. \\
 5 & strong pass  & AdaLN at $k=1$ already yields 0.962 on a 4-mode task. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \textbf{What the passes say.}
-CC-1 places a quantitative lower bound on R's inductive bias: an order-dependent transformer pays 4$\times$ the parameters \emph{and still fails} compared to DeepSets with the right symmetry. CC-5 says the R$\to$L bandwidth budget is permissive --- R can emit compact signals, and AdaLN decodes them.
+CC-1 places a quantitative lower bound on R's inductive bias: an order-dependent transformer pays 4$\times$ the parameters \emph{and still fails} compared to DeepSets with the right symmetry. CC-5 says the R$\to$L bandwidth budget is permissive ,  R can emit compact signals, and AdaLN decodes them.
 
 \textbf{What the partial says.}
 CC-2 tells us $\Sn$-contrastive-only training is a weak but real signal at small scale. The LORN programme cannot yet rely on it standing alone; scaling experiments or harder-negative strategies are required before contrastive is the sole R objective.
 
 \textbf{What the kills say.}
-CC-3 and CC-4 agree: composition of non-abelian group elements --- a putative test of the nonlinear-composition backbone --- does not emerge from na\"{i}ve MLPs or shallow residual stacks. This falsifies the simplest form of ``manifold composition is an MLP'' and forces the LORN theory toward architecturally-primed composition: equivariant representations, attractor-mediated dynamics, or structured coupling geometry. The gauge paper's skew--dissipative picture is exactly the right \emph{kind} of prior; the battery rules out the lazier alternatives.
+CC-3 and CC-4 agree: composition of non-abelian group elements ,  a putative test of the nonlinear-composition backbone ,  does not emerge from na\"{i}ve MLPs or shallow residual stacks. This falsifies the simplest form of ``manifold composition is an MLP'' and forces the LORN theory toward architecturally-primed composition: equivariant representations, attractor-mediated dynamics, or structured coupling geometry. The gauge paper's skew--dissipative picture is exactly the right \emph{kind} of prior; the battery rules out the lazier alternatives.
 
 % ======================================================================
 \section{What This Changes}
@@ -271,10 +271,10 @@ CC-3 and CC-4 agree: composition of non-abelian group elements --- a putative te
 A honest re-framing of the programme:
 
 \begin{enumerate}[nosep]
-\item The ORN literature has shown the L-side works --- shared $\M$, shared FFN, gated corrections --- at scale. That result stands.
+\item The ORN literature has shown the L-side works ,  shared $\M$, shared FFN, gated corrections ,  at scale. That result stands.
 \item The R-side is \emph{new research}. It is not a small modification of L. Its objective is different, its primitive is different, its training dynamics are different.
 \item The R$\leftrightarrow$L bridge is unsolved. AdaLN, cross-attention, and hypernet weight generation are candidates; CC-5 is one test among many that need to run.
-\item The theoretical skeleton --- skew--dissipative decomposition, attractor memoisation, monoid-of-layer-actions --- is architecture-agnostic. It applies to any Gauge LORN instantiation, not just one built on ORN.
+\item The theoretical skeleton ,  skew--dissipative decomposition, attractor memoisation, monoid-of-layer-actions ,  is architecture-agnostic. It applies to any Gauge LORN instantiation, not just one built on ORN.
 \end{enumerate}
 
 The concept-circuit methodology is the bridge between theory and empirics at a scale where both are tractable. Each concept circuit is a minimal embodiment of one theoretical prediction, tested at a scale where the prediction either shows up or does not. The paper is a framework for growing the research programme by \emph{enumerating} concept circuits rather than validating a single architecture.
@@ -326,7 +326,7 @@ $k$ & AdaLN acc & Hypernet acc & Hypernet params \\
 \end{tabular}
 \end{table}
 
-\paragraph{Interpretation.} Hypernet is \emph{slightly} better than AdaLN at every $k$, with the gap widening at $k \ge 4$. Both channels saturate at low $k$ --- R$\to$L bandwidth is abundant regardless of architectural choice. The LORN programme is not forced to adopt AdaLN; the channel design is flexible, and either works as the bridge. The minor advantage of hypernet suggests full-rank-deltas are slightly richer than affine modulations, but the difference is not architectural-decisive.
+\paragraph{Interpretation.} Hypernet is \emph{slightly} better than AdaLN at every $k$, with the gap widening at $k \ge 4$. Both channels saturate at low $k$ ,  R$\to$L bandwidth is abundant regardless of architectural choice. The LORN programme is not forced to adopt AdaLN; the channel design is flexible, and either works as the bridge. The minor advantage of hypernet suggests full-rank-deltas are slightly richer than affine modulations, but the difference is not architectural-decisive.
 
 Taken with CC-4b: the very mechanism that makes the hypernet channel work (a bilinear map from $\alpha$ into the weight space of L) is \emph{precisely} the interaction structure that CC-4b says is missing from a plain MLP. The two results agree: bilinear/multiplicative mechanisms are the minimal architectural prior that makes composition and mode-selection tractable.
 
@@ -340,7 +340,7 @@ Taken with CC-4b: the very mechanism that makes the hypernet channel work (a bil
 \begin{center}\small
 3.41, 2.77, 2.05, 1.50, 1.24, 1.14, 1.12, 1.12
 \end{center}
-Geometric decay from step 0 to step 5 (three orders of magnitude of distance), then a floor at 1.12 --- the intrinsic basin-separation distance of the learned attractors (confirmed by anchor-to-anchor convergence norm of 0.162). Predicted burn-in depth for $\epsilon = 0.01$: $\log(1/0.01) / \log(1/0.844) = 27$ steps.
+Geometric decay from step 0 to step 5 (three orders of magnitude of distance), then a floor at 1.12 ,  the intrinsic basin-separation distance of the learned attractors (confirmed by anchor-to-anchor convergence norm of 0.162). Predicted burn-in depth for $\epsilon = 0.01$: $\log(1/0.01) / \log(1/0.844) = 27$ steps.
 
 \paragraph{Interpretation.} This is a direct, quantitative confirmation of the contraction prediction from the gauge memoisation theorem at the smallest scale. A trained contractive block exhibits:
 \begin{enumerate}[nosep,leftmargin=*]
@@ -360,13 +360,13 @@ For the LORN theory, this is the first small-scale empirical confirmation of the
 \item \textbf{CC-7 (pass):} $\lambda = 0.844$ contraction fitted cleanly; geometric burn-in observed; first empirical confirmation of the gauge memoisation theorem at the smallest scale.
 \end{itemize}
 
-The combined picture from Rounds 1 and 2: \emph{plain MLPs are too weak for composition, but a contractive residual block with bilinear modulation --- exactly what the gauge architecture provides --- is sufficient.} Five of eight tests now have verdicts (CC-1, CC-5, CC-6, CC-7 pass; CC-3, CC-4, CC-4b kill the MLP-only hypothesis; CC-2 partial and needs round-3 redesign). The programme is converging on a concrete architectural constraint: any LORN R or L-side composition primitive must contain multiplicative interaction, and its depth is usable as iteration on a contractive attractor rather than as free parameterisation.
+The combined picture from Rounds 1 and 2: \emph{plain MLPs are too weak for composition, but a contractive residual block with bilinear modulation ,  exactly what the gauge architecture provides ,  is sufficient.} Five of eight tests now have verdicts (CC-1, CC-5, CC-6, CC-7 pass; CC-3, CC-4, CC-4b kill the MLP-only hypothesis; CC-2 partial and needs round-3 redesign). The programme is converging on a concrete architectural constraint: any LORN R or L-side composition primitive must contain multiplicative interaction, and its depth is usable as iteration on a contractive attractor rather than as free parameterisation.
 
 
 % ======================================================================
 \part*{Round 3: Closing the Composition Question, Extending Contraction}
 
-Three circuits inspired by Round 2: CC-2b retries contrastive-only at larger scale with harder negatives; CC-8 extends CC-7's single-fixed-point contraction into multi-attractor orbit traversal; CC-9 is the positive test of the CC-4/4b diagnosis --- can attention solve what MLP could not?
+Three circuits inspired by Round 2: CC-2b retries contrastive-only at larger scale with harder negatives; CC-8 extends CC-7's single-fixed-point contraction into multi-attractor orbit traversal; CC-9 is the positive test of the CC-4/4b diagnosis ,  can attention solve what MLP could not?
 
 \section{CC-2b: Harder $\Sn$-Contrastive}
 
@@ -374,7 +374,7 @@ Three circuits inspired by Round 2: CC-2b retries contrastive-only at larger sca
 
 \paragraph{Result.} \emph{Kill.} Linear probe accuracy sits at chance ($1/8 = 0.125$) for the entire training run. Probe accuracy values across 9 checkpoints: 0.127, 0.124, 0.126, 0.123, 0.126, 0.134, 0.132, 0.121, 0.127. No trajectory.
 
-\paragraph{Interpretation.} A definitive kill for ``$\Sn$-contrastive training alone is sufficient for R'' at small scale. The failure mode is explicable: positional-embedding-plus-mean-pool makes the encoder \emph{trivially} permutation-invariant, so each sample and its permuted version collapse to the same embedding by construction --- the contrastive gradient on positives vanishes. Only the negative-repulsion gradient remains, and with $K=8$ mildly-separable Dirichlet classes, that gradient is too weak to find a separating embedding.
+\paragraph{Interpretation.} A definitive kill for ``$\Sn$-contrastive training alone is sufficient for R'' at small scale. The failure mode is explicable: positional-embedding-plus-mean-pool makes the encoder \emph{trivially} permutation-invariant, so each sample and its permuted version collapse to the same embedding by construction ,  the contrastive gradient on positives vanishes. Only the negative-repulsion gradient remains, and with $K=8$ mildly-separable Dirichlet classes, that gradient is too weak to find a separating embedding.
 
 Two corrective paths for a Round 4 CC-2c: (a) use an encoder that is \emph{not} trivially invariant (e.g., no pooling; contrast CLS-token representations) so the invariance must be learned; (b) combine contrastive with a small supervised or masked-prediction signal. In either case, the LORN programme cannot assume a pure-$\Sn$-contrastive R works out of the box. Pretrain with a mixed objective, or with an architectural constraint that forces invariance to be learned rather than architectural.
 
@@ -408,13 +408,13 @@ iter & dist-to-true & routing acc \\
 
 Fitted $\lambda = 0.777$ over iterations 0--6 (cleaner contraction than CC-7 thanks to more widely spaced attractors).
 
-\paragraph{Interpretation.} The approach phase is textbook: geometric decay in distance at $\lambda \approx 0.78$, bringing the state from noise distance 4.8 to within 0.6 of its true anchor by iteration 8 --- exactly the training horizon. Beyond that, \emph{the state drifts away from the training target}. Distance grows, and by iteration 24 the routing accuracy has degraded from 0.997 to 0.792.
+\paragraph{Interpretation.} The approach phase is textbook: geometric decay in distance at $\lambda \approx 0.78$, bringing the state from noise distance 4.8 to within 0.6 of its true anchor by iteration 8 ,  exactly the training horizon. Beyond that, \emph{the state drifts away from the training target}. Distance grows, and by iteration 24 the routing accuracy has degraded from 0.997 to 0.792.
 
-This is a sharp lesson about variable-depth inference. A residual block trained with a fixed iteration depth learns an 8-step approximation to a contractive map; but the \emph{trained}-contractive dynamics are not the same as the map's long-run limit. Over-iteration visits the map's \emph{untrained} fixed points --- other limit cycles or slow manifolds that the training never explored. The state stays in a bounded region (norms don't blow up) but no longer matches the trained attractors.
+This is a sharp lesson about variable-depth inference. A residual block trained with a fixed iteration depth learns an 8-step approximation to a contractive map; but the \emph{trained}-contractive dynamics are not the same as the map's long-run limit. Over-iteration visits the map's \emph{untrained} fixed points ,  other limit cycles or slow manifolds that the training never explored. The state stays in a bounded region (norms don't blow up) but no longer matches the trained attractors.
 
 For LORN's orbital/variable-depth inference story, this is actionable: training must stabilise attractors beyond the nominal iteration depth, either by (a) sampling training horizons from a distribution rather than fixing them, (b) adding a fixed-point regulariser (penalise $\|f(x) - x\|$ at convergence), or (c) early-stopping inference at the end of the trained horizon. The natural iterative-inference architecture is \emph{not} ``iterate until the state stops changing''; it is ``iterate for the trained depth.'' This is an architectural constraint on any variable-depth LORN extension.
 
-\section{CC-9: Attention-Based Composition --- Confirms the CC-4b Diagnosis}
+\section{CC-9: Attention-Based Composition ,  Confirms the CC-4b Diagnosis}
 
 \textbf{Setup.} Z$_{17}$ addition, but input is a 3-token sequence $[a, b, \texttt{EQ}]$ processed by a single-layer transformer with attention + FFN; predict at the \texttt{EQ} position. Sweep $d \in \{16, 32, 64, 128\}$. 85\% train split.
 
@@ -436,7 +436,7 @@ $d$ & Params & Train acc & Val acc \\
 \end{tabular}
 \end{table}
 
-\paragraph{Interpretation.} At $d=32$ (14K params), the attention-based composer reaches 97.7\% val accuracy on the held-out 15\% of Z$_{17}$ pairs --- a regime where CC-4b's MLP (at 20K+ params) generalised to 0.000 val. The architectural difference is decisive: attention routes the two operands through the same transformation (the coupling between $a$ and $b$ tokens is learned from data), producing a structured embedding where the Fourier circuit of modular addition can be discovered. An MLP on concatenated embeddings has no such interaction channel and cannot discover the same circuit.
+\paragraph{Interpretation.} At $d=32$ (14K params), the attention-based composer reaches 97.7\% val accuracy on the held-out 15\% of Z$_{17}$ pairs ,  a regime where CC-4b's MLP (at 20K+ params) generalised to 0.000 val. The architectural difference is decisive: attention routes the two operands through the same transformation (the coupling between $a$ and $b$ tokens is learned from data), producing a structured embedding where the Fourier circuit of modular addition can be discovered. An MLP on concatenated embeddings has no such interaction channel and cannot discover the same circuit.
 
 This closes the composition question raised by CC-3, CC-4, and CC-4b: \emph{the failure was MLP-architectural, not task-fundamental}. Attention provides the multiplicative interaction the composition law requires. For LORN, this means the composition primitive at both R and L must be attention-based (or an equivalent bilinear construction like ORN's $\M = AB^\top$). A pure FFN/MLP pathway is representationally insufficient for any kind of algebraic composition.
 
@@ -447,7 +447,7 @@ The $d=64$ dip (0.841) is noise from the single-seed sweep; the overall pattern 
 
 \begin{itemize}[nosep]
 \item \textbf{CC-2b (kill):} $\Sn$-contrastive with trivially-invariant encoder goes nowhere. R's objective cannot be pure contrastive with a pooled encoder; either the architecture must be non-invariant, or the objective must be mixed.
-\item \textbf{CC-8 (mixed):} Contractive attractors approach correctly for the trained horizon, then drift off-target over-iteration. Variable-depth inference is not automatic --- it requires training that stabilises the attractor beyond the training depth.
+\item \textbf{CC-8 (mixed):} Contractive attractors approach correctly for the trained horizon, then drift off-target over-iteration. Variable-depth inference is not automatic ,  it requires training that stabilises the attractor beyond the training depth.
 \item \textbf{CC-9 (strong pass):} Attention-based Z$_{17}$ addition generalises at $d=32, 14$K params (val 0.977). Confirms that the composition failures of CC-3, CC-4, CC-4b are MLP-architectural, not fundamental.
 \end{itemize}
 
@@ -478,7 +478,7 @@ Four circuits close the three open questions from Round 3: R's objective (CC-2c)
 \begin{itemize}[nosep]
 \item contrastive-only: final probe acc 0.133 (chance 0.125)
 \item MLM-only: final probe acc 0.135
-\item mixed (50/50): final probe acc 0.077 --- \emph{below} chance
+\item mixed (50/50): final probe acc 0.077 ,  \emph{below} chance
 \end{itemize}
 
 \paragraph{Interpretation.} No combination of permutation-contrastive and masked-token-prediction objectives at this scale recovers multiset class structure. The mixed objective is actually \emph{worse} than either alone: the two objectives interfere destructively. Masked-token prediction focuses the encoder on token-level detail; permutation-contrastive wants the pool-level representation to collapse under permutation. With an invariant-pooled architecture, neither provides the needed signal, and their combination is noise.
@@ -506,7 +506,7 @@ uniform [4, 24]        & \textbf{0.995} & 0.002 & 23 \\
 \end{tabular}
 \end{table}
 
-\paragraph{Interpretation.} Sampling the iteration depth from a uniform distribution over the training horizon turns a 20-point accuracy-drop into a 0.3-point drop. The attractors become stable across the full evaluation range. The over-iteration drift observed in CC-8 was not an intrinsic limitation of contractive blocks; it was a training artifact --- the model had no reason to be stable at depths it never trained at.
+\paragraph{Interpretation.} Sampling the iteration depth from a uniform distribution over the training horizon turns a 20-point accuracy-drop into a 0.3-point drop. The attractors become stable across the full evaluation range. The over-iteration drift observed in CC-8 was not an intrinsic limitation of contractive blocks; it was a training artifact ,  the model had no reason to be stable at depths it never trained at.
 
 For LORN's variable-depth inference story, this is the architectural guarantee that makes orbital iteration viable: \emph{train with random horizons, and iterate-to-convergence becomes safe}. The LORN design specification now includes: if a component's depth is variable at inference time, the training depth must be sampled from a distribution covering the eventual inference range. This is a clean, testable, one-sentence architectural prescription.
 
@@ -520,7 +520,7 @@ iter 0: 0.250 \quad iter 1: 1.000 \quad iter 15: 1.000
 \end{center}
 The contractor is essential (iter 0 at 25\%) and stable (no drop through 15 iterations).
 
-\paragraph{Interpretation.} Circuit chaining works cleanly. The composer-and-contractor pipeline learns jointly to solve Z$_{17}$ addition: the composer produces an embedding that the contractor relaxes into a classifiable attractor after a single step. The depth-independence of the final accuracy (same at iter 1 and iter 15) is notable --- joint training made the attractor stable over iterations without requiring the multi-horizon strategy of CC-8b. This is the first evidence that LORN-style architectural composition (several concept circuits in series) does not pay a chained burn-in penalty when components are trained together.
+\paragraph{Interpretation.} Circuit chaining works cleanly. The composer-and-contractor pipeline learns jointly to solve Z$_{17}$ addition: the composer produces an embedding that the contractor relaxes into a classifiable attractor after a single step. The depth-independence of the final accuracy (same at iter 1 and iter 15) is notable ,  joint training made the attractor stable over iterations without requiring the multi-horizon strategy of CC-8b. This is the first evidence that LORN-style architectural composition (several concept circuits in series) does not pay a chained burn-in penalty when components are trained together.
 
 Future work should quantify the cost of \emph{separately}-trained components composed post-hoc, and compare to the joint training of CC-10. The gauge-paper theorem predicts a depth penalty only when attractor manifolds of the chained circuits differ; joint training aligns them.
 
@@ -530,7 +530,7 @@ Future work should quantify the cost of \emph{separately}-trained components com
 
 \paragraph{Result.} \emph{Strong pass.} Mean equivariance across all shifts: \textbf{0.993}. Per-shift values all in range 0.98--1.00.
 
-\paragraph{Interpretation.} The attention-based composer, trained only to predict $a + b \bmod p$ on 85\% of pairs, has discovered that a shift in one argument corresponds to a shift in the output. This is evidence that the model has learned the \emph{group structure} of Z$_{17}$, not merely memorised the addition table. In mechanistic-interpretability terms, the circuit the model implements is a Fourier-style rotation in embedding space --- the same circuit hand-constructed in prior work~\cite{nanda2023progress}.
+\paragraph{Interpretation.} The attention-based composer, trained only to predict $a + b \bmod p$ on 85\% of pairs, has discovered that a shift in one argument corresponds to a shift in the output. This is evidence that the model has learned the \emph{group structure} of Z$_{17}$, not merely memorised the addition table. In mechanistic-interpretability terms, the circuit the model implements is a Fourier-style rotation in embedding space ,  the same circuit hand-constructed in prior work~\cite{nanda2023progress}.
 
 This is the complement to the CC-4/4b kill. An MLP on embedding pairs memorises without generalising; an attention-based composer discovers the group structure and is equivariant under its action. The architectural bias of attention (symmetric dot-product, position-independent mixing, softmax competition) is what the composition primitive requires. ORN's $\M = AB^\top$ is a principled further constraint on the same kind of primitive.
 
@@ -560,10 +560,10 @@ After four rounds and thirteen circuits, the Gauge LORN architectural constraint
 \end{enumerate}
 
 \paragraph{What this changes.}
-The LORN programme has moved from a vision statement to a constrained architectural search. Of the seven constraints, six are resolved (some positively, one negatively). Only constraint 2 --- R's training objective --- remains genuinely open. That question is also sharper now: every obvious unsupervised approach has been tried and killed at this scale. The path forward is either more data, different scale, direct supervision, or a principled reframe of what R's discovery problem actually is.
+The LORN programme has moved from a vision statement to a constrained architectural search. Of the seven constraints, six are resolved (some positively, one negatively). Only constraint 2 ,  R's training objective ,  remains genuinely open. That question is also sharper now: every obvious unsupervised approach has been tried and killed at this scale. The path forward is either more data, different scale, direct supervision, or a principled reframe of what R's discovery problem actually is.
 
 \paragraph{Round 5 targets.}
-(a) \textbf{CC-2d}: R trained with direct class supervision --- establishes an upper bound on achievable multiset separation. (b) \textbf{CC-12}: slow-feature R primitive --- does time-coherence give a signal where $\Sn$-contrastive does not? (c) \textbf{CC-13}: attractor-basin classifier as R --- does a network of trained attractors outperform contrastive at the same data scale? (d) \textbf{CC-14}: non-invariant R architecture with contrastive --- does forcing the encoder to \emph{earn} invariance (rather than pool into it) provide a learnable signal? Each addresses the unresolved R-objective question from a different angle.
+(a) \textbf{CC-2d}: R trained with direct class supervision ,  establishes an upper bound on achievable multiset separation. (b) \textbf{CC-12}: slow-feature R primitive ,  does time-coherence give a signal where $\Sn$-contrastive does not? (c) \textbf{CC-13}: attractor-basin classifier as R ,  does a network of trained attractors outperform contrastive at the same data scale? (d) \textbf{CC-14}: non-invariant R architecture with contrastive ,  does forcing the encoder to \emph{earn} invariance (rather than pool into it) provide a learnable signal? Each addresses the unresolved R-objective question from a different angle.
 
 
 % ======================================================================
@@ -579,7 +579,7 @@ Four circuits testing four distinct angles on the R-objective question. The most
 
 \paragraph{Interpretation.} Disaster-level finding that retroactively reshapes the whole R-objective thread. The task is too hard for the configuration. With $K=8$ Dirichlet classes at $\alpha=0.2$ and length-12 samples from vocab 32, the class distributions overlap to the point that even full supervision recovers barely more than 18\% accuracy. The supervised ceiling is $\sim 0.18$.
 
-Rounds 2, 2b, 2c, 12, 13, 14 were all measuring unsupervised objectives on a task where \emph{no unsupervised approach could exceed 0.18 even if it matched the supervised ceiling perfectly}. The ``partial signal'' of CC-2 (0.46 probe acc at $K=4$) was not weak performance --- it was within reach of the supervised ceiling for $K=4$, a task regime we never actually measured. Running more rounds at $K=8$ was asking ``has this unsupervised objective surpassed the supervised ceiling?'' The question was structurally unanswerable.
+Rounds 2, 2b, 2c, 12, 13, 14 were all measuring unsupervised objectives on a task where \emph{no unsupervised approach could exceed 0.18 even if it matched the supervised ceiling perfectly}. The ``partial signal'' of CC-2 (0.46 probe acc at $K=4$) was not weak performance ,  it was within reach of the supervised ceiling for $K=4$, a task regime we never actually measured. Running more rounds at $K=8$ was asking ``has this unsupervised objective surpassed the supervised ceiling?'' The question was structurally unanswerable.
 
 \textbf{Methodological correction.} Every future circuit test must begin with a supervised ceiling probe before any unsupervised variant is evaluated. This is CC-0 in all future rounds. The CC-2 thread needs a full redesign at a task where the supervised ceiling is $> 0.85$.
 
@@ -595,7 +595,7 @@ Rounds 2, 2b, 2c, 12, 13, 14 were all measuring unsupervised objectives on a tas
 
 \textbf{Setup.} Encoder + learned codebook of 8 centres; commitment loss pulls encodings to nearest code; VQ codebook loss updates the codes. Unsupervised.
 
-\paragraph{Result.} Probe acc 0.169 at step 3000. Cluster purity 0.131 --- essentially $1/K = 0.125$, meaning all encodings collapsed to a single code.
+\paragraph{Result.} Probe acc 0.169 at step 3000. Cluster purity 0.131 ,  essentially $1/K = 0.125$, meaning all encodings collapsed to a single code.
 
 \paragraph{Interpretation.} Classic VQ codebook collapse. Without an EMA update rule, diversity regulariser, or codebook reset, all encodings converge to one code. The failure is VQ-specific, not LORN-specific, and would be fixed in a well-implemented VQ. Regardless, on a task with a 0.18 supervised ceiling, even a healthy VQ would not go far. Re-run at a task with real class separability before drawing conclusions.
 
@@ -603,14 +603,14 @@ Rounds 2, 2b, 2c, 12, 13, 14 were all measuring unsupervised objectives on a tas
 
 \textbf{Setup.} Encoder with a \texttt{CLS} token (no mean-pool); positional embeddings retained; contrastive training with permutation augmentation. Invariance must be \emph{learned} through the CLS readout rather than enforced by pooling.
 
-\paragraph{Result.} Probe acc collapses: 0.176 at init, 0.074 at step 500, 0.040 at step 3000 --- below chance.
+\paragraph{Result.} Probe acc collapses: 0.176 at init, 0.074 at step 500, 0.040 at step 3000 ,  below chance.
 
 \paragraph{Interpretation.} Representation collapse. Without mean-pool's free invariance, the CLS readout tries to satisfy the contrastive objective by collapsing all embeddings to a single vector, minimising positive distance at the cost of losing discriminability. The contrastive loss does not protect against this failure mode without an explicit anti-collapse term (variance regulariser, stop-gradient on one branch, etc.) Under the CC-2d reframe, even a non-collapsed CC-14 could not exceed 0.18 on this task.
 
 
 \section{Round 5 Summary and the Real Open Questions}
 
-Round 5 is the most consequential round of the battery --- not because any circuit passes its stated criterion, but because \emph{CC-2d reveals four rounds of the battery were measuring the wrong thing}. The R-objective question is now reopened:
+Round 5 is the most consequential round of the battery ,  not because any circuit passes its stated criterion, but because \emph{CC-2d reveals four rounds of the battery were measuring the wrong thing}. The R-objective question is now reopened:
 
 \begin{enumerate}[nosep,leftmargin=*]
 \item \textbf{The multiset-classification task was too hard}. Supervised ceiling is 0.18 vs chance 0.125. Every unsupervised objective test on this task was structurally unanswerable.
@@ -628,7 +628,7 @@ Round 5 is the most consequential round of the battery --- not because any circu
 \item Attention discovers group structure automatically (confirmed, CC-11).
 \item Multi-horizon training stabilises variable-depth attractors (confirmed, CC-8b).
 \end{itemize}
-The seventh constraint --- R's unsupervised objective --- is \emph{reopened}, with a new methodological safeguard.
+The seventh constraint ,  R's unsupervised objective ,  is \emph{reopened}, with a new methodological safeguard.
 
 \paragraph{Round 6 targets.}
 (a) \textbf{CC-0}: supervised-ceiling probe on a redesigned multiset task with well-separated classes (e.g.\ $K=4$ categorical classes with disjoint token support, ceiling $\ge 0.90$).
@@ -668,11 +668,11 @@ All four are at or above the supervised ceiling \emph{before training begins}. T
 
 \paragraph{Interpretation.} With probe saturated, these metrics tell us only that none of the three objectives \emph{destroys} the trivially-accessible structure. That is itself a positive result: CC-14b, which collapsed in Round 5, now stays stable thanks to VICReg. But the objective's value-add cannot be measured by this probe on this task. These three await Round 7 on a task with non-trivial initial probe.
 
-\section{CC-13b: VQ with Entropy Anti-Collapse --- The Breakthrough}
+\section{CC-13b: VQ with Entropy Anti-Collapse ,  The Breakthrough}
 
 \textbf{Setup.} Encoder + learned 4-centre codebook. Loss: commitment + codebook (straight-through) + entropy regulariser on the soft-assignment distribution (anti-collapse).
 
-\paragraph{Result.} \emph{Pass --- cluster purity is the right metric.} Table~\ref{tab:cc13b} shows the training trajectory.
+\paragraph{Result.} \emph{Pass ,  cluster purity is the right metric.} Table~\ref{tab:cc13b} shows the training trajectory.
 
 \begin{table}[t]
 \centering\small
@@ -695,16 +695,16 @@ Cluster purity rises from 0.381 (random assignment with entropy bias $\approx 1/
 
 \paragraph{Interpretation.} This is the first unsupervised R-primitive in the battery to demonstrably work. Three technical ingredients were required:
 \begin{itemize}[nosep]
-\item \textbf{Attractor-basin architecture.} A learned codebook forces the encoder to map inputs to one of $K$ discrete attractors --- the R-hemisphere's ``which basin'' readout.
+\item \textbf{Attractor-basin architecture.} A learned codebook forces the encoder to map inputs to one of $K$ discrete attractors ,  the R-hemisphere's ``which basin'' readout.
 \item \textbf{Straight-through estimator + codebook loss.} Standard VQ-VAE machinery. Commitment loss pulls encoder to codes; codebook loss pulls codes to encoder.
 \item \textbf{Entropy anti-collapse regulariser.} Without it (CC-13, Round 2), all samples land in one cluster (purity $\to 1/K$). With entropy $> 0$ on the marginal cluster distribution, utilisation is forced uniform.
 \end{itemize}
 This is a constructive answer to the Round 5 open question. R can be unsupervised \emph{if} the architectural constraint is an attractor codebook with anti-collapse regularisation. Pure $\Sn$-contrastive objectives fail because they do not enforce cluster structure; VQ forces cluster structure by construction.
 
-For the LORN programme, this is significant. R's $\alpha$-manifold, as described in the gauge paper, is attractor-basin-structured at 605M scale --- confirmed empirically by CC-13b at laptop scale. The attractor basins are not just observed in trained ORNs; they are the \emph{mechanism} that makes unsupervised R training possible.
+For the LORN programme, this is significant. R's $\alpha$-manifold, as described in the gauge paper, is attractor-basin-structured at 605M scale ,  confirmed empirically by CC-13b at laptop scale. The attractor basins are not just observed in trained ORNs; they are the \emph{mechanism} that makes unsupervised R training possible.
 
 
-\section{Round 6 Summary --- Seventh Constraint Resolved}
+\section{Round 6 Summary ,  Seventh Constraint Resolved}
 
 \begin{itemize}[nosep]
 \item \textbf{CC-0 (ceiling = 0.982)}: redesigned task is in the informative regime.
@@ -746,7 +746,7 @@ The first attempt at a full two-hemisphere integration, plus two resolved questi
 
 \paragraph{Result.} Supervised ceiling 0.978, initial random-probe 0.983. The raw encoder features \emph{still} carry enough token-identity for a random-init probe to score above the supervised ceiling. Task is not in the probe-informative regime.
 
-\paragraph{Interpretation.} The overlap weighting is not what makes a task probe-informative. What matters is whether the mean-pooled encoder embedding carries enough class-distinguishing information \emph{in raw form}. Our Bernoulli-mixture construction leaves the class's canonical block intact in expectation; the mean pool of any encoder preserves this bag-of-words signal. A truly probe-informative task would need to obscure raw bag-of-words identity --- e.g.\ by using structured token co-occurrences rather than per-token class signatures, or by shuffling tokens across classes so identity is not the class-giveaway.
+\paragraph{Interpretation.} The overlap weighting is not what makes a task probe-informative. What matters is whether the mean-pooled encoder embedding carries enough class-distinguishing information \emph{in raw form}. Our Bernoulli-mixture construction leaves the class's canonical block intact in expectation; the mean pool of any encoder preserves this bag-of-words signal. A truly probe-informative task would need to obscure raw bag-of-words identity ,  e.g.\ by using structured token co-occurrences rather than per-token class signatures, or by shuffling tokens across classes so identity is not the class-giveaway.
 
 Methodological rule \#3: \emph{ceiling-matching by noise injection is not sufficient}. Design tasks where the raw bag-of-words is uninformative so the encoder must discover higher-order structure.
 
@@ -756,7 +756,7 @@ Methodological rule \#3: \emph{ceiling-matching by noise injection is not suffic
 
 \paragraph{Result.} VQ-only recovers purity 0.979. VQ+contrastive plateaus at purity 0.615.
 
-\paragraph{Interpretation.} \emph{Destructive interference, not synergy.} The contrastive gradient pushes same-multiset-perms together in projection space, but it also pushes different-multisets apart --- and the encoder's parameters are shared with the VQ commitment/codebook losses. The two objectives pull on the representation in incompatible directions, and VQ's ability to quantise into clean clusters is degraded.
+\paragraph{Interpretation.} \emph{Destructive interference, not synergy.} The contrastive gradient pushes same-multiset-perms together in projection space, but it also pushes different-multisets apart ,  and the encoder's parameters are shared with the VQ commitment/codebook losses. The two objectives pull on the representation in incompatible directions, and VQ's ability to quantise into clean clusters is degraded.
 
 This is a real finding for R's objective design: VQ and contrastive cannot be combined naïvely. If both are wanted, they likely need separate heads (a contrastive projection head and a VQ quantisation head on different transforms of the encoder output) or sequential training (pretrain with one, fine-tune with the other).
 
@@ -782,19 +782,19 @@ Codebook $K$ & Purity & Clusters used \\
 \end{tabular}
 \end{table}
 
-\paragraph{Interpretation.} With $K=8$ on a true-$K=4$ task, VQ splits each true class across two clusters, but the entropy regulariser pushes those splits toward equal utilisation --- so purity drops as half of the per-cluster content is ``wrong'' (the partner half of the split class). At $K \in \{16, 32\}$, the entropy pressure weakens (uniform distribution over 16 or 32 slots is harder to achieve), and the model falls back toward a sparser representation, partially recovering purity.
+\paragraph{Interpretation.} With $K=8$ on a true-$K=4$ task, VQ splits each true class across two clusters, but the entropy regulariser pushes those splits toward equal utilisation ,  so purity drops as half of the per-cluster content is ``wrong'' (the partner half of the split class). At $K \in \{16, 32\}$, the entropy pressure weakens (uniform distribution over 16 or 32 slots is harder to achieve), and the model falls back toward a sparser representation, partially recovering purity.
 
 For LORN's R: if the true latent class count is unknown, start with $K$ slightly smaller than the expected number, not larger. Over-sizing the codebook with entropy anti-collapse \emph{actively harms} structure discovery. This is a design constraint: R's codebook size is a hyperparameter that interacts strongly with the entropy weight.
 
-\section{CC-17: First LORN Integration Test --- Task-Design Failure}
+\section{CC-17: First LORN Integration Test ,  Task-Design Failure}
 
 \textbf{Setup.} VQ-R (4 clusters) + AdaLN bridge + attention-based L. Joint training on a conditional-prediction task: $\mathrm{target} = (\max\mathrm{token} + 3 \cdot \mathrm{class}) \bmod V$. Baseline: L alone with $\alpha = 0$.
 
-\paragraph{Result.} LORN accuracy 0.943; L-alone accuracy 0.943; \textbf{lift over baseline = 0.000}. R's cluster purity 0.465 --- R did not succeed at clustering under joint training.
+\paragraph{Result.} LORN accuracy 0.943; L-alone accuracy 0.943; \textbf{lift over baseline = 0.000}. R's cluster purity 0.465 ,  R did not succeed at clustering under joint training.
 
 \paragraph{Interpretation.} The task was solvable by L alone, so R contributed nothing. The intended conditional target was meant to require class information, but the class-signal is \emph{leaked} through the input: the maximum token of a class-$c$ sample is usually in the canonical block $[c \cdot 8, (c+1) \cdot 8)$, so $\max\text{tok}$ correlates strongly with class. L can infer class from the inputs alone and does not need R's $\alpha$.
 
-R's cluster purity decaying to 0.465 is a secondary finding. Under joint training, R's gradient from the classification head is dominated by the downstream task's CE loss; the VQ commitment signal is a small side effect. Since L does not need R, R has no gradient incentive to cluster correctly --- it just produces whatever $\alpha$ vector minimises the shared loss.
+R's cluster purity decaying to 0.465 is a secondary finding. Under joint training, R's gradient from the classification head is dominated by the downstream task's CE loss; the VQ commitment signal is a small side effect. Since L does not need R, R has no gradient incentive to cluster correctly ,  it just produces whatever $\alpha$ vector minimises the shared loss.
 
 \paragraph{The methodology lesson.} A proper LORN integration test requires a task where L \emph{strictly cannot} succeed without R's signal. The canonical way to enforce this: restrict L's input view (e.g., L sees only 2--3 tokens at random per sample, not the full sequence) while R sees everything; then R must extract the class-signal from its full view and hand it to L through the bridge. Without this restriction, the bridge is redundant.
 
@@ -841,8 +841,8 @@ so L needs both its two visible tokens \emph{and} the class $c$ to predict. With
 
 \paragraph{Baseline ceilings.}
 \begin{itemize}[nosep]
-\item \textbf{Oracle L} --- L receives the \emph{true} class as a one-hot $\alpha$: 0.896. This is the achievable ceiling given 2-token visibility.
-\item \textbf{L-alone} --- L receives $\alpha = 0$: 0.642. This is what 2-token visibility alone can achieve. Substantially above chance $(1/V = 0.031)$ because $x_{L,0} + x_{L,1}$ itself carries information.
+\item \textbf{Oracle L} ,  L receives the \emph{true} class as a one-hot $\alpha$: 0.896. This is the achievable ceiling given 2-token visibility.
+\item \textbf{L-alone} ,  L receives $\alpha = 0$: 0.642. This is what 2-token visibility alone can achieve. Substantially above chance $(1/V = 0.031)$ because $x_{L,0} + x_{L,1}$ itself carries information.
 \end{itemize}
 
 \section{CC-17b: LORN vs L-Alone vs Oracle}
@@ -870,15 +870,15 @@ R purity at step 4000 & 0.900 \\
 \end{tabular}
 \end{table}
 
-\paragraph{Training dynamics.} R's cluster purity climbs from 0.43 (random VQ init) to 0.90 over 4000 steps. L-alone plateaus at 0.642 by step 1000 --- that is the 2-token-visibility ceiling. LORN continues improving as R's clusters sharpen, reaching 0.819. The full LORN model gets 77\% of the way from L-alone to the oracle, using an unsupervised cluster discovery as its only class signal.
+\paragraph{Training dynamics.} R's cluster purity climbs from 0.43 (random VQ init) to 0.90 over 4000 steps. L-alone plateaus at 0.642 by step 1000 ,  that is the 2-token-visibility ceiling. LORN continues improving as R's clusters sharpen, reaching 0.819. The full LORN model gets 77\% of the way from L-alone to the oracle, using an unsupervised cluster discovery as its only class signal.
 
 \paragraph{Interpretation.} This is the integration proof that Round 7 was missing. The task is designed so that class-information is \emph{strictly necessary} for L; R discovers the class through VQ; the AdaLN bridge carries R's discovery to L; L uses it to close most of the oracle gap. Every architectural component has a measurable contribution.\footnote{\emph{Scope.} The +17.7-point lift shows that the bridge carries signal and that R's cluster assignment is usable by L under joint training. The R here uses mean-pool readout and the classes are bag-of-words-accessible. Per the Phase 1 checklist this does not count as evidence of structural capability; it is mechanism validation that the bridge works and that R does not collapse under joint training.}
 
-The 0.077 residual gap to the oracle is the cost of using a 4-cluster VQ instead of the true 4-class labels --- 10\% of R's assignments remain wrong (purity 0.90), and those propagate to L's prediction error. Longer training or a more expressive R would likely close some of this.
+The 0.077 residual gap to the oracle is the cost of using a 4-cluster VQ instead of the true 4-class labels ,  10\% of R's assignments remain wrong (purity 0.90), and those propagate to L's prediction error. Longer training or a more expressive R would likely close some of this.
 
 \section{CC-18: Bridge Ablation}
 
-\textbf{Setup.} Same R, same task, same training regime as CC-17b --- only the bridge type varies: zero (no $\alpha$ signal), concat (add linear-projected $\alpha$ to hidden state), AdaLN (scale-shift modulation), hypernet (low-rank weight delta generated from $\alpha$).
+\textbf{Setup.} Same R, same task, same training regime as CC-17b ,  only the bridge type varies: zero (no $\alpha$ signal), concat (add linear-projected $\alpha$ to hidden state), AdaLN (scale-shift modulation), hypernet (low-rank weight delta generated from $\alpha$).
 
 \paragraph{Result.} Hypernet dominates. See Table~\ref{tab:cc18}.
 
@@ -904,18 +904,18 @@ Oracle  & 0.896 & -- & -- \\
 
 \begin{enumerate}[nosep,leftmargin=*]
 \item \textbf{Hypernet closes the oracle gap to 0.009.} The best bridge gives LORN within one percentage point of the oracle ceiling. The full architecture, trained end-to-end with \emph{no class labels}, is essentially optimal on this task.
-\item \textbf{R's purity under joint training depends on the bridge.} Zero bridge (no pressure on R) gives clean VQ clusters (0.982 purity). Concat bridge \emph{collapses} R's clustering (0.518 --- clusters contaminated) because concat's weak information channel forces R to distort its $\alpha$ to compensate. AdaLN is intermediate (0.695). Hypernet recovers \emph{near-zero}-pressure clustering (0.950) because it has enough bandwidth to accept R's cluster structure as-is without forcing distortion.
+\item \textbf{R's purity under joint training depends on the bridge.} Zero bridge (no pressure on R) gives clean VQ clusters (0.982 purity). Concat bridge \emph{collapses} R's clustering (0.518 ,  clusters contaminated) because concat's weak information channel forces R to distort its $\alpha$ to compensate. AdaLN is intermediate (0.695). Hypernet recovers \emph{near-zero}-pressure clustering (0.950) because it has enough bandwidth to accept R's cluster structure as-is without forcing distortion.
 \item \textbf{Bridge type matters more than parameter count.} Hypernet has $\sim$32\% more parameters than AdaLN, but its advantage (+0.12) far exceeds what extra parameters elsewhere could buy.
 \end{enumerate}
 
 Architectural takeaway: hypernet is the right bridge for LORN \emph{at this toy scale}. It has enough capacity to transmit R's full cluster signal; it is low-pressure enough that R's discovery dynamics survive joint training; and it produces an end-to-end accuracy that essentially matches the oracle.\footnote{\emph{Scope.} This ablation compares bridge \emph{mechanisms} on the information-starved toy, with a mean-pool R and bag-of-words-accessible classes. It shows the hypernet channel carries more of R's signal than AdaLN or concat on this task. It does not establish that hypernet is the Phase-1 bridge of choice; that comparison has to be redone with a Phase-1-compliant R and a non-bag-of-words task.}
 
 
-\section{Round 8 Summary --- The Programme's Constraint Set is Settled}
+\section{Round 8 Summary ,  The Programme's Constraint Set is Settled}
 
 \begin{itemize}[nosep]
 \item \textbf{CC-17b (pass, +17.7 points):} LORN with AdaLN lifts 0.177 over L-alone, closing 77\% of the oracle gap. R's VQ clusters reach 0.90 purity under joint training.
-\item \textbf{CC-18 (hypernet wins):} hypernet bridge reaches 0.887, within 0.009 of the oracle. R purity under hypernet is 0.950 --- clustering survives joint training because the channel has enough bandwidth.
+\item \textbf{CC-18 (hypernet wins):} hypernet bridge reaches 0.887, within 0.009 of the oracle. R purity under hypernet is 0.950 ,  clustering survives joint training because the channel has enough bandwidth.
 \end{itemize}
 
 \paragraph{What this closes.}
@@ -930,7 +930,7 @@ Every architectural constraint in the LORN design specification now has end-to-e
 \item Attention discovers group structure automatically (CC-11).
 \item Multi-horizon training stabilises variable-depth attractors (CC-8b).
 \item Unsupervised R = attractor-basin codebook + anti-collapse (CC-13b).
-\item Composite R objectives interfere --- use separate heads or sequential (CC-15).
+\item Composite R objectives interfere ,  use separate heads or sequential (CC-15).
 \item VQ codebook size must match or under-estimate true $K$ (CC-16).
 \item \textbf{Integration works when L is information-starved and the bridge has enough bandwidth} (CC-17b/18).
 \end{enumerate}
@@ -957,11 +957,11 @@ The architecture is three pieces: R (observer), control (actor), L (predictor). 
 The control piece can serve two fundamentally different purposes, and the circuit battery did \emph{not} settle which matters:
 
 \begin{itemize}[nosep,leftmargin=*]
-\item \textbf{Mode A --- representation shaping (training-time co-evolution).} R's $\alpha$ is wired into L during training, so L's learned representation is better than it would be without R. CC-17b's +17.7-point lift lived in this mode. If L's structure is already good (as Exp~A in \cite{gauge-v2} suggests --- 74\% invariance floor emerges naturally), this may be unnecessary overhead.
-\item \textbf{Mode B --- behaviour steering (inference-time control).} L is trained independently. At inference, R's $\alpha$ influences L's generation: by selection/filtering over candidate outputs (Exp~F), by on-the-fly weight modulation, by steering vectors, or by prompt engineering. If L's structure is already good, this is the right path: R is a quality filter, not a teacher.
+\item \textbf{Mode A ,  representation shaping (training-time co-evolution).} R's $\alpha$ is wired into L during training, so L's learned representation is better than it would be without R. CC-17b's +17.7-point lift lived in this mode. If L's structure is already good (as Exp~A in \cite{gauge-v2} suggests ,  74\% invariance floor emerges naturally), this may be unnecessary overhead.
+\item \textbf{Mode B ,  behaviour steering (inference-time control).} L is trained independently. At inference, R's $\alpha$ influences L's generation: by selection/filtering over candidate outputs (Exp~F), by on-the-fly weight modulation, by steering vectors, or by prompt engineering. If L's structure is already good, this is the right path: R is a quality filter, not a teacher.
 \end{itemize}
 
-These are different control problems with potentially different winning architectures. The V4 strategy does not change --- build and train at scale, measure --- but the \emph{interpretation} of any result will hinge on which mode the control piece is operating in.
+These are different control problems with potentially different winning architectures. The V4 strategy does not change ,  build and train at scale, measure ,  but the \emph{interpretation} of any result will hinge on which mode the control piece is operating in.
 
 \paragraph{The real open problem: composing and generating from R to L.}
 Beyond Modes A and B, there is a distinct unresolved question that neither the circuit battery nor the hemisphere sweeps have settled:
@@ -969,7 +969,7 @@ Beyond Modes A and B, there is a distinct unresolved question that neither the c
 \begin{itemize}[nosep,leftmargin=*]
 \item Given a chosen $\alpha^*$ in R-space, produce L-space text whose R-fingerprint matches $\alpha^*$. This is \emph{generation from structural intent}.
 \item Given two $\alpha_1, \alpha_2$, compose them ($\alpha_1 + \alpha_2$, interpolation, or group operation) and generate text with the composed structure. This is \emph{R-space arithmetic manifesting in L-space}.
-\item Navigate R-space continuously --- move from explanatory to argumentative structure at fixed topic, from formal to casual register at fixed semantics, and so on --- and have L's generation follow.
+\item Navigate R-space continuously ,  move from explanatory to argumentative structure at fixed topic, from formal to casual register at fixed semantics, and so on ,  and have L's generation follow.
 \end{itemize}
 
 The circuit battery shows that R exists (CC-13b: purity 0.97), that attention discovers group structure on $\alpha$-manifolds (CC-11: 99.3\% equivariance), and that a control piece can lift L performance when information-starved (CC-17b/18). But $\alpha \to$ \emph{generated text} is a bigger problem than $\alpha \to$ classification accuracy, and only a V4 on real text will tell us how hard it actually is. Exp~F (best-of-$N$ generation with $\alpha$-based selection) is the cheapest candidate mechanism; hypernet modulation during generation is another; steering-vector injection is a third.
@@ -982,8 +982,8 @@ The circuit-exploration phase of the LORN programme is now complete. Continuatio
 
 \begin{itemize}[nosep,leftmargin=*]
 \item \textbf{V4 prototype} at 5--10M params on real text (TinyStories, WikiText-2). First measurement of whether the recipe scales.
-\item \textbf{Theory synthesis} --- a single paper tying the skew--dissipative theorems, the monoid-of-layer-actions framing, and the ten empirical constraints together.
-\item \textbf{Targeted follow-up circuits} --- slow-feature R on a harder multiset task; hierarchical VQ (multi-scale codebooks); structured $\alpha$-manifolds (non-discrete R outputs); attention-based composition at larger $p$ to test the $\log_2 p$ Fourier scaling.
+\item \textbf{Theory synthesis} ,  a single paper tying the skew--dissipative theorems, the monoid-of-layer-actions framing, and the ten empirical constraints together.
+\item \textbf{Targeted follow-up circuits} ,  slow-feature R on a harder multiset task; hierarchical VQ (multi-scale codebooks); structured $\alpha$-manifolds (non-discrete R outputs); attention-based composition at larger $p$ to test the $\log_2 p$ Fourier scaling.
 \end{itemize}
 
 The circuit battery has done its work.
@@ -999,7 +999,7 @@ After eight rounds of circuits, the design specification is complete enough to i
 \texttt{orn/lorn\_v4.py} is a single Python file (~280 lines) wiring the three components validated by the battery:
 
 \begin{itemize}[nosep,leftmargin=*]
-\item \textbf{VQREncoder} (the R-hemisphere). Attention encoder (no positional embedding --- invariance by mean-pool) $\to$ learned codebook of size $K$ $\to$ VQ-VAE straight-through estimator with commitment, codebook, and entropy-anti-collapse losses. Validated by CC-13b (purity 0.381 $\to$ 0.974) and CC-17b/CC-18 (survives joint training at purity 0.95 with hypernet bridge).
+\item \textbf{VQREncoder} (the R-hemisphere). Attention encoder (no positional embedding ,  invariance by mean-pool) $\to$ learned codebook of size $K$ $\to$ VQ-VAE straight-through estimator with commitment, codebook, and entropy-anti-collapse losses. Validated by CC-13b (purity 0.381 $\to$ 0.974) and CC-17b/CC-18 (survives joint training at purity 0.95 with hypernet bridge).
 \item \textbf{HypernetBridge.} For each sample, generate a low-rank weight delta $\Delta W = U(\alpha) V(\alpha)^\top$ for the top-$n$ L-layers. Validated by CC-18: beats AdaLN by 12 points on the information-starved task and closes the oracle gap to 0.009.
 \item \textbf{ORNlite} (the L-hemisphere reference implementation). Shared $\M = AB^\top$ coupling, shared wide FFN, per-layer gated contractive correction. Laptop-scale port of \texttt{orn/full\_orn.py}'s FullORN. For production scale, the HypernetBridge hooks into FullORN's blocks by modifying their forward to accept the per-sample $\Delta W$.
 \end{itemize}
@@ -1021,7 +1021,7 @@ Smoke test at the bottom of \texttt{lorn\_v4.py} instantiates a 540K-parameter m
 \begin{itemize}[nosep,leftmargin=*]
 \item \textbf{No production-scale trainer.} The \texttt{ORNlite} in \texttt{lorn\_v4.py} is a laptop reference. The production L lives in \texttt{orn/full\_orn.py} with RoPE, GQA, SDPA, AMP, weight-tying, and FP16/BF16 plumbing. We have \emph{not} yet wired \texttt{HypernetBridge} into \texttt{FullORN}'s blocks. Engineering task, not research risk: it needs a 20-line change in \texttt{ORNBlock.forward} to accept a per-sample delta.
 \item \textbf{No real-text dataset integration.} The circuit tests use synthetic algorithmic tasks. LORN v4 has not been run on TinyStories, WikiText, or FineWeb. The data pipeline (\texttt{training/train\_v2.py}) is production-ready but does not know about R's $\alpha$ or the bridge. Another engineering task.
-\item \textbf{No distributed / multi-GPU training.} The current tests run on MPS or a single GPU. Scale-up to RTX 4090 (the 605M target) requires only standard PyTorch DDP wrapping --- no research risk.
+\item \textbf{No distributed / multi-GPU training.} The current tests run on MPS or a single GPU. Scale-up to RTX 4090 (the 605M target) requires only standard PyTorch DDP wrapping ,  no research risk.
 \item \textbf{No inference API.} We have not defined the inference surface for LORN: does R re-encode at every generation step, or does $\alpha$ stay fixed for the generation? Does R see the prefix, or only the prompt? These are inference-path design choices we have not made.
 \item \textbf{No downstream benchmarks.} ORN v3 has been benchmarked on 8-task lm-eval. LORN has no benchmark numbers at any scale because it has not been trained on real data yet.
 \end{itemize}
@@ -1050,7 +1050,7 @@ Two honest hypotheses about the first scale-up run:
 \item \textbf{Pessimistic.} The information-starvation that made CC-17b work (L sees only 2 of 12 tokens) does not map cleanly to a language-model trainer, where L sees the full prefix by construction. Without an information-essential bridge, R may get zero gradient (CC-17 failure mode). A proper scale-up may need a \emph{new} task design: for example, R's $\alpha$ modulates only a subset of L's layers, or only the L-output classifier head, or only the final layer's RMSNorm.
 \end{itemize}
 
-This ambiguity is itself a battery finding: \emph{the bridge is only worth its parameter budget if L needs R's information.} A language model with full autoregressive input may already have enough signal in the prefix. CC-17b's design --- L sees 2 tokens, R sees 12 --- is the small-scale analogue of something like: L is an autoregressive head, R is a long-context summariser, and L is forced to operate on a context-truncated view. A V4 that mirrors this architecture ---  long-context R + truncated-context L --- would preserve the information-essentialness.
+This ambiguity is itself a battery finding: \emph{the bridge is only worth its parameter budget if L needs R's information.} A language model with full autoregressive input may already have enough signal in the prefix. CC-17b's design ,  L sees 2 tokens, R sees 12 ,  is the small-scale analogue of something like: L is an autoregressive head, R is a long-context summariser, and L is forced to operate on a context-truncated view. A V4 that mirrors this architecture ,   long-context R + truncated-context L ,  would preserve the information-essentialness.
 
 
 \section{Summary}
@@ -1083,7 +1083,7 @@ This paper was written before the \emph{lorn\_gauge} v3 Phase 1 checklist existe
 \end{itemize}
 
 \paragraph{How to read the rest of the paper.}
-Every verdict above --- pass, kill, partial --- is a statement about the mechanism at laptop scale on toy data. The ``preferred stack'' recommendation and the ``LORN v4'' recipe are pipeline fixtures useful for running further mechanism tests, not architectural commitments. The Phase 1 question --- \emph{does R capture structure a bag-of-words baseline cannot?} --- is not addressed anywhere in this document. That question is the subject of \emph{lorn\_gauge} v3 and its successor experiments.
+Every verdict above ,  pass, kill, partial ,  is a statement about the mechanism at laptop scale on toy data. The ``preferred stack'' recommendation and the ``LORN v4'' recipe are pipeline fixtures useful for running further mechanism tests, not architectural commitments. The Phase 1 question ,  \emph{does R capture structure a bag-of-words baseline cannot?} ,  is not addressed anywhere in this document. That question is the subject of \emph{lorn\_gauge} v3 and its successor experiments.
 
 
 % ======================================================================

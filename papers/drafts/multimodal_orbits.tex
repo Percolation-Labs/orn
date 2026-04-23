@@ -40,7 +40,7 @@
     {\small Percolation Labs}\\
     {\small \url{https://github.com/Percolation-Labs/orn}}%
 }
-\date{March 2026 \quad{\small\textnormal{--- Draft with M2, MAESTRO, frozen-M results}}}
+\date{March 2026 \quad{\small\textnormal{,  Draft with M2, MAESTRO, frozen-M results}}}
 
 \begin{document}
 \maketitle
@@ -49,14 +49,14 @@
 \begin{abstract}
 Multimodal transformers process images, audio, and text by tokenising each modality into patches, concatenating them, and running the same attention mechanism over the combined sequence.
 Every layer independently learns cross-modal coupling: which image patches attend to which words, which audio frames attend to which tokens.
-This is the same per-layer redundancy that motivates the Orbital Response Network (ORN) for text---but multiplied across all modality pairs.
+This is the same per-layer redundancy that motivates the Orbital Response Network (ORN) for text, but multiplied across all modality pairs.
 
 We argue that a shared metric tensor $\M$ is \emph{more} natural in the multimodal setting than in text alone.
-The coupling rule ``visual region depicting an object attends to the text naming that object'' is structurally invariant across layers---only the resolution changes.
+The coupling rule ``visual region depicting an object attends to the text naming that object'' is structurally invariant across layers, only the resolution changes.
 A single $\M$ applied to a unified residual field where all modalities coexist handles within-modal and cross-modal coupling uniformly, without separate cross-attention mechanisms.
 
 Preliminary results on CIFAR-10 next-patch prediction ($d{=}192$, $L{=}8$, 64-patch sequences): SharedM beats the transformer by $0.7\%$ MSE with $8\times$ fewer coupling parameters and $7.5\times$ better coupling efficiency.
-$\M$'s effective rank on images is 4 (vs 51 for text at 50M), confirming that different domains saturate at different $r^*$---the rank diagnostic works.
+$\M$'s effective rank on images is 4 (vs 51 for text at 50M), confirming that different domains saturate at different $r^*$, the rank diagnostic works.
 A cross-modal experiment (one $\M$ for images + audio simultaneously) is scripted and ready to run.
 The key diagnostic: the rank $r^*$ of $\M$ when visual tokens are added.
 If cross-modal coupling reuses the same geometric dimensions as within-text coupling, $r^*$ should increase modestly.
@@ -76,12 +76,12 @@ In a multimodal transformer processing text + image, each layer must additionall
     \item Text $\to$ image coupling (grounding: ``dog'' $\to$ dog region)
     \item Image $\to$ text coupling (captioning: dog region $\to$ ``dog'')
 \end{itemize}
-These four coupling types are learned jointly in the same $W_Q$, $W_K$ at each layer---and independently re-learned at the next layer.
+These four coupling types are learned jointly in the same $W_Q$, $W_K$ at each layer, and independently re-learned at the next layer.
 The spectral invariance observed in text-only GPT-2 (correlation $0.95$ across layers, Experiment~0b of the companion paper) should hold equally or more strongly for cross-modal coupling, because the structural relationship between modalities does not change with depth.
 
 \subsection{The Field Accommodates Multiple Modalities}
 
-In ORN, all tokens---text, image patches, audio frames---enter the same residual field and couple through the same $\M$.
+In ORN, all tokens, text, image patches, audio frames, enter the same residual field and couple through the same $\M$.
 There is no separate cross-attention mechanism for text$\to$image or image$\to$text.
 A text token and an image patch couple based on where they sit in $\M$'s geometry, not based on what modality produced them.
 
@@ -99,7 +99,7 @@ A single image (ViT-style) is ${\sim}576$ patches.
 A 10-second video at 1fps adds ${\sim}5{,}760$ visual tokens.
 The standard KV cache for this is $2LNd$, scaling linearly with both depth and sequence length.
 
-The ORN field stores $Nd$---the residual states of all tokens, once.
+The ORN field stores $Nd$, the residual states of all tokens, once.
 At $L = 13$ (the SharedM configuration), this is a $26\times$ reduction.
 For a mixed sequence of 1024 text tokens + 576 image patches = 1600 tokens at $d = 512$, the KV cache is $2 \times 13 \times 1600 \times 512 \approx 21$M entries.
 The ORN field is $1600 \times 512 \approx 0.8$M entries.
@@ -107,7 +107,7 @@ The ORN field is $1600 \times 512 \approx 0.8$M entries.
 \subsection{Orbital Embeddings Are Natural for Non-Text Modalities}
 
 For text, the embedding table ($V \times d$, $V = 50{,}257$) is the dominant parameter cost at small scale.
-For images, there is no fixed vocabulary---each patch is a continuous vector.
+For images, there is no fixed vocabulary, each patch is a continuous vector.
 Position-aware patch projections are already a form of ``seed $\to$ representation'' mapping.
 
 Orbital embeddings (compact seed + shared unfolding dynamics $\Phi$) are a natural fit for continuous-input modalities:
@@ -156,7 +156,7 @@ All simultaneous    & 4 & 4.2M & Joint optimisation \\
 \paragraph{Modality-specific geometry.}
 Each modality alone produces a characteristic rank: images = 4, audio = 6, text = 2.
 Audio requires the richest coupling geometry, consistent with the higher dimensionality of temporal structure (16 frames of 200-dim features) compared to spatial patches.
-Text's rank-2 coupling at this scale is minimal---the autoregressive next-token task requires only ``attend to recent context'' and ``attend to correlated tokens,'' both low-rank patterns.
+Text's rank-2 coupling at this scale is minimal, the autoregressive next-token task requires only ``attend to recent context'' and ``attend to correlated tokens,'' both low-rank patterns.
 
 \paragraph{Path dependence.}
 The order of modality introduction changes $\M$'s final geometry.
@@ -166,7 +166,7 @@ $\M$'s geometry is path-dependent: the first modality shapes the coupling subspa
 This is analogous to biological critical periods, where early sensory experience shapes neural organisation.
 
 \paragraph{Convergence under joint training.}
-All-simultaneous training produces rank 4 with condition number 4.2M---close to the audio-only condition number, suggesting that audio's temporal coupling is the hardest constraint the joint geometry must satisfy.
+All-simultaneous training produces rank 4 with condition number 4.2M, close to the audio-only condition number, suggesting that audio's temporal coupling is the hardest constraint the joint geometry must satisfy.
 The key finding: adding modalities barely increases rank (4$\to$4 for images+audio, 4 for all three), consistent with our conjecture that cross-modal coupling reuses within-modal coupling dimensions.
 
 If this conjecture holds, then multimodal SharedM requires only a modest increase in $r$ over text-only, while the standard approach requires the full $2Ld^2$ at every layer to handle the combinatorial explosion of modality-pair couplings.
@@ -204,7 +204,7 @@ Results from this regime cannot distinguish architectural contributions from noi
 All results in this paper that depend on $\M$'s learned structure use $d \geq 96$ and $\geq 2000$ steps.
 
 \paragraph{Why SharedM loses at small scale and wins at large scale.}
-The pattern in Table~\ref{tab:when-m-matters} is not a defect---it is the expected signature of a structural constraint competing with memorisation.
+The pattern in Table~\ref{tab:when-m-matters} is not a defect, it is the expected signature of a structural constraint competing with memorisation.
 At tiny scale ($d < 96$, $< 1000$ steps), a standard transformer can memorise modality-specific coupling rules cheaply: per-layer $W_Q$, $W_K$ have enough capacity for a small training set, so the structural constraint of a single shared coupling geometry costs performance without compensating benefit.
 SharedM begins to pay off when three conditions are met:
 (1)~training is long enough for $\M$ to crystallise genuine geometric structure (rank~18 at 5000 steps vs.\ rank~2 at 500 steps);
@@ -217,7 +217,7 @@ We do not claim SharedM dominates at all scales; the honest summary is that the 
 
 \subsection{Confirmed Sub-Linear Rank Growth}\label{sec:confirmed-rank}
 
-At $d{=}96$ / 2000 steps---the regime where $\M$ demonstrably matters---we repeat the rank measurement from Table~\ref{tab:spectral-growth} with the critical control in place:
+At $d{=}96$ / 2000 steps, the regime where $\M$ demonstrably matters, we repeat the rank measurement from Table~\ref{tab:spectral-growth} with the critical control in place:
 
 \begin{table}[h]
 \centering
@@ -226,9 +226,9 @@ At $d{=}96$ / 2000 steps---the regime where $\M$ demonstrably matters---we repea
 \toprule
 \textbf{Config} & \textbf{Rank} & \textbf{Sum of singles} & \textbf{Compression} \\
 \midrule
-img & 4 & --- & --- \\
-aud & 4 & --- & --- \\
-txt & 2 & --- & --- \\
+img & 4 & ,  & ,  \\
+aud & 4 & ,  & ,  \\
+txt & 2 & ,  & ,  \\
 \midrule
 img+aud & 4 & 8 & 2$\times$ \\
 img+txt & 3 & 6 & 2$\times$ \\
@@ -275,7 +275,7 @@ Audio adds modest additional structure but still reuses at least part of the sha
 \subsection{Eigenvector Ablation: Shared, Not Partitioned}\label{sec:eigenvector-ablation}
 
 To test whether jointly trained $\M$ partitions its eigenvectors by modality (e.g., top-2 for images, next-2 for audio), we zero the top-$k$ singular vectors and measure per-modality degradation.
-All modalities degraded similarly---no modality was selectively destroyed by removing specific eigenvectors.
+All modalities degraded similarly, no modality was selectively destroyed by removing specific eigenvectors.
 This confirms that $\M$'s coupling dimensions are \emph{shared} across modalities rather than partitioned into modality-specific subspaces.
 
 Combined with the sub-linear rank and transfer results, the picture is consistent: $\M$ discovers a compact, shared coupling geometry that all modalities use, with modest specialisation (primarily for audio) accommodated by a small number of additional dimensions.
@@ -303,7 +303,7 @@ Spectrum correlation $> 0.9$ across layers for all coupling types (within-modal 
 \subsection{Exp M2: Next-Patch Prediction (Completed)}
 
 \paragraph{Goal.}
-Test whether $\M$ can learn spatial coupling for autoregressive image completion---the vision analogue of next-token prediction, and a genuine world-modelling task (``given what I've seen, what comes next?'').
+Test whether $\M$ can learn spatial coupling for autoregressive image completion, the vision analogue of next-token prediction, and a genuine world-modelling task (``given what I've seen, what comes next?'').
 
 \paragraph{Task.}
 CIFAR-10 images split into 64 patches (4$\times$4 pixels, 8$\times$8 grid).
@@ -328,12 +328,12 @@ All at $d{=}192$, $L{=}8$, $h{=}4$, trained for 5{,}000 steps on 50K images:
 \toprule
 \textbf{Model} & \textbf{Params} & \textbf{Coupling} & \textbf{MSE} & \textbf{vs TF} & \textbf{Top} & \textbf{Mid} \\
 \midrule
-Transformer & 3,584K & 590K & 0.0451 & --- & 0.041 & 0.050 \\
+Transformer & 3,584K & 590K & 0.0451 & ,  & 0.041 & 0.050 \\
 \textbf{SharedM} & \textbf{3,068K} & \textbf{74K} & \textbf{0.0448} & $\mathbf{-0.7\%}$ & 0.046 & 0.051 \\
 ORN & 3,222K & 74K & 0.0453 & $+0.6\%$ & 0.043 & 0.050 \\
 \bottomrule
 \end{tabular}
-\caption{M2 results. SharedM beats the transformer on next-patch prediction ($-0.7\%$) with $8\times$ fewer coupling parameters. Coupling efficiency: SharedM/ORN achieve 0.30 quality per 1K coupling params vs 0.04 for the transformer---a $7.5\times$ efficiency advantage.}
+\caption{M2 results. SharedM beats the transformer on next-patch prediction ($-0.7\%$) with $8\times$ fewer coupling parameters. Coupling efficiency: SharedM/ORN achieve 0.30 quality per 1K coupling params vs 0.04 for the transformer, a $7.5\times$ efficiency advantage.}
 \end{table}
 
 \paragraph{Key findings.}
@@ -343,22 +343,22 @@ ORN & 3,222K & 74K & 0.0453 & $+0.6\%$ & 0.043 & 0.050 \\
 
     \item \textbf{Coupling efficiency: $7.5\times$ advantage.} SharedM achieves 0.30 quality units per 1K coupling parameters vs 0.04 for the transformer. This is consistent with the text-only MoE result ($6\times$ efficiency advantage at matched quality).
 
-    \item \textbf{ORN perturbative corrections did not help.} The ORN ($+0.6\%$ vs transformer) is marginally worse than bare SharedM. On image completion, there is less context-dependent structure to correct---every patch's spatial relationship to its neighbours is determined by its position, not by accumulated narrative context. The gate opened to 0.23 (vs 0.36 on language), confirming that the model found less use for context-dependent corrections on images.
+    \item \textbf{ORN perturbative corrections did not help.} The ORN ($+0.6\%$ vs transformer) is marginally worse than bare SharedM. On image completion, there is less context-dependent structure to correct, every patch's spatial relationship to its neighbours is determined by its position, not by accumulated narrative context. The gate opened to 0.23 (vs 0.36 on language), confirming that the model found less use for context-dependent corrections on images.
 
     \item \textbf{Position-dependent MSE confirms spatial coupling.} Top-row patches (least context: only left neighbours) have the highest MSE. Middle patches (both left and above context) are slightly harder. Bottom patches (most context) are easiest. The model is learning spatial dependencies through the causal ordering.
 
-    \item \textbf{$\M$'s spectral structure.} Effective rank dropped from 72 (step~1) to 4 (step~1{,}000) and stabilised. The spatial coupling geometry for CIFAR-10 is very low-rank---only 4 dimensions of coupling structure are needed for image patches. Compare with text (rank~51 at 50M scale): images have simpler relational structure than language.
+    \item \textbf{$\M$'s spectral structure.} Effective rank dropped from 72 (step~1) to 4 (step~1{,}000) and stabilised. The spatial coupling geometry for CIFAR-10 is very low-rank, only 4 dimensions of coupling structure are needed for image patches. Compare with text (rank~51 at 50M scale): images have simpler relational structure than language.
 \end{enumerate}
 
 \paragraph{Reconstruction quality.}
 Figure~\ref{fig:m2-recon} shows original images alongside the SharedM model's autoregressive predictions.
-The model captures overall composition, colour palette, and major object structure from the causal patch sequence---predicting each patch from only the patches above and to its left.
+The model captures overall composition, colour palette, and major object structure from the causal patch sequence, predicting each patch from only the patches above and to its left.
 Errors concentrate on fine details and object boundaries, consistent with the MSE loss producing slightly blurred predictions (a known limitation of MSE vs cross-entropy on discrete codes~\cite{chen2020igpt}).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../experiments/multimodal/results/m2_next_patch/progressive_completion.png}
-\caption{Progressive image completion by SharedM. The model predicts each 4$\times$4 patch from preceding patches only (raster scan, causal mask). Grey: not yet predicted. The object (a dog) emerges from partial context as more patches are predicted---each new patch is conditioned on all previous patches through $\M$'s coupling geometry.}
+\caption{Progressive image completion by SharedM. The model predicts each 4$\times$4 patch from preceding patches only (raster scan, causal mask). Grey: not yet predicted. The object (a dog) emerges from partial context as more patches are predicted, each new patch is conditioned on all previous patches through $\M$'s coupling geometry.}
 \label{fig:m2-progressive}
 \end{figure}
 
@@ -377,11 +377,11 @@ The low effective rank on images (4 vs 51 for text) supports the rank diagnostic
 \subsection{Exp M-MAESTRO: Musical Narrative Structure}
 
 \paragraph{Goal.}
-Test whether SharedM captures musical coupling---temporal relationships between musical events in real piano performances---and whether adding text to a music model follows the sub-linear rank growth pattern.
+Test whether SharedM captures musical coupling, temporal relationships between musical events in real piano performances, and whether adding text to a music model follows the sub-linear rank growth pattern.
 
 \paragraph{Task.}
 MAESTRO v3 MIDI piano performances: 89K training sequences, 64 timesteps $\times$ 6 continuous features (num\_active\_notes, mean\_pitch, pitch\_spread, mean\_velocity, bass\_note, treble\_note) at 10\,Hz.
-Each token is a meaningful musical event---not a sub-phoneme spectral slice.
+Each token is a meaningful musical event, not a sub-phoneme spectral slice.
 This event-level tokenisation gives $\M$ clean sequential structure: ``next'' means ``next musical event,'' and coupling reflects phrase structure, cadential patterns, and dynamic arcs.
 
 \paragraph{Setup.}
@@ -396,13 +396,13 @@ Four configurations: transformer and SharedM, each music-only and music+text (Sh
 \toprule
 \textbf{Config} & \textbf{Params} & \textbf{Music MSE} & \textbf{vs TF} & \textbf{Text Loss} & \textbf{M Rank} \\
 \midrule
-TF music-only       & 1.20M & 0.01628 & ---     & ---   & --- \\
-SharedM music-only  & 1.03M & 0.01568 & $-3.7\%$ & ---   & 2 \\
-TF music+text       & 1.27M & 0.01644 & $+1.0\%$ & 0.500 & --- \\
+TF music-only       & 1.20M & 0.01628 & ,      & ,    & ,  \\
+SharedM music-only  & 1.03M & 0.01568 & $-3.7\%$ & ,    & 2 \\
+TF music+text       & 1.27M & 0.01644 & $+1.0\%$ & 0.500 & ,  \\
 SharedM music+text  & 1.11M & 0.01675 & $+2.9\%$ & 0.497 & 5 \\
 \bottomrule
 \end{tabular}
-\caption{MAESTRO piano prediction results ($d{=}128$, 4000 steps).  SharedM beats the transformer on music-only by $3.7\%$ with $14\%$ fewer parameters.  Music coupling requires only rank 2---simpler than images (4) or text at larger scale.  Adding text grows rank from 2 to 5: sub-linear, with 3 new dimensions accommodating text coupling.}
+\caption{MAESTRO piano prediction results ($d{=}128$, 4000 steps).  SharedM beats the transformer on music-only by $3.7\%$ with $14\%$ fewer parameters.  Music coupling requires only rank 2, simpler than images (4) or text at larger scale.  Adding text grows rank from 2 to 5: sub-linear, with 3 new dimensions accommodating text coupling.}
 \label{tab:maestro}
 \end{table}
 
@@ -410,7 +410,7 @@ SharedM music+text  & 1.11M & 0.01675 & $+2.9\%$ & 0.497 & 5 \\
 \begin{enumerate}[nosep]
     \item \textbf{SharedM beats transformer on music by $3.7\%$} with $14\%$ fewer parameters.  Musical coupling (phrase boundaries, dynamic arcs, cadential patterns) is well-captured by a single shared $\M$, consistent with the image and text results.
 
-    \item \textbf{Music coupling needs only rank 2.}  This is the lowest rank of any modality tested---simpler than images (4) or audio spectrograms (6).  Event-level tokenisation at 10\,Hz produces clean temporal structure where the dominant coupling pattern is ``attend to recent musical context,'' a rank-1 pattern, plus a secondary pattern for longer-range phrase structure.
+    \item \textbf{Music coupling needs only rank 2.}  This is the lowest rank of any modality tested, simpler than images (4) or audio spectrograms (6).  Event-level tokenisation at 10\,Hz produces clean temporal structure where the dominant coupling pattern is ``attend to recent musical context,'' a rank-1 pattern, plus a secondary pattern for longer-range phrase structure.
 
     \item \textbf{Adding text grows rank from 2 to 5.}  The increase is sub-linear: 3 new dimensions for text, not the full rank-2 + rank-$k$ sum.  This is consistent with the three-modality rank compression in Table~\ref{tab:confirmed-rank}.
 
@@ -418,7 +418,7 @@ SharedM music+text  & 1.11M & 0.01675 & $+2.9\%$ & 0.497 & 5 \\
 \end{enumerate}
 
 \paragraph{Interpretation.}
-MAESTRO extends the SharedM advantage to a fourth modality type (structured music events, vs images, spectrograms, and text).  The rank-2 coupling geometry confirms that event-level tokenisation---where each token carries musical meaning---gives $\M$ simpler structure to discover than raw spectral frames.  The sub-linear rank growth from music-only to music+text (2$\to$5) adds further evidence that $\M$ finds shared coupling dimensions across modalities.
+MAESTRO extends the SharedM advantage to a fourth modality type (structured music events, vs images, spectrograms, and text).  The rank-2 coupling geometry confirms that event-level tokenisation, where each token carries musical meaning, gives $\M$ simpler structure to discover than raw spectral frames.  The sub-linear rank growth from music-only to music+text (2$\to$5) adds further evidence that $\M$ finds shared coupling dimensions across modalities.
 
 \subsection{Exp M3: Rank Saturation Across Modalities}
 
@@ -437,7 +437,7 @@ The gap $r^*_{\text{multimodal}} - r^*_{\text{text}}$ is the measurement.
 \subsection{Exp M4: Audio Next-Frame Prediction}
 
 \paragraph{Goal.}
-Test whether $\M$ learns temporal coupling for audio---the audio analogue of next-patch prediction.
+Test whether $\M$ learns temporal coupling for audio, the audio analogue of next-patch prediction.
 
 \paragraph{Setup.}
 Speech Commands dataset (10K train, 2K test).
@@ -449,7 +449,7 @@ Same architecture as M2, shared $\M$ handles temporal instead of spatial couplin
 SharedM works for audio with the same architecture, no modality-specific changes.
 The coupling rule ``recent frames relate to current frame'' is structurally similar to ``adjacent patches relate to current patch.''
 
-\subsection{Exp M5: Cross-Modal --- One M for Images AND Audio (Ready)}
+\subsection{Exp M5: Cross-Modal ,  One M for Images AND Audio (Ready)}
 
 \paragraph{Goal.}
 The strongest test: train a single model on both image patches and audio frames simultaneously.
@@ -468,15 +468,15 @@ Evaluate separately on image MSE and audio MSE.
 \paragraph{Prediction.}
 SharedM handles both modalities with one coupling geometry.
 Combined MSE within $5\%$ of the transformer.
-If confirmed, $\M$ is modality-general---a universal relational geometry.
+If confirmed, $\M$ is modality-general, a universal relational geometry.
 
-\paragraph{Script.} \texttt{exp\_m\_crossmodal.py} --- written and dry-run tested.
+\paragraph{Script.} \texttt{exp\_m\_crossmodal.py} ,  written and dry-run tested.
 
 \subsection{Future Experiments}
 
 \begin{description}[nosep, leftmargin=1.5em]
     \item[M6: Audio next-frame (standalone)] Same as M2 but audio-only. Baseline for M5 comparison.
-    \item[M7: Transfer --- freeze M from images, fine-tune on audio.] The multimodal LP1. If frozen image-trained $\M$ transfers to audio, the geometry is modality-general.
+    \item[M7: Transfer ,  freeze M from images, fine-tune on audio.] The multimodal LP1. If frozen image-trained $\M$ transfers to audio, the geometry is modality-general.
     \item[M8: Semigroup analysis on cross-modal M.] Compare spectral structure of $\M$ trained on images+audio vs text-only vs image-only. Do multimodal models develop richer spectra?
     \item[M9: Image captioning.] Patches $\to$ text tokens autoregressively. Cross-modal coupling in one sequence.
     \item[M10: Video prediction.] Frame sequences at longer horizons. Moving MNIST or similar.
@@ -490,25 +490,25 @@ If confirmed, $\M$ is modality-general---a universal relational geometry.
 
 The progressive completion figure (Figure~\ref{fig:m2-progressive}) is already suggestive: from 9 patches (the top-left corner), the model builds a recognisable dog.
 By 33 patches (half the image), the composition is correct.
-The model is \emph{already generating}---it is generating from partial context rather than from noise.
+The model is \emph{already generating}, it is generating from partial context rather than from noise.
 
 The step from completion to generation is a change of masking, not architecture.
 The coupling geometry $\M$ does not care about raster order; it couples tokens based on their position in the field.
 Change the attention mask, change the generation task:
 
 \begin{description}[nosep, leftmargin=1.5em]
-    \item[Sparse completion:] Give 8 random patches out of 64, predict the other 56. Tests whether $\M$ can reconstruct from scattered spatial context---closer to how vision works (sparse fixations, not raster scan).
+    \item[Sparse completion:] Give 8 random patches out of 64, predict the other 56. Tests whether $\M$ can reconstruct from scattered spatial context, closer to how vision works (sparse fixations, not raster scan).
     \item[Outpainting:] Give the centre, predict the edges. Tests extrapolation from dense context.
     \item[Inpainting:] Give the edges, predict the centre. Tests interpolation from surrounding context.
-    \item[Unconditional generation:] Give only a learned seed token, predict all 64 patches. The orbital dynamics must generate from nothing---transporting a compact seed through $\M$'s geometry to produce a coherent image. This is the ORN as a generative model.
+    \item[Unconditional generation:] Give only a learned seed token, predict all 64 patches. The orbital dynamics must generate from nothing, transporting a compact seed through $\M$'s geometry to produce a coherent image. This is the ORN as a generative model.
 \end{description}
 
 All four tasks use the same architecture. Only the mask changes.
 
 \paragraph{Adaptive generation order.}
-Raster scan is arbitrary---the eye does not scan images left-to-right.
+Raster scan is arbitrary, the eye does not scan images left-to-right.
 Biological saccades jump to \emph{informative} regions first.
-An ORN with flexible masking could learn not just what to predict but \emph{where to look next}: predict the easy patches first (uniform sky---high confidence, small correction), then the hard patches (object boundaries---low confidence, large correction).
+An ORN with flexible masking could learn not just what to predict but \emph{where to look next}: predict the easy patches first (uniform sky, high confidence, small correction), then the hard patches (object boundaries, low confidence, large correction).
 The perturbative gate provides a natural confidence signal: patches where the gate is low can be predicted with the mean field alone; patches where the gate opens need more context before prediction.
 
 This connects the ORN to active inference~\cite{friston2010free}: the agent selects observations (patch predictions) to maximise information gain, guided by the coupling geometry $\M$ (the generative model) and the perturbative gate (the precision/confidence signal).
@@ -516,7 +516,7 @@ This connects the ORN to active inference~\cite{friston2010free}: the agent sele
 \paragraph{Comparison with diffusion.}
 A diffusion model generates CIFAR-10 images in ${\sim}50$--$1{,}000$ denoising steps, each a full network pass.
 An ORN generates in a single forward pass of $L$ layers ($L{=}8$ in M2).
-If the perturbative corrections can learn to recover the instance-specific detail that the mean field ($\M$) averages over, the ORN produces diffusion-quality results at transformer-speed inference---no iterative denoising loop.
+If the perturbative corrections can learn to recover the instance-specific detail that the mean field ($\M$) averages over, the ORN produces diffusion-quality results at transformer-speed inference, no iterative denoising loop.
 
 This is not yet demonstrated.
 The M2 reconstructions are blurry (MSE loss, 32$\times$32 resolution, corrections barely active).
@@ -529,20 +529,20 @@ Competitive FID ($< 50$) would confirm the mechanism works; competitive with dif
 
 \subsection{Why M Produces Blurry Images}
 
-The M2 reconstructions (Figure~\ref{fig:m2-progressive}) capture structure---object shape, colour, composition---but the predictions are soft rather than sharp.
+The M2 reconstructions (Figure~\ref{fig:m2-progressive}) capture structure, object shape, colour, composition, but the predictions are soft rather than sharp.
 This is not a bug of the architecture; it is a \emph{consequence of what $\M$ is}.
 
 $\M$ encodes the \textbf{mean-field coupling geometry}: the average relational structure across all images.
 ``Patches to the right of sky-coloured patches are probably also sky-coloured'' is a coupling rule that holds on average.
-When $\M$ generates a prediction, it produces the expectation over all images consistent with the context so far---a blurry composite of all possible continuations.
+When $\M$ generates a prediction, it produces the expectation over all images consistent with the context so far, a blurry composite of all possible continuations.
 This is the same phenomenon that makes MSE-trained autoencoders produce blurry reconstructions: optimising the average prediction hedges across modes rather than committing to one.
 
-In physics: $\M$ gives the \textbf{classical path}---the saddle-point solution of the action.
+In physics: $\M$ gives the \textbf{classical path}, the saddle-point solution of the action.
 The classical path captures the dominant trajectory but not the fluctuations.
 A classical field theory of electromagnetism tells you the average field, not the specific photon.
 
 A crucial distinction (see companion document \textit{Path Integrals and the ORN}): the ORN does not compute the path integral $T^L$ (which would average over all futures, converging to the stationary distribution).
-Instead, the deeper layers \emph{refine} the context-specific prediction---the residual connection preserves the starting state, and each layer sharpens rather than averages.
+Instead, the deeper layers \emph{refine} the context-specific prediction, the residual connection preserves the starting state, and each layer sharpens rather than averages.
 The semigroup provides the geometric scaffold (composable coupling kernels, CK ${\sim}0.99$); the response heads and corrections provide the context-specific selection.
 The path integral computes what \emph{can} happen; the ORN computes what \emph{will} happen given this context.
 
@@ -566,9 +566,9 @@ This is structurally analogous to two established approaches:
 In a diffusion model, a denoising network iteratively removes Gaussian noise to recover a clean image.
 The noise level controls how much detail the network must supply at each step: high noise $\to$ recover coarse structure; low noise $\to$ recover fine detail.
 In the ORN, the orbital prediction is the ``noisy'' (blurry) estimate, and the perturbative correction is the denoising step.
-The gate $g$ plays the role of the noise level---controlling how much correction (detail) to apply at each point.
+The gate $g$ plays the role of the noise level, controlling how much correction (detail) to apply at each point.
 The key difference: in diffusion, the noise schedule is external.
-In the ORN, the gate is \emph{learned}---it reads the residual stream and decides autonomously how much correction the current context warrants.
+In the ORN, the gate is \emph{learned}, it reads the residual stream and decides autonomously how much correction the current context warrants.
 
 \paragraph{Multi-scale prediction (VAR).}
 Tian et al.~\cite{tian2024var} showed that predicting images coarse-to-fine (next-scale rather than next-token) dramatically improves quality (FID 18.65 $\to$ 1.73).
@@ -578,11 +578,11 @@ The perturbative corrections amplify this: they are small at early layers (mean 
 \subsection{Why the Gate Barely Opened on Images}
 
 In M2, the perturbative gate opened to only 0.23 (vs 0.36 on text in Exp~8).
-This makes sense: at 32$\times$32 resolution with 4$\times$4 patches, the spatial detail is coarse---there is not much room for instance-specific corrections to improve on the mean-field prediction.
+This makes sense: at 32$\times$32 resolution with 4$\times$4 patches, the spatial detail is coarse, there is not much room for instance-specific corrections to improve on the mean-field prediction.
 Every dog is roughly the same colour blob at this resolution.
 
 The prediction: \textbf{at higher resolution, the perturbative corrections should become increasingly valuable.}
-Fine-grained detail (fur texture, facial features, text in images) cannot be predicted by the mean field---it requires context-specific correction.
+Fine-grained detail (fur texture, facial features, text in images) cannot be predicted by the mean field, it requires context-specific correction.
 The gate amplitude should grow with image resolution, and the MSE gap between ORN and bare SharedM should widen as resolution increases.
 
 This is directly testable: run M2 at 64$\times$64 or 128$\times$128 (with proportionally more patches) and measure whether the ORN's corrections close the gap with the transformer more than at 32$\times$32.
@@ -595,9 +595,9 @@ The 0.449-nat ablation gap on text (Exp~8) is the cost of losing this sharpening
 
 The architecture proposes a division of labour that mirrors physics:
 \begin{enumerate}[nosep]
-    \item \textbf{$\M$ captures the symmetries}---the coupling rules that hold on average across all instances.
-    \item \textbf{Response heads extract content}---what flows through the coupling pattern at each depth.
-    \item \textbf{Perturbative corrections break the symmetries}---adding instance-specific detail that the mean field cannot provide, gated by context confidence.
+    \item \textbf{$\M$ captures the symmetries}, the coupling rules that hold on average across all instances.
+    \item \textbf{Response heads extract content}, what flows through the coupling pattern at each depth.
+    \item \textbf{Perturbative corrections break the symmetries}, adding instance-specific detail that the mean field cannot provide, gated by context confidence.
 \end{enumerate}
 
 Images make this decomposition visible because the mean field is literally blurry and the corrections are literally sharpening.
@@ -614,19 +614,19 @@ It knows where it is in the schedule and adapts its behaviour: early steps recov
 The schedule is explicit.
 
 In the ORN, $\M$ has no depth signal.
-It reads the field state and produces coupling---the same $\M$ at every layer.
+It reads the field state and produces coupling, the same $\M$ at every layer.
 There is no explicit $t$.
 
-\paragraph{But depth IS encoded---in the response heads.}
+\paragraph{But depth IS encoded, in the response heads.}
 The response heads ($W_V^{(\ell)}$, $W_O^{(\ell)}$, $\text{FFN}^{(\ell)}$) are the one component that varies with depth.
 They are per-layer parameters that transform the field state differently at each depth.
 The residual stream at layer $\ell$ carries the cumulative signature of response heads $1$ through $\ell{-}1$: not just ``what tokens are present'' but ``what tokens are present \emph{as processed by this specific sequence of transformations}.''
 
 When the perturbative gate reads the field state, it is reading this depth-encoded signature.
-The field state after 2 layers of response-head processing looks structurally different from the field after 7 layers---not just because more context has been integrated, but because the per-layer response heads have left their fingerprint on the representation.
+The field state after 2 layers of response-head processing looks structurally different from the field after 7 layers, not just because more context has been integrated, but because the per-layer response heads have left their fingerprint on the representation.
 
 This means the ORN has an \textbf{implicit depth schedule}: the gate learns to vary its correction amplitude not from an explicit layer index but from the response heads' cumulative effect on the field.
-The gate-entropy anticorrelation ($r = -0.95$) is evidence that this works---the gate tracks the field state's maturity, which is a direct consequence of how many response-head transformations have been applied.
+The gate-entropy anticorrelation ($r = -0.95$) is evidence that this works, the gate tracks the field state's maturity, which is a direct consequence of how many response-head transformations have been applied.
 
 \paragraph{Implicit vs explicit: which is better?}
 Diffusion uses explicit noise-level conditioning: the network receives $t$ as input.
@@ -643,14 +643,14 @@ The 0.449-nat ablation gap from Exp~8 confirms the implicit schedule is working:
 The per-layer response heads provide enough depth information through their cumulative field-state fingerprint for the gate to learn when and how much to correct.
 
 \paragraph{The physics: running couplings, naturally.}
-In quantum field theory, coupling constants ``run'' with energy scale---the effective interaction strength changes depending on the resolution at which you probe the system.
+In quantum field theory, coupling constants ``run'' with energy scale, the effective interaction strength changes depending on the resolution at which you probe the system.
 The fine-structure constant $\alpha$ is ${\sim}1/137$ at low energies but ${\sim}1/128$ at the $Z$ boson mass.
 The \emph{theory} is the same; the effective coupling runs because the renormalisation group integrates out high-energy modes as you lower the resolution.
 
 $\M$ is the theory.
 The perturbative gate $g$ is the coupling constant.
 The response heads at each layer are the renormalisation group steps that coarse-grain the field state.
-Because the gate reads the coarse-grained field, it naturally produces a \textbf{running coupling}---the effective correction strength varies with depth, driven by how the response heads have transformed the representation.
+Because the gate reads the coarse-grained field, it naturally produces a \textbf{running coupling}, the effective correction strength varies with depth, driven by how the response heads have transformed the representation.
 
 This is not something we designed.
 It is a consequence of having per-layer response heads (providing depth variation) and a context-dependent gate (reading the field state).
@@ -681,12 +681,12 @@ Architecture: full ORN ($d{=}512$, $L{=}24$, $H{=}8$, $d_{\text{corr}}{=}64$), 9
 Running on vast.ai RTX 4090, ${\sim}40$h total for both runs.
 
 \paragraph{Prediction.}
-If frozen $\M$ matches from-scratch within $5\%$, the coupling geometry is generic and transferable---the strongest evidence yet that memoisation captures a universal relational rule, not a corpus-specific pattern.
+If frozen $\M$ matches from-scratch within $5\%$, the coupling geometry is generic and transferable, the strongest evidence yet that memoisation captures a universal relational rule, not a corpus-specific pattern.
 If frozen $\M$ is $> 10\%$ worse, $\M$ needs co-training with the response heads and the universality claim is weakened.
 
 \subsection{4-Modality Exploration}
 
-We ran a 4-modality experiment (CIFAR-10 images, MAESTRO piano, ESC-50 environmental sounds, TinyStories text) at $d{=}128$, $L{=}6$, 3000 steps on MPS---the regime where $\M$ matters (46\% gap vs random frozen $\M$ at $d{=}96$).
+We ran a 4-modality experiment (CIFAR-10 images, MAESTRO piano, ESC-50 environmental sounds, TinyStories text) at $d{=}128$, $L{=}6$, 3000 steps on MPS, the regime where $\M$ matters (46\% gap vs random frozen $\M$ at $d{=}96$).
 The experiment trains 11 configurations: each modality alone (4 runs), all four simultaneously, a TF baseline on all four, and 5 modality pairs.
 We first state the conjectures made before running, then report results and evaluate each conjecture.
 
@@ -752,11 +752,11 @@ The right metric is rank compression \emph{at acceptable quality loss}, not rank
 
 Music and text are the most \emph{compatible} pair: rank $4 = \max(2, 4)$, barely any quality cost.
 Music's rank-2 coupling fits inside text's rank-4 subspace without competition.
-More generally, music is robust to sharing---it never degrades more than $6.8\%$ in any pairing.
+More generally, music is robust to sharing, it never degrades more than $6.8\%$ in any pairing.
 Its coupling is so compact that it does not compete for $\M$'s capacity.
 
 Images and environmental sounds are sensitive: they degrade significantly whenever sharing $\M$.
-This is precisely where perturbative corrections should help---recovering per-modality detail that $\M$'s compression loses.
+This is precisely where perturbative corrections should help, recovering per-modality detail that $\M$'s compression loses.
 The corrections are context-gated and the modality token is in the residual stream, so the gate can learn ``activate for environmental sounds, stay quiet for music.''
 This predicts modality-dependent gate magnitudes, with env sounds and images showing the largest gate values.
 
@@ -773,8 +773,8 @@ We compare three architectures at matched parameter count ($d{=}128$, $L{=}6$, 3
 \toprule
 & \textbf{Images} & \textbf{Music} & \textbf{Env sounds} & \textbf{Text} & \textbf{M rank} & \textbf{Gates} \\
 \midrule
-Transformer & 0.0801 & 0.0174 & 17.84 & 0.5215 & --- & --- \\
-SharedM     & 0.0828 & 0.0174 & 19.41 & 0.5258 & 4 & --- \\
+Transformer & 0.0801 & 0.0174 & 17.84 & 0.5215 & ,  & ,  \\
+SharedM     & 0.0828 & 0.0174 & 19.41 & 0.5258 & 4 & ,  \\
 ORN         & 0.0846 & 0.0167 & 17.30 & 0.5328 & 4 & \scriptsize img\,0.09 mus\,0.05 env\,0.21 txt\,0.21 \\
 \bottomrule
 \end{tabular}
@@ -802,7 +802,7 @@ Text          & $+0.8\%$  & $+2.2\%$  & $-163\%$ (worse) \\
 Corrections selectively compensate where $\M$'s compression hurts most.
 Environmental sounds, which suffered $+8.8\%$ under bare SharedM, are brought \emph{below} the transformer baseline by $3.1\%$.
 Music, already near-parity, is pushed to a clear win.
-Images and text, however, get \emph{worse} with corrections at this scale---the limited correction capacity (a single small MLP per layer) is allocated to the modalities where it helps most, leaving images and text underserved.
+Images and text, however, get \emph{worse} with corrections at this scale, the limited correction capacity (a single small MLP per layer) is allocated to the modalities where it helps most, leaving images and text underserved.
 
 \paragraph{Gate magnitudes are modality-adaptive.}
 The gates reveal the network's correction allocation strategy.
@@ -827,12 +827,12 @@ Environmental sounds, which had the largest SharedM gap ($+8.8\%$), get the wide
 
 \paragraph{M rank is invariant to corrections.}
 $\M$ crystallises to rank~4 with or without perturbative corrections.
-Corrections do not alter the coupling geometry---they compensate in the value stream only.
+Corrections do not alter the coupling geometry, they compensate in the value stream only.
 This confirms the architectural decomposition: $\M$ governs \emph{who couples to whom}; corrections govern \emph{what to do about it} on a per-instance basis.
 
 \paragraph{Multi-task degradation is a training budget problem, not a correction problem.}
 The quality cost of training on all four modalities simultaneously (each modality sees ${\sim}25\%$ of training steps) is nearly identical for SharedM and ORN: ${\sim}63$--$70\%$ on images, ${\sim}7\%$ on text, ${\sim}112$--$117\%$ on env sounds, ${\sim}3$--$6\%$ on music.
-Corrections do not fix training budget starvation---they fix $\M$'s coverage gap within the budget each modality receives.
+Corrections do not fix training budget starvation, they fix $\M$'s coverage gap within the budget each modality receives.
 
 \paragraph{Conjecture evaluation.}
 \begin{itemize}[nosep]
@@ -845,7 +845,7 @@ Corrections do not fix training budget starvation---they fix $\M$'s coverage gap
 
     \item \textbf{Conjecture 3} (mus+txt most shared): \textbf{Not confirmed as stated.}
     The mus+env pair achieves the greatest rank compression ($3.5\times$, rank 2), not mus+txt.
-    However, mus+txt is the best \emph{compatible} pair---highest compression with acceptable quality ($< 3\%$ cost on both modalities).
+    However, mus+txt is the best \emph{compatible} pair, highest compression with acceptable quality ($< 3\%$ cost on both modalities).
     The conjecture was wrong about which pair compresses most but right about which pair works best in practice.
 
     \item \textbf{Conjecture 4} (SharedM advantage grows with modality count): \textbf{Partially confirmed.}
@@ -857,9 +857,9 @@ Corrections do not fix training budget starvation---they fix $\M$'s coverage gap
 \paragraph{Scaling outlook.}
 At $d{=}128$ with 3000 steps, correction capacity is stretched across four modalities.
 At V2 scale ($d{=}512{+}$, longer training), we expect three improvements.
-First, correction capacity scales with $d$---the correction MLP at $d{=}512$ has $16\times$ the capacity of $d{=}128$, sufficient to serve all modalities simultaneously.
+First, correction capacity scales with $d$, the correction MLP at $d{=}512$ has $16\times$ the capacity of $d{=}128$, sufficient to serve all modalities simultaneously.
 Second, longer training resolves budget starvation: each modality sees enough data to converge, eliminating the ${\sim}63$--$112\%$ multi-task degradation.
-Third, image representations may need rethinking---we invested research in audio tokenisation and it paid off (env sounds benefit most from corrections), but images still use naive raster-scan patches.
+Third, image representations may need rethinking, we invested research in audio tokenisation and it paid off (env sounds benefit most from corrections), but images still use naive raster-scan patches.
 Saccade-ordered or multi-resolution patch strategies could improve image coupling compatibility with the shared $\M$.
 The goal: at scale, match or beat the transformer on \emph{all} modalities with fewer coupling parameters, creating a world model where adding modalities strengthens rather than dilutes each one.
 
@@ -891,12 +891,12 @@ From $+11.8\%$ behind at 3K to $-17.7\%$ ahead at 5K, settling at $-4.2\%$ ahead
 The large oscillation suggests the coupling geometry undergoes a phase transition around 4--5K steps where $\M$ locks in the environmental sound structure.
 
 \paragraph{Music and text oscillate without clear trend.}
-These modalities are already well-served by $\M$'s compact rank-2 coupling, so neither architecture has a systematic advantage---both are near-optimal for the available budget.
+These modalities are already well-served by $\M$'s compact rank-2 coupling, so neither architecture has a systematic advantage, both are near-optimal for the available budget.
 
 \paragraph{Interpretation.}
 The crossover confirms the central prediction of the ORN multimodal theory.
 A transformer memorises per-layer coupling rules quickly (it wins early).
-The ORN must first crystallise a shared coupling geometry, \emph{then} train response heads and corrections to use it---this takes longer, but once done, the shared geometry provides a more parameter-efficient representation.
+The ORN must first crystallise a shared coupling geometry, \emph{then} train response heads and corrections to use it, this takes longer, but once done, the shared geometry provides a more parameter-efficient representation.
 
 This is analogous to the single-modality V1 result (val~3.35 matching GPT-2 Small with $0.6\%$ coupling params) but now demonstrated in the multimodal setting where the advantage is amplified: $\M$'s sub-linear rank growth (rank~4 for 4 modalities vs sum~15) means each new modality is nearly free in coupling budget.
 
@@ -912,7 +912,7 @@ We scaled the 4-modality experiment to $d{=}256$ with 20K training steps, compar
 \toprule
 & \textbf{Images} & \textbf{Music} & \textbf{Env sounds} & \textbf{Text} & \textbf{M rank} \\
 \midrule
-Transformer & 0.0454 & 0.0173 & 6.39 & 0.4852 & --- \\
+Transformer & 0.0454 & 0.0173 & 6.39 & 0.4852 & ,  \\
 ORN         & 0.0464 & 0.0153 & 5.58 & 0.5079 & 17 \\
 CORN        & 0.0515 & 0.0149 & 5.42 & 0.4807 & 11 \\
 \bottomrule
@@ -925,7 +925,7 @@ This confirms the crossover trajectory predicted at $d{=}128$: with sufficient s
 
 \paragraph{Rank compression at scale.}
 CORN's $\M$ compresses to rank~11, down from ORN's rank~17.
-The semigroup consistency loss concentrates coupling energy into fewer modes, achieving tighter spectral structure without sacrificing quality---in fact, improving it on 3/4 modalities.
+The semigroup consistency loss concentrates coupling energy into fewer modes, achieving tighter spectral structure without sacrificing quality, in fact, improving it on 3/4 modalities.
 
 \paragraph{Semigroup generation: $t = \sigma$ is optimal.}
 Parallel experiments on diffusion-style generation via CORN's $t$-scaled semigroup dynamics confirmed that $t = \sigma$ (coupling strength equals noise level) is the optimal mapping between semigroup time and diffusion noise.
@@ -939,7 +939,7 @@ The largest-scale frozen-M transfer test to date: a 605M ORN trained exclusively
 
 \paragraph{Setup.}
 A 605M ORN ($d{=}2048$, $L{=}32$, GQA 32/8, 8$\times$ wide shared FFN, $d_{\text{ff}}{=}44{,}032$) was trained on FineWeb-Edu for 819M tokens.
-The backbone was then frozen---SharedM ($A$, $B$) and the wide shared FFN---and lightweight adapters were trained on two simultaneous captioning tasks:
+The backbone was then frozen, SharedM ($A$, $B$) and the wide shared FFN, and lightweight adapters were trained on two simultaneous captioning tasks:
 \begin{itemize}[nosep]
     \item \textbf{Image captioning:} COCO train2017 (118K images), 2D patch encoder, ViT-style 16$\times$16 patches, learned 2D position embeddings
     \item \textbf{Audio captioning:} AudioCaps + Clotho, 20 spectrogram patches $\times$ 1600-dim, temporal position embeddings
@@ -990,12 +990,12 @@ AUD generated & A man speaks and a dog barks and a woman speaks in the backgroun
 
 \paragraph{What this does not yet confirm.}
 \begin{enumerate}[nosep]
-    \item \textbf{Image-specific generation.}  The model produces scene-plausible captions (grammatical, contextually reasonable) but not image-specific ones---``man holding a frisbee'' for a cat on a desk.  The residual field carries a signal that ``an image is present'' but does not fully bind image content to caption tokens.
+    \item \textbf{Image-specific generation.}  The model produces scene-plausible captions (grammatical, contextually reasonable) but not image-specific ones, ``man holding a frisbee'' for a cat on a desk.  The residual field carries a signal that ``an image is present'' but does not fully bind image content to caption tokens.
     \item \textbf{$\M$ as cross-modal coupling authority.}  The current result is consistent with a weaker explanation: the patch encoder provides a genre signal (``this is a captioning task'') and the frozen $\M$+FFN generates appropriate language, with LoRA doing the content binding.  Whether $\M$ mediates the cross-modal coupling or merely provides the language generation backbone is not yet distinguished.
 \end{enumerate}
 
 \paragraph{Interpretation and next steps.}
-The result is a proof of concept for the lightweight adaptation claim---not for the coupling authority claim.
+The result is a proof of concept for the lightweight adaptation claim, not for the coupling authority claim.
 The image-specific generation gap is precisely what the MoE design addresses: with dedicated modality experts routed by $\M$'s geometry, image content would activate a visual expert rather than relying on the frozen language FFN.
 
 Two diagnostic experiments can close the gap without additional GPU training:
@@ -1004,7 +1004,7 @@ Two diagnostic experiments can close the gap without additional GPU training:
     \item \textbf{Rank analysis:}  Measure rank-90\% of $\M$'s residual representations on text vs image vs audio inputs from the fine-tuned checkpoint.  Sub-linear growth would confirm the shared geometry claim at 605M scale.
 \end{itemize}
 
-A stronger GPU experiment---unfreezing $\M$ during multimodal training and measuring whether image-specific generation improves---would directly test whether $\M$ is the bottleneck.
+A stronger GPU experiment, unfreezing $\M$ during multimodal training and measuring whether image-specific generation improves, would directly test whether $\M$ is the bottleneck.
 If trainable $\M$ produces image-specific captions and frozen $\M$ does not, that is the most informative result possible: $\M$ is the coupling authority, and the right fix is to let it adapt to the new modalities.
 
 % ======================================================================
@@ -1025,7 +1025,7 @@ If trainable $\M$ produces image-specific captions and frozen $\M$ does not, tha
     The coupling redundancy argument predicts it should.
 
     \item[Exp M14: Flexible masking and generation]
-    Sparse completion, inpainting, outpainting, unconditional generation---all from the same architecture.
+    Sparse completion, inpainting, outpainting, unconditional generation, all from the same architecture.
     The perturbative gate as confidence signal for adaptive generation order.
 
     \item[Mean-field sharpening at higher resolution]
@@ -1049,7 +1049,7 @@ How we represent each modality determines how much relational structure is avail
 
 \paragraph{Audio patching matters.}
 Our initial audio results were weak ($+9.3\%$ behind transformer) because the re-patching interleaved frequency and time dimensions, confusing the coupling geometry.
-Restoring the original temporal structure (16 frames $\times$ 200-dim, clean time axis) gives $\M$ a sequence where ``next'' means ``next in time''---the coupling $\M$ should naturally discover temporal adjacency, periodicity, and hierarchical composition (frames $\to$ phonemes $\to$ words).
+Restoring the original temporal structure (16 frames $\times$ 200-dim, clean time axis) gives $\M$ a sequence where ``next'' means ``next in time'', the coupling $\M$ should naturally discover temporal adjacency, periodicity, and hierarchical composition (frames $\to$ phonemes $\to$ words).
 
 \paragraph{M12 three-modal results (audio fix).}
 With the corrected audio representation, we ran the full three-modal experiment (M12) at 13M parameters, $d{=}192$, $L{=}8$, 6000 steps.
@@ -1069,7 +1069,7 @@ Delta & $-7.0\%$ & $+2.2\%$ & $+2.3\%$ & $+2.2\%$ \\
 
 ORN wins on images ($-7.0\%$) with 2.7\% fewer parameters, confirming the coupling compression advantage for spatial modalities.
 Audio and text are slightly behind ($+2.2\%$ each), consistent with the ORN's per-layer response heads needing more capacity for temporal and sequential modalities at this scale.
-The combined loss is within $2.2\%$---well inside the $5\%$ threshold for the multimodal memoisation claim.
+The combined loss is within $2.2\%$, well inside the $5\%$ threshold for the multimodal memoisation claim.
 Perturbative gate values (image 0.042, audio 0.094, text 0.109) show the expected pattern: images need minimal correction (spatial coupling is well-captured by $\M$), while audio and text require more perturbative refinement.
 
 \paragraph{Multi-scale input.}
@@ -1087,19 +1087,19 @@ The coupling compression ($8\times$ fewer coupling parameters) holds regardless 
 
 \paragraph{Audio embedding analysis.}
 To understand what structure the 16-frame $\times$ 200-dim mel spectrogram actually contains, we analysed the Speech Commands audio data before designing embedding variants.
-The temporal axis decomposes into 4 distinct blocks of 4 sub-frames (intra-block correlation ${\sim}0.85$, inter-block ${\sim}0.2$), and PCA on the frequency axis shows 5 components capture 93\% of variance---the 200 frequency bins are largely redundant.
+The temporal axis decomposes into 4 distinct blocks of 4 sub-frames (intra-block correlation ${\sim}0.85$, inter-block ${\sim}0.2$), and PCA on the frequency axis shows 5 components capture 93\% of variance, the 200 frequency bins are largely redundant.
 The actual information content is approximately 4 temporal events $\times$ 5 spectral features.
 
 Six embedding variants were tested ($d{=}96$, $L{=}6$, 3000 steps, MPS).
 For the directly comparable variants targeting raw 200-dim frequency:
 raw 16$\times$200 baseline achieved MSE 9.81;
 frequency-band projection (4$\times$50 bands projected separately, then summed) achieved MSE 9.27 ($-5.5\%$).
-Block-pooled variants (averaging 4 sub-frames into 4 coarse temporal events) gave MSE 11.91 (fixed pool) and 11.53 (learnable weighted pool)---higher loss on the raw target but a cleaner task structure where each token represents a perceptual event.
+Block-pooled variants (averaging 4 sub-frames into 4 coarse temporal events) gave MSE 11.91 (fixed pool) and 11.53 (learnable weighted pool), higher loss on the raw target but a cleaner task structure where each token represents a perceptual event.
 PCA-compressed variants (B: PCA to 20d, MSE 91.1; D: PCA + pool, MSE 108.8) are not directly comparable due to target scaling differences.
 
 The key finding: frequency-band projection gives a free $5.5\%$ improvement by respecting the spectral block structure.
-Block pooling creates a representation where audio tokens align structurally with image patches and text tokens---all become ``sequence of events, predict next.''
-The literature (AST, AudioMAE, BEATs) converges on 2D spectrogram patches ($16{\times}16$ on 128-bin mel, yielding 6--25 tokens/sec) as the standard approach, treating audio spectrograms as images---a natural fit for ORN's continuous projection.
+Block pooling creates a representation where audio tokens align structurally with image patches and text tokens, all become ``sequence of events, predict next.''
+The literature (AST, AudioMAE, BEATs) converges on 2D spectrogram patches ($16{\times}16$ on 128-bin mel, yielding 6--25 tokens/sec) as the standard approach, treating audio spectrograms as images, a natural fit for ORN's continuous projection.
 We have now prepared richer audio data for subsequent experiments:
 \begin{itemize}[nosep]
     \item \textbf{MAESTRO v3 MIDI:} 89K piano performance sequences, event-level tokenisation at 10\,Hz (64 timesteps $\times$ 6 continuous features).  Results in Section~\ref{tab:maestro}.
@@ -1111,7 +1111,7 @@ These enable 4-modality experiments: images + music + environmental sounds + tex
 The literature on audio transformers converges on three representation families, each with different implications for $\M$:
 \begin{enumerate}[nosep]
     \item \textbf{2D spectrogram patches} (AST, AudioMAE, BEATs): $16{\times}16$ patches on 128-bin mel spectrograms, yielding 6--25 tokens/sec.  This treats audio as an image, and the standard approach for classification and understanding tasks.
-    \item \textbf{Neural audio codecs} (EnCodec, SoundStream, DAC): continuous frame-level features at 50--86\,Hz.  The encoder output \emph{before} quantisation preserves the continuous geometry $\M$ needs---the codebook quantisation step discards exactly the information $\M$ operates on.
+    \item \textbf{Neural audio codecs} (EnCodec, SoundStream, DAC): continuous frame-level features at 50--86\,Hz.  The encoder output \emph{before} quantisation preserves the continuous geometry $\M$ needs, the codebook quantisation step discards exactly the information $\M$ operates on.
     \item \textbf{Event-level tokenisation} (MAESTRO at 10\,Hz): each token is a musically meaningful event.  Gives $\M$ the cleanest sequential structure of any audio representation.
 \end{enumerate}
 The semantic/acoustic token duality from AudioLM maps onto ORN's decomposition: semantic tokens capture relational structure (what $\M$ models), acoustic tokens capture surface detail (what response heads handle).  This is a natural fit for the mean-field + correction architecture.
@@ -1120,7 +1120,7 @@ The semantic/acoustic token duality from AudioLM maps onto ORN's decomposition: 
 
 How we tokenise each modality determines what relational structure $\M$ can discover.
 A bad tokenisation hides structure; a good one exposes it.
-ORN is \emph{more} sensitive to tokenisation quality than a standard transformer because it has fewer coupling parameters---a transformer with $2Ld^2$ coupling params can compensate for poor input structure by learning modality-specific rules at each layer; $\M$ with $d^2$ cannot.
+ORN is \emph{more} sensitive to tokenisation quality than a standard transformer because it has fewer coupling parameters, a transformer with $2Ld^2$ coupling params can compensate for poor input structure by learning modality-specific rules at each layer; $\M$ with $d^2$ cannot.
 
 \paragraph{The token rate sweet spot.}
 Too fast ($>50$\,Hz): adjacent tokens are nearly identical, next-token prediction is trivial, and $\M$ wastes rank on temporal interpolation rather than structural coupling.
@@ -1129,17 +1129,17 @@ The sweet spot is 6--25 tokens/sec, where each token covers one perceptual event
 This is where our representations land: MAESTRO at 10\,Hz (musical events), ESC-50 at ${\sim}19$ patches/sec (spectral snapshots), images at 64 patches/image (spatial regions), text at ${\sim}5$--15 tokens/sec (words).
 
 \paragraph{Images: saccade ordering vs raster scan.}
-Raster scan (left-to-right, top-to-bottom) is arbitrary---the eye does not process images this way.
+Raster scan (left-to-right, top-to-bottom) is arbitrary, the eye does not process images this way.
 Biological saccades jump to salient regions first: face, then hands, then held object.
 We tested saliency-ordered and spiral-ordered patches: both make next-patch prediction harder ($+1$--$2\%$ MSE) because the spatial continuity that makes raster prediction easy is broken.
 However, saccade ordering creates a \emph{narrative} structure (``look at important thing, then next important thing'') that could align with text and music's sequential structure.
 Our structured embeddings experiment showed that this alignment doesn't help for single-modality prediction, but the hypothesis remains that saccade-ordered images would share more coupling geometry with text/music than raster-ordered images in a cross-modal setting.
 
 \paragraph{Audio: from spectral frames to perceptual events.}
-Raw mel spectrogram frames at 100\,Hz are sub-phoneme slices---too fine for meaningful coupling.
+Raw mel spectrogram frames at 100\,Hz are sub-phoneme slices, too fine for meaningful coupling.
 Three better approaches:
 \begin{itemize}[nosep]
-    \item \textbf{2D spectrogram patches} (AST, AudioMAE): treat the spectrogram as an image, apply $16{\times}16$ patches.  Each patch spans ${\sim}160$\,ms $\times$ 20 mel bins---a recognisable acoustic event.  The standard approach for audio transformers.
+    \item \textbf{2D spectrogram patches} (AST, AudioMAE): treat the spectrogram as an image, apply $16{\times}16$ patches.  Each patch spans ${\sim}160$\,ms $\times$ 20 mel bins, a recognisable acoustic event.  The standard approach for audio transformers.
     \item \textbf{Event-level tokenisation} (MAESTRO): each token IS a musical event (note onset, chord change, dynamic shift).  Gives $\M$ the cleanest sequential structure.  Our data: 6 continuous features per 100\,ms frame.
     \item \textbf{Neural codec features} (EnCodec, SoundStream, DAC): the encoder output \emph{before} RVQ quantisation gives continuous features at 50--86\,Hz.  The RVQ hierarchy itself mirrors ORN's mean-field/correction decomposition: first codebook captures coarse structure ($\M$'s domain), later codebooks capture acoustic detail (response heads' domain).
 \end{itemize}
@@ -1153,7 +1153,7 @@ This is untested but suggested by the rank-2 finding for music: if $\M$ needed s
 
 \paragraph{Cross-modal alignment through tokenisation.}
 The key insight: if all modalities are tokenised as ``sequence of perceptual events, predict next event,'' then $\M$'s coupling geometry naturally discovers whatever cross-modal structure exists.
-A film score token (``tension rises'') and a text token (``the villain appeared'') are relationally similar---both set up what comes next.
+A film score token (``tension rises'') and a text token (``the villain appeared'') are relationally similar, both set up what comes next.
 Whether $\M$ discovers this depends on whether the tokenisation exposes the relational structure, not on whether we engineer an alignment loss.
 CLIP and CLAP force alignment via contrastive loss.
 ORN discovers alignment (or its absence) through shared coupling dynamics.
@@ -1164,7 +1164,7 @@ Damasio's convergence-divergence zone (CDZ) framework~\cite{damasio2009cdz} prop
 
 $\M$ is structurally a CDZ.
 It does not represent content (that is the residual field).
-It represents \emph{coupling rules}---which tokens should attend to which.
+It represents \emph{coupling rules}, which tokens should attend to which.
 Modality-specific encoders (ViT for images, spectrogram convolutions for audio, token embeddings for text) are the sensory cortices.
 The residual field is the activity pattern being coordinated.
 $\M$ binds co-occurring features across modalities without storing the features themselves.
@@ -1184,7 +1184,7 @@ If $\M$'s geometry captures ``local binding'' and ``sequential progression'' as 
 However, a critical asymmetry: musical chords are \emph{explicit in the input} (multiple notes at one timestep), while grammatical chunks are \emph{emergent through depth} (individual tokens that bind across layers of processing).
 A chord arrives pre-bound; a noun phrase is constructed.
 This means the shared geometry, if it exists, may operate at different layers for different modalities: $\M$ applied at layer 1 to music sees pre-formed chords, while $\M$ applied at layer 3 to text sees emergent grammatical groups.
-The per-layer response heads handle this naturally---the \emph{coupling rule} (``bound things attend to each other'') is the same, but the \emph{state of binding} in the residual field differs by depth and modality.
+The per-layer response heads handle this naturally, the \emph{coupling rule} (``bound things attend to each other'') is the same, but the \emph{state of binding} in the residual field differs by depth and modality.
 
 This is a reason \emph{not} to engineer representations that force alignment (e.g.\ decomposing music into individual notes to match text's sequential structure, or pre-parsing text into grammatical chunks to match music's chord structure).
 If the shared geometry is real, $\M$ discovers it from natural representations at whatever depth it emerges.
@@ -1198,7 +1198,7 @@ Current multimodal approaches project each modality into a shared space through 
 All treat the projection and the coupling as separate mechanisms.
 
 Orbital embeddings suggest a more principled alternative: the coupling geometry $\M$ IS the alignment mechanism.
-Each modality starts from its own seed (raw patches, frames, tokens) and evolves through the same shared dynamics $\Phi$---the same operator that defines coupling.
+Each modality starts from its own seed (raw patches, frames, tokens) and evolves through the same shared dynamics $\Phi$, the same operator that defines coupling.
 Tokens from different modalities that are relationally similar converge to similar regions of coupling space, not because they were trained on paired data, but because $\M$'s geometry naturally places relationally similar things near each other.
 
 This is the ORN's version of the Neural ODE~\cite{chen2018neural} connection: the orbital iteration $h_{\ell+1} = h_\ell + f(\M, h_\ell)$ is a discretised ODE with $\M$ defining the vector field.
@@ -1207,7 +1207,7 @@ Convergence happens where the dynamics say it should.
 
 Our embedding ablation (Section~\ref{sec:embedding-ablation}) tests this directly.  Orbital embeddings with $T{=}1$ and $T{=}3$ iterations show modest improvement ($-2.1\%$, $-3.1\%$) but are substantially outperformed by a simple modality token ($-10.0\%$).  At current scale, telling $\M$ what modality it is processing (via a learnable prefix token) is far more effective than using $\M$'s own dynamics as the embedding function.
 
-The gate-by-modality results (image gate 0.058, audio gate 0.163, text gate 0.106) suggest that $\M$'s coverage varies by modality---a signature consistent with different modalities entering the coupling space from different directions and requiring different amounts of correction to align.  Whether orbital embeddings help at larger scale (where $\M$ has richer spectral structure) remains open.
+The gate-by-modality results (image gate 0.058, audio gate 0.163, text gate 0.106) suggest that $\M$'s coverage varies by modality, a signature consistent with different modalities entering the coupling space from different directions and requiring different amounts of correction to align.  Whether orbital embeddings help at larger scale (where $\M$ has richer spectral structure) remains open.
 
 \section{Literature: How Multimodal Models Handle the Sensory-Coupling Interface}
 
@@ -1227,7 +1227,7 @@ Alayrac et al.\ (Flamingo) use a Perceiver Resampler: learned query tokens cross
 Li et al.\ (BLIP-2) use a Q-Former: 32 learned queries ``interview'' the visual patches.
 Both act as information bottlenecks before the language model.
 \textbf{For ORN:} likely redundant.
-$\M$ with effective rank $r^*$ IS already a bottleneck---it selects the $r^*$ most important coupling dimensions.
+$\M$ with effective rank $r^*$ IS already a bottleneck, it selects the $r^*$ most important coupling dimensions.
 Adding a separate bottleneck before $\M$ might discard relational structure that $\M$ could exploit.
 
 \paragraph{3. Discrete tokenisation (VQ-VAE, VQGAN).}
@@ -1237,7 +1237,7 @@ A 2025 survey~\cite{discrete2025survey} confirms that discrete tokens still unde
 Discretisation destroys the continuous coupling geometry $\M$ operates on.
 
 \paragraph{4. Native multimodal (Gemini, ImageBind).}
-Gemini processes all modalities through shared transformer layers from the start---no separate encoders aligned post-hoc.
+Gemini processes all modalities through shared transformer layers from the start, no separate encoders aligned post-hoc.
 ImageBind~\cite{fang2023imagebind} creates a single shared embedding space for six modalities using only image-paired training data; transitive alignment through the image ``hub'' creates cross-modal alignment without explicit (audio, text) pairs.
 \textbf{For ORN:} ImageBind's transitive alignment is structurally close to what $\M$ provides.
 If $\M$ learns a shared coupling geometry, it should transitively align modalities that were never explicitly paired.
@@ -1249,8 +1249,8 @@ $\M$ defines the vector field; the residual stream is the trajectory; each modal
 
 This connects the ORN to a rich theoretical literature:
 \begin{itemize}[nosep]
-    \item Latent ODEs encode initial conditions and evolve them through continuous dynamics---exactly the orbital embedding idea (seeds + shared dynamics).
-    \item The Neural Differential Manifold~\cite{ndm2025} treats network parameters as a metric tensor defining a Riemannian manifold---the closest existing work to $\M$-as-metric, though NDM computes a different metric per layer while ORN shares one.
+    \item Latent ODEs encode initial conditions and evolve them through continuous dynamics, exactly the orbital embedding idea (seeds + shared dynamics).
+    \item The Neural Differential Manifold~\cite{ndm2025} treats network parameters as a metric tensor defining a Riemannian manifold, the closest existing work to $\M$-as-metric, though NDM computes a different metric per layer while ORN shares one.
     \item Hyperbolic embeddings~\cite{nickel2017poincare} represent hierarchical structure in curved space. If $\M$'s eigenspectrum creates a soft hierarchy (large eigenvalues for coarse coupling, small for fine), $\M$ implicitly induces hyperbolic-like geometry in coupling space.
 \end{itemize}
 
@@ -1258,8 +1258,8 @@ This connects the ORN to a rich theoretical literature:
 
 Based on the literature review AND the embedding ablation experiment below, the design principle is:
 \begin{enumerate}[nosep]
-    \item Use continuous projection (not discrete tokenisation)---$\M$ needs continuous geometry.
-    \item Do not add a bottleneck before $\M$---$\M$ IS the bottleneck (rank $r^*$).
+    \item Use continuous projection (not discrete tokenisation), $\M$ needs continuous geometry.
+    \item Do not add a bottleneck before $\M$, $\M$ IS the bottleneck (rank $r^*$).
     \item Tell $\M$ what modality it is processing via a learnable modality token (e.g.\ \texttt{[IMG]}, \texttt{[AUD]}).  This is the single largest embedding improvement we found ($-10.0\%$ over transformer baseline at $d{=}96$).
     \item Normalise embeddings with RMSNorm before $\M$ sees them, so all modalities enter at consistent scale.  Combined with the modality token, this yields $-11.7\%$ vs transformer.
     \item Keep the projection simple.  MLP adds expressiveness but not performance; the gain is in \emph{what information reaches M}, not \emph{how non-linearly it is transformed}.
@@ -1277,7 +1277,7 @@ To determine how modalities should be projected into $\M$'s coupling space, we t
 \toprule
 \textbf{Variant} & \textbf{Params} & \textbf{MSE} & \textbf{vs TF} \\
 \midrule
-TF + Linear (baseline)      & 683,184  & 0.4486 & ---      \\
+TF + Linear (baseline)      & 683,184  & 0.4486 & ,       \\
 \midrule
 SharedM + Linear             & 591,024  & 0.4366 & $-2.7\%$ \\
 SharedM + MLP                & 604,976  & 0.4346 & $-3.1\%$ \\
@@ -1327,9 +1327,9 @@ The ORN has 6.0M parameters; the Transformer has 6.7M (11\% more, due to per-lay
 
 \textbf{Diagnostics} at checkpoints 10K, 25K, 50K:
 \begin{itemize}[nosep]
-    \item D1: coupling pattern PCA --- are attention patterns modality-agnostic?
-    \item D2: frozen-$\M$ transfer --- freeze $\M$, train fresh response heads on text only
-    \item D3: base-space orbit reconstruction --- can $\M^k h$ projected to the coupling manifold reconstruct content?
+    \item D1: coupling pattern PCA ,  are attention patterns modality-agnostic?
+    \item D2: frozen-$\M$ transfer ,  freeze $\M$, train fresh response heads on text only
+    \item D3: base-space orbit reconstruction ,  can $\M^k h$ projected to the coupling manifold reconstruct content?
 \end{itemize}
 
 \subsection{Prediction Quality}
@@ -1371,7 +1371,7 @@ At each checkpoint, we extract attention patterns from images, music, and text, 
 
 \textbf{Coupling patterns are $> 99.6\%$ similar across all modality pairs at all checkpoints.}
 The coupling manifold is modality-agnostic from early training (10K) and remains so.
-$\M$ does not develop modality-specific coupling modes---it uses the same geometric structure for images, music, environmental sounds, and text.
+$\M$ does not develop modality-specific coupling modes, it uses the same geometric structure for images, music, environmental sounds, and text.
 
 This is the multimodal analogue of the spectral invariance result for text transformers: the coupling rule is universal, and the per-layer variation comes from the evolving residual stream (the fiber), not from the coupling matrix (the base).
 
@@ -1393,7 +1393,7 @@ The transfer gap measures how much worse the frozen-$\M$ model is compared to th
 \end{center}
 
 At 50K, the frozen-$\M$ transfer costs only \textbf{2.2\%}.
-$\M$ carries genuine geometric information that transfers to a new task---it is not an artefact of co-adaptation with the multimodal response heads.
+$\M$ carries genuine geometric information that transfers to a new task, it is not an artefact of co-adaptation with the multimodal response heads.
 
 At 10K and 25K, the transfer is \emph{better} than the original (negative gap).
 This is because the fresh text-only response heads can fully specialise for text, unburdened by the multimodal interference that the original response heads must handle.
@@ -1420,7 +1420,7 @@ The coupling manifold self-organises to $\sim$18 dimensions across four modaliti
 This is consistent with the text-only experiments, where the base-space optimal dimension was $\sim$20 (confirmed by PCA of GPT-2 attention patterns at 8 dimensions for 95\% variance, and by the base-space orbit reconstruction experiments where $N_{\text{base}} = 20$ was optimal).
 
 The rank stabilises between 25K and 50K (24 $\to$ 17.5), suggesting the manifold structure is largely determined by 25K steps.
-The final rank of 17.5 means $\M$ uses fewer than 18 of its 256 available dimensions for coupling---a compression ratio of $14\times$.
+The final rank of 17.5 means $\M$ uses fewer than 18 of its 256 available dimensions for coupling, a compression ratio of $14\times$.
 
 \subsection{The Fiber Bundle Picture, Confirmed Multimodally}
 
@@ -1433,10 +1433,10 @@ These results confirm the central prediction of the fiber bundle framework:
 
     \item \textbf{The fiber encodes modality-specific content.}
     Frozen-$\M$ transfer costs only 2.2\%: the coupling geometry transfers; the response heads must re-specialise for each modality.
-    At early checkpoints, fresh single-modality response heads outperform multimodal ones---the fiber benefits from specialisation, the base does not.
+    At early checkpoints, fresh single-modality response heads outperform multimodal ones, the fiber benefits from specialisation, the base does not.
 
     \item \textbf{The manifold self-organises to $\sim$18 dimensions.}
-    Despite having 256 dimensions available, $\M$ concentrates its coupling energy into 18 modes---across all four modalities simultaneously.
+    Despite having 256 dimensions available, $\M$ concentrates its coupling energy into 18 modes, across all four modalities simultaneously.
     This is the same dimensionality found in text-only experiments, suggesting the coupling manifold's intrinsic dimension is a property of relational structure itself, not of any specific modality.
 
     \item \textbf{No semigroup loss is needed.}
@@ -1447,7 +1447,7 @@ These results confirm the central prediction of the fiber bundle framework:
 
 \begin{remark}
 The orbit reconstruction diagnostic (D3) showed weak signal at 50K steps: text orbit accuracy 0--4\%, image MSE $\sim$0.28.
-This used a simple mean-pool decoder without training---the C6b experiments (companion paper) show that a trained orbit decoder on the 20D base space achieves 86\% reconstruction accuracy.
+This used a simple mean-pool decoder without training, the C6b experiments (companion paper) show that a trained orbit decoder on the 20D base space achieves 86\% reconstruction accuracy.
 The multimodal base-space orbits likely carry substantial information; the diagnostic was too weak to extract it.
 A proper trained orbit decoder for multimodal base-space reconstruction is the natural next experiment.
 \end{remark}
@@ -1458,7 +1458,7 @@ A proper trained orbit decoder for multimodal base-space reconstruction is the n
 
 The shared coupling manifold (Section~\ref{sec:universal-manifold}) shows that $\M$'s coupling patterns are modality-agnostic ($> 99.6\%$ cosine similarity across all modality pairs).
 But coupling similarity is not the same as \emph{embedding} similarity.
-When we attempt standard multimodal tasks---zero-shot classification, cross-modal retrieval---the raw embeddings fail: CIFAR-10 zero-shot accuracy is 10.4\% (chance level), and cross-modal search precision is near zero.
+When we attempt standard multimodal tasks, zero-shot classification, cross-modal retrieval, the raw embeddings fail: CIFAR-10 zero-shot accuracy is 10.4\% (chance level), and cross-modal search precision is near zero.
 
 The coupling geometry is shared, but the model cannot exploit it.
 The input projections ($\text{img\_proj}$, $\text{txt\_emb}$) map different modalities into different regions of the $d$-dimensional space.
@@ -1483,7 +1483,7 @@ Orbit $k{=}8$ & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
 \end{center}
 
 \textbf{$\M$'s orbit dynamics are a convergent funnel.}
-All modalities---images, environmental audio, and text---converge to cosine similarity \textbf{1.000} in the base space after $\sim$4--5 orbit steps.
+All modalities, images, environmental audio, and text, converge to cosine similarity \textbf{1.000} in the base space after $\sim$4--5 orbit steps.
 The orbit IS the interlingua.
 
 The progression reveals the geometry:
@@ -1501,7 +1501,7 @@ The progression reveals the geometry:
 \subsection{The Convergence Is Too Aggressive}
 
 There is a critical subtlety: the orbit converges to cosine 1.000 for \emph{all} inputs, not just semantically matching ones.
-The orbit of a dog image and the orbit of an airplane image also converge to cosine $\sim$1.000---because $\M$'s dominant eigenmode absorbs everything.
+The orbit of a dog image and the orbit of an airplane image also converge to cosine $\sim$1.000, because $\M$'s dominant eigenmode absorbs everything.
 
 The L2 separation tells a different story.
 At the orbit endpoint ($k{=}8$), the L2 distance between same-class cross-modal pairs is $2.1\times$ smaller than between different-class pairs (for img$\leftrightarrow$txt) and $2.6\times$ smaller (for img$\leftrightarrow$env).
@@ -1521,12 +1521,12 @@ Diff-class img$\leftrightarrow$img & $d_{\text{diff}}$ & \textbf{2.1--2.6$\times
 
 \textbf{The orbit provides modality-agnostic direction but not class-discriminative direction.}
 Everything converges to $\M$'s leading eigenmode.
-The discriminative signal is in how fast each eigenmode decays---the transient dynamics, not the fixed point.
+The discriminative signal is in how fast each eigenmode decays, the transient dynamics, not the fixed point.
 
 \subsection{The Interlingua Hypothesis}
 
 This suggests a precise training strategy.
-The orbit is not the final representation---it is the \emph{regulariser} that shows the encoder where the shared geometry wants things to land.
+The orbit is not the final representation, it is the \emph{regulariser} that shows the encoder where the shared geometry wants things to land.
 The useful cross-modal representation is at \textbf{early orbit steps} ($k{=}1$--3), where there is both:
 \begin{itemize}[nosep]
     \item Cross-modal alignment (cosine 0.85--0.96, much better than raw embeddings)
@@ -1580,13 +1580,13 @@ The orbit is the bottleneck that forces the representation through the shared ge
 \end{enumerate}
 
 The key comparison: does orbit-mediated contrastive learning outperform standard (raw embedding) contrastive learning?
-If yes, $\M$'s geometry provides a genuine inductive bias for cross-modal alignment---not just shared coupling patterns, but a usable bridge between modalities.
+If yes, $\M$'s geometry provides a genuine inductive bias for cross-modal alignment, not just shared coupling patterns, but a usable bridge between modalities.
 
 \paragraph{What this would prove.}
 If O1 or O3 produces zero-shot classification accuracy significantly above chance (${>}30\%$ on CIFAR-10, ${>}5\%$ on ESC-50) with modest training ($\sim$30K steps at $d{=}256$), then the ORN offers a genuine multimodal advantage: the shared coupling manifold provides geometric structure that makes cross-modal alignment \emph{easier to learn} than in a standard transformer.
 The orbit is the mechanism: it funnels different modalities toward the same region of base space, and the encoder only needs to learn a rough alignment for $\M$'s dynamics to refine it.
 
-If it fails, the shared coupling geometry is a coincidence of training dynamics, not a usable bridge---and the ORN's multimodal story reduces to parameter efficiency alone.
+If it fails, the shared coupling geometry is a coincidence of training dynamics, not a usable bridge, and the ORN's multimodal story reduces to parameter efficiency alone.
 
 \section{What Would Confirm or Falsify}
 
@@ -1609,10 +1609,10 @@ If it fails, the shared coupling geometry is a coincidence of training dynamics,
 
 \paragraph{Falsifies the theory:}
 \begin{itemize}[nosep]
-    \item Cross-modal coupling has low spectral correlation ($< 0.7$) --- \textbf{REJECTED}: measured $> 0.996$ \checkmark
-    \item SharedM degrades significantly ($> 10\%$) on multimodal tasks --- \textbf{REJECTED}: ORN wins on env audio ($-15\%$), competitive elsewhere \checkmark
-    \item $r^*$ doubles or more with each added modality --- \textbf{REJECTED}: rank 17.5 for 4 modalities vs $\sim$20 for text alone \checkmark
-    \item If frozen-M test shows $> 10\%$ worse than from-scratch --- \textbf{REJECTED}: gap is $+2.2\%$ \checkmark
+    \item Cross-modal coupling has low spectral correlation ($< 0.7$) ,  \textbf{REJECTED}: measured $> 0.996$ \checkmark
+    \item SharedM degrades significantly ($> 10\%$) on multimodal tasks ,  \textbf{REJECTED}: ORN wins on env audio ($-15\%$), competitive elsewhere \checkmark
+    \item $r^*$ doubles or more with each added modality ,  \textbf{REJECTED}: rank 17.5 for 4 modalities vs $\sim$20 for text alone \checkmark
+    \item If frozen-M test shows $> 10\%$ worse than from-scratch ,  \textbf{REJECTED}: gap is $+2.2\%$ \checkmark
 \end{itemize}
 
 All four falsification criteria have been tested and rejected.
@@ -1627,18 +1627,18 @@ The theory survives every test we have designed for it.
 
 A striking convergence has emerged in the 2024--2025 multimodal literature: across diverse architectures and scales, the \emph{same decomposition} appears independently.
 Attention coupling (which tokens relate to which) can be shared across modalities; response mechanisms (FFN, projections) benefit from being modality-specific.
-This is precisely the ORN's coupling--response decomposition---arrived at from a different direction.
+This is precisely the ORN's coupling--response decomposition, arrived at from a different direction.
 
 \paragraph{The Platonic Representation Hypothesis.}
 Huh et al.~\cite{huh2024platonic} demonstrate that as vision and language models scale, their internal representations \emph{converge}: different architectures trained on different objectives and different modalities increasingly measure distance between datapoints in the same way.
-The convergence is not engineered---it emerges from scale and task pressure.
+The convergence is not engineered, it emerges from scale and task pressure.
 They argue this reflects a shared ``platonic representation'' of reality's statistical structure.
 \textbf{For ORN:} if representations converge across modalities and architectures, then the coupling geometry (what relates to what) is genuinely modality-invariant.
 A shared $\M$ that captures this universal relational structure is exactly what the Platonic Representation Hypothesis predicts should exist.
 Our measurement of $>99.6\%$ coupling similarity across 4 modalities (Section~\ref{sec:universal}) is direct evidence for this convergence at the coupling level.
 
 \paragraph{Meta-Transformer: frozen encoder across 12 modalities.}
-Zhang et al.~\cite{zhang2023metatransformer} demonstrate that a single \emph{frozen} ViT encoder---pretrained on one modality---processes 12 modalities (text, image, point cloud, audio, video, time series, tabular, X-ray, infrared, hyperspectral, graph, IMU) without any fine-tuning of the encoder.
+Zhang et al.~\cite{zhang2023metatransformer} demonstrate that a single \emph{frozen} ViT encoder, pretrained on one modality, processes 12 modalities (text, image, point cloud, audio, video, time series, tabular, X-ray, infrared, hyperspectral, graph, IMU) without any fine-tuning of the encoder.
 Only lightweight modality-specific tokenisers and task heads are updated.
 \textbf{For ORN:} Meta-Transformer's frozen encoder is the closest existing architecture to shared $\M$.
 The entire attention mechanism (Q, K, V, FFN) learned from one modality transfers to 11 others.
@@ -1666,7 +1666,7 @@ The tokenisers handle modality-specific encoding; the transformer's attention is
 \paragraph{Dual Attention Transformer: relational vs sensory information.}
 Altabaa \& Lafferty~\cite{altabaa2024dat} factor standard attention into two types: \emph{sensory heads} (properties of individual tokens) and \emph{relational heads} (relationships between tokens).
 The relational component generalises across language, vision, and symbolic reasoning.
-\textbf{For ORN:} DAT's relational heads are conceptually identical to shared $\M$---they isolate the coupling rule from the content response.
+\textbf{For ORN:} DAT's relational heads are conceptually identical to shared $\M$, they isolate the coupling rule from the content response.
 The key difference: DAT uses per-layer relational heads; ORN memoises the relational structure into a single shared $\M$.
 
 \paragraph{Synthesis: the ORN as explicit architecture for an emergent consensus.}
@@ -1700,7 +1700,7 @@ The experimental validation (Section~\ref{sec:v3-multimodal-geometry}) tests whe
 No existing work measures the \emph{geometry} of the shared coupling.
 The Platonic Representation Hypothesis predicts convergence; the ORN provides a way to measure it.
 $\M$'s eigenspectrum is the coupling manifold made tangible: a finite-dimensional space whose rank, eigenmode partitioning, and crystallisation dynamics reveal what relational structure is shared across modalities and what is modality-specific.
-The proposed V3 multimodal geometry experiment (Section~\ref{sec:v3-multimodal-geometry}) directly measures eigenmode usage per modality---which of $\M$'s singular vectors each modality activates---providing the first empirical map of the universal coupling manifold.
+The proposed V3 multimodal geometry experiment (Section~\ref{sec:v3-multimodal-geometry}) directly measures eigenmode usage per modality, which of $\M$'s singular vectors each modality activates, providing the first empirical map of the universal coupling manifold.
 
 
 % ======================================================================
@@ -1708,7 +1708,7 @@ The proposed V3 multimodal geometry experiment (Section~\ref{sec:v3-multimodal-g
 \label{sec:v3-multimodal-geometry}
 % ======================================================================
 
-The key question is not whether multimodal works (it does---our coupling similarity is $>99.6\%$), but \emph{how much of the coupling geometry is intrinsically shared vs modality-specific}, and whether V3's shared FFN creates the cross-modal bridge that V2 lacked.
+The key question is not whether multimodal works (it does, our coupling similarity is $>99.6\%$), but \emph{how much of the coupling geometry is intrinsically shared vs modality-specific}, and whether V3's shared FFN creates the cross-modal bridge that V2 lacked.
 
 \subsection{How Literature Informed Each Design Choice}
 
@@ -1716,14 +1716,14 @@ Every design decision in this experiment is motivated by a specific finding in t
 The goal is not to ``hack on multimodal'' but to measure what is fundamentally shared in the coupling space.
 
 \paragraph{1. The tokeniser is everything (Meta-Transformer~\cite{zhang2023metatransformer}).}
-Meta-Transformer shares a \emph{frozen} encoder across 12 modalities---and it works.
+Meta-Transformer shares a \emph{frozen} encoder across 12 modalities, and it works.
 The only modality-specific component is the tokeniser.
 This told us to stop trying to fix $\M$ or the backbone and instead fix the \emph{input interface}.
 Our prior failures ($0\%$ cross-modal retrieval, Section~\ref{sec:universal}) happened with separate input projections: each modality mapped to a different region of $\R^d$.
 $\M$'s coupling geometry was shared ($>99.6\%$ similarity) but the modalities never met in representation space.
 Variant~B addresses this directly: a shared projection forces all modalities into the same region, so $\M$ can couple them.
 
-\paragraph{2. Coupling is shareable, FFN is not---or is it? (MoT~\cite{liang2024mot}).}
+\paragraph{2. Coupling is shareable, FFN is not, or is it? (MoT~\cite{liang2024mot}).}
 MoT shares attention but separates FFN per modality, achieving 55\% FLOP savings.
 ORN V3 does the opposite: it shares \emph{both} $\M$ and FFN.
 This creates a direct test.
@@ -1734,11 +1734,11 @@ We measure this via CKA alignment: if V3's shared FFN shows higher cross-modal C
 \paragraph{3. Measure the kernel, not the embeddings (Platonic Representation Hypothesis~\cite{huh2024platonic}).}
 Huh et al.\ show convergence at the level of the \emph{distance structure} (kernel), not at the level of raw representations.
 $\M = AB^\top$ defines exactly such a coupling metric.
-This told us to measure \textbf{eigenmode usage per modality}---which modes of $\M$'s singular value decomposition each modality activates---rather than raw embedding cosine similarity (which is low by construction for different modalities).
+This told us to measure \textbf{eigenmode usage per modality}, which modes of $\M$'s singular value decomposition each modality activates, rather than raw embedding cosine similarity (which is low by construction for different modalities).
 If the top-$k$ eigenmodes are shared, the coupling \emph{metric} has converged, exactly as Platonic predicts.
 
 \paragraph{4. Asymmetric relations outperform symmetric (DAT~\cite{altabaa2024dat}).}
-Altabaa \& Lafferty factor attention into relational (structural) and sensory (content) heads, finding that \emph{asymmetric} relational attention outperforms symmetric---directly paralleling our finding that $AB^\top$ beats $LL^\top$.
+Altabaa \& Lafferty factor attention into relational (structural) and sensory (content) heads, finding that \emph{asymmetric} relational attention outperforms symmetric, directly paralleling our finding that $AB^\top$ beats $LL^\top$.
 This validates tracking $\M$'s asymmetry ($\|\M - \M^\top\|/\|\M\|$) throughout training.
 If asymmetry is consistent across modalities, the relational geometry is genuinely universal.
 
@@ -1751,7 +1751,7 @@ Observing this U-shape would confirm that $\M$ performs the modality-invariant c
 \paragraph{6. Crystallise before specialising (our frozen-M result $+$ developmental biology).}
 Our frozen-M transfer gap ($+0.73\%$) plus Meta-Transformer's frozen encoder show that coupling geometry should be established before modality-specific training.
 Variant~C implements this: a dedicated $\M$ crystallisation phase where $\M$ sees all modalities in alternating steps before response heads specialise.
-This mirrors biological development (connectivity before specialisation---realisation~114 from the research diary) and the phased training harness designed on Day~6.
+This mirrors biological development (connectivity before specialisation, realisation~114 from the research diary) and the phased training harness designed on Day~6.
 
 \subsection{Design}
 
@@ -1760,7 +1760,7 @@ Three training strategies on V3 ($d{=}128$, $L{=}6$, 6x wide shared FFN, three m
 \begin{description}[nosep]
 \item[A: Separate projections (baseline).] Each modality has its own linear projection into $d$-space.
 This is what failed before: fibers are disjoint, coupling similarity $>99.6\%$ but zero cross-modal retrieval.
-Included as control---Meta-Transformer's lesson predicts this should underperform.
+Included as control, Meta-Transformer's lesson predicts this should underperform.
 \item[B: Shared projection + modality tokens.] All modalities project through the \emph{same} linear layer into $d$-space.
 A learned modality token (e.g.\ \texttt{[IMG]}, \texttt{[AUD]}, \texttt{[TXT]}) prepended to each sequence tells the model which modality it processes.
 Forces all modalities into the same region of representation space.
@@ -1808,18 +1808,18 @@ If the shared FFN creates a cross-modal bridge (the V3 hypothesis):
 Our first multimodal experiment (V1) achieved 0\% cross-modal retrieval despite $>99.6\%$ coupling similarity across modalities.
 Diagnosis: three design bugs broke $\M$-alignment:
 \begin{enumerate}[nosep]
-    \item \textbf{Separate modality tokens} --- different learned starting points for text and image guaranteed different orbits regardless of $\M$.
-    \item \textbf{Unpaired contrastive} --- random text pushed toward random images. InfoNCE without semantic pairing is noise.
-    \item \textbf{No input distribution alignment} --- the text embedding and image projection produced different output distributions. $\M$ could trivially distinguish modalities from input statistics alone.
+    \item \textbf{Separate modality tokens} ,  different learned starting points for text and image guaranteed different orbits regardless of $\M$.
+    \item \textbf{Unpaired contrastive} ,  random text pushed toward random images. InfoNCE without semantic pairing is noise.
+    \item \textbf{No input distribution alignment} ,  the text embedding and image projection produced different output distributions. $\M$ could trivially distinguish modalities from input statistics alone.
 \end{enumerate}
 
 The theory requires: $\M$ must be modality-agnostic.
 Both modalities must enter $\M$'s coupling space in the \emph{same} distribution.
 Three fixes, each derived from this principle:
 \begin{enumerate}[nosep]
-    \item \textbf{Single shared CLS token} --- both modalities start from the same point. Modality information comes from content, not from the starting token.
-    \item \textbf{Shared input normalisation} (RMSNorm after projection) --- forces the same distribution into $\M$.
-    \item \textbf{Paired contrastive} from CIFAR-10 labels --- pseudo-captions (``a picture of a dog'') paired with their images via InfoNCE.
+    \item \textbf{Single shared CLS token} ,  both modalities start from the same point. Modality information comes from content, not from the starting token.
+    \item \textbf{Shared input normalisation} (RMSNorm after projection) ,  forces the same distribution into $\M$.
+    \item \textbf{Paired contrastive} from CIFAR-10 labels ,  pseudo-captions (``a picture of a dog'') paired with their images via InfoNCE.
 \end{enumerate}
 
 \subsection{Results: V2 Theory-Aligned Design}
@@ -1840,7 +1840,7 @@ Step & CIFAR-10 & Cross-modal & $\M$ rank & SV[0] \\
 20,000 & 63.1\% & 59.7\% & 141 & 6.55 \\
 \textbf{28,000} & \textbf{64.2\%} & \textbf{60.5\%} & \textbf{141} & \textbf{6.55} \\
 \midrule
-Chance & 10\% & 10\% & --- & --- \\
+Chance & 10\% & 10\% & ,  & ,  \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1854,7 +1854,7 @@ SV[0] grows monotonically (2.59 $\to$ 6.55), indicating $\M$ is sharpening its c
 \begin{enumerate}[nosep]
     \item \textbf{$\M$ bridges modalities when the input interface is designed correctly.}
     The same $\M$ that was stuck at 0\% in V1 reaches 60.5\% in V2.
-    The coupling geometry was never the problem --- the input projections were.
+    The coupling geometry was never the problem ,  the input projections were.
 
     \item \textbf{$\M$ crystallises on multiple modalities simultaneously.}
     Rank 180 $\to$ 141 is normal crystallisation, comparable to text-only training (V2: 332 $\to$ 69 at $d{=}576$).
@@ -2065,7 +2065,7 @@ Text LM loss               & Causal attention   & Causal attention (unchanged) \
 RoPE for text              & 1D from pos 0      & 1D from pos 0 (no prefix shift) \\
 RoPE for images            & 1D (meaningless)    & Identity (no positional encoding) \\
 Input normalisation        & Shared RMSNorm      & Shared RMSNorm (from V2) \\
-CLS/MOD prefix tokens      & Prepended           & Removed --- mean pool needs no CLS \\
+CLS/MOD prefix tokens      & Prepended           & Removed ,  mean pool needs no CLS \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -2144,13 +2144,13 @@ This explains two persistent failures:
     \item \textbf{Fiber disjointness.} $\M$ discovers that image patches and text tokens couple with $>$99.6\% similarity, but the modalities land in different regions of $\R^d$.
     The coupling is shared; the fibers are disjoint.
     $\M$ never received a signal that an image of a dog and the word ``dog'' should be \emph{near each other}.
-    \item \textbf{Weak embeddings.} ORN V2 (108M, 4B tokens FineWeb-Edu) achieves 0.31 on STSBenchmark---below GloVe.
+    \item \textbf{Weak embeddings.} ORN V2 (108M, 4B tokens FineWeb-Edu) achieves 0.31 on STSBenchmark, below GloVe.
     The model can predict the next word but cannot judge whether two sentences mean the same thing.
 \end{enumerate}
 
 Contrastive training provides the missing signal.
 It tells $\M$: these two sequences should map to nearby representations (positive pair); these two should map far apart (negative pair).
-This is \textbf{between-sequence coupling}---the global analogue of $\M$'s local coupling geometry.
+This is \textbf{between-sequence coupling}, the global analogue of $\M$'s local coupling geometry.
 
 \subsection{Contrastive Training as Part of Pretraining}
 
@@ -2169,7 +2169,7 @@ InfoNCE on cross-modal pairs provides this pressure.
 
 \subsection{Spectral Hard Negatives}
 
-$\M$'s eigenspectrum provides a unique mechanism for hard negative mining---a critical component of embedding quality:
+$\M$'s eigenspectrum provides a unique mechanism for hard negative mining, a critical component of embedding quality:
 
 \begin{itemize}[nosep]
     \item Two texts close in top modes (same form) but far in tail modes (different topic) are natural hard negatives for topic retrieval.
@@ -2177,14 +2177,14 @@ $\M$'s eigenspectrum provides a unique mechanism for hard negative mining---a cr
     \item Cross-modal pairs close in top modes (shared coupling) but far in tail modes (disjoint fibers) are hard negatives for alignment.
 \end{itemize}
 
-No external model (GPT-4) is needed to generate hard negatives---$\M$'s spectral decomposition provides them for free.
+No external model (GPT-4) is needed to generate hard negatives, $\M$'s spectral decomposition provides them for free.
 This is a direct advantage of the shared coupling architecture over standard transformers.
 
 \subsection{Conjecture: Orbit Isometry as Self-Supervised Contrastive}
 \label{sec:orbit-contrastive}
 
 \begin{conjecture}[Self-contrastive ORN]
-Two sequences whose orbit trajectories through $\M$'s eigenspectrum are isometric---same eigenmode activation pattern at each depth---are structurally equivalent.
+Two sequences whose orbit trajectories through $\M$'s eigenspectrum are isometric, same eigenmode activation pattern at each depth, are structurally equivalent.
 The orbit trajectory itself provides a self-supervised contrastive signal, requiring no external labels or paired data.
 \end{conjecture}
 
@@ -2205,7 +2205,7 @@ Both arise from one operator.
 No external supervision, no paired data, no separate contrastive dataset.
 
 \paragraph{Experimental evidence so far.}
-Orbit trajectory embeddings ($\mathcal{T}(x) \in \R^{L \times k}$, flattened) achieve 97.7\% kNN accuracy on communicative form classification---the best of any representation tested, beating static top-mode projection (88.3\%) and full embedding (90.6\%).
+Orbit trajectory embeddings ($\mathcal{T}(x) \in \R^{L \times k}$, flattened) achieve 97.7\% kNN accuracy on communicative form classification, the best of any representation tested, beating static top-mode projection (88.3\%) and full embedding (90.6\%).
 The top-5 most similar trajectory pairs are all correct form AND topic matches (cosine similarity ${>}0.99$).
 
 However, orbit trajectory scores 0.247 on STSBenchmark (below mean-pool baseline at 0.314).
@@ -2231,6 +2231,6 @@ For multimodal, the same ablation applies: orbit isometry across modalities (ima
 \paragraph{Risks.}
 Orbit trajectories may be too uniform (all sequences converge to $\M$'s dominant eigenmode, giving high similarity everywhere) or too noisy (sequence-specific perturbations dominate, masking structural similarity).
 The eigenmode projection may not be discriminative enough at each layer to distinguish structurally equivalent sequences from merely similar ones.
-The STSBenchmark result (0.247) shows that structural equivalence $\neq$ semantic similarity---the orbit signal alone is insufficient for content-level judgments.
+The STSBenchmark result (0.247) shows that structural equivalence $\neq$ semantic similarity, the orbit signal alone is insufficient for content-level judgments.
 
 \end{document}
