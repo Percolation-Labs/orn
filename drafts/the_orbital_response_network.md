@@ -16,7 +16,11 @@ Every transformer layer learns its own pair of coupling matrices *W_Q* and *W_K*
 
 The raw matrices point in different directions. Cosine similarity between any two *M_l* matrices sits around 0.005. But the spectrum is the same everywhere. On a small trained transformer in the repo, the pairwise Spearman correlation of sorted eigenvalue magnitudes is 0.999 across layers. On real pretrained transformers (three GPT-2 sizes, SmolLM2-135M, Qwen2.5-0.5B), the correlation sits between 0.93 and 0.99.
 
-*M* is a bilinear form. Its spectrum is invariant under orthogonal rotation. What the data is telling us is that every layer has learned the same bilinear form, up to rotation. The layers are not independent draws from a distribution of coupling rules. They are one rule, expressed in different coordinate frames, acting on a residual stream that rotates through those frames as depth increases.
+*M* is a bilinear form. Its spectrum is invariant under orthogonal rotation.
+
+> What the data is telling us is that every layer has learned the same bilinear form, up to rotation.
+
+The layers are not independent draws from a distribution of coupling rules. They are one rule, expressed in different coordinate frames, acting on a residual stream that rotates through those frames as depth increases.
 
 I spent a while checking whether this is an artefact of training, a quirk of one model, or a feature of one scale. It reproduces across model families, across seeds, and across training runs. Same thing showing up every time.
 
