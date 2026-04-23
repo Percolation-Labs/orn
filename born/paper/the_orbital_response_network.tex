@@ -809,6 +809,17 @@ The following limitations are genuine and distinct from the capacity-relocation 
 
 \textit{Experimental gaps.} Single-seed numbers (no error bars) on Tables~\ref{tab:scaling} and~\ref{tab:moe}; full-harness V3-605M benchmark row (currently \texttt{limit=200} on MPS); spectral-invariance coverage beyond the five models in Table~\ref{tab:spectral}; BLiMP as a standard test of the syntactic-separation claim. None of these require an architectural change.
 
+\paragraph{Honest read of V3-605M.}
+A 605M ORN-V3 trained on 3B FineWeb-Edu tokens for about \$394 averages 47\% across the 8-task zero-shot suite (\texttt{limit=200}, MPS), passing GPT-2 Small (300B tokens) and SmolLM-135M (600B tokens) on the mean, with structural-reasoning tasks driving most of the lift (HellaSwag 33$\to$47 V2$\to$V3, ARC-Easy 46$\to$52, OpenBookQA 31$\to$37). BLiMP across 20 subtasks shows a diagnostically specific failure pattern: island constraints and long-distance NPI licensing (sentential\_subject\_island 27, complex\_NP\_island 49, matrix\_question\_npi\_licensor\_present 23) are where the model cracks; everything else is 70--100\%. Scaling V2 $\to$ V3 did not close the island-constraint failures; whether this is a structural ceiling of shared coupling or a 3B-token shortfall is not yet distinguishable.
+
+\paragraph{Planned scale-up.}
+Two experiments are intended to convert this from a well-motivated preliminary result into something defensible against the obvious reviewer questions.
+(a) A 10B-token V3 continuation. V2's WSD decay phase from 4B to 8B tokens moved ARC-Easy from 30.5\% to 46.2\% while $\M$'s rank and asymmetry barely changed; V3 was capped at 3B before its equivalent decay had finished acting. Running V3 out to 10B tokens (roughly \$1000 on A100) should show whether the 605M model's downstream gaps close the way V2's did, and specifically whether the island-constraint BLiMP subtasks move.
+(b) A same-compute transformer baseline trained on the same 8B tokens as V2 (and 3B as V3) to produce the matched-compute comparison Table~\ref{tab:benchmarks} currently lacks. Until (a) and (b) land, the present paper's claim is the architectural substitution does not hurt and unlocks the shared object; it is not that ORN is state of the art.
+
+\paragraph{Stepping-stone status.}
+ORN is a stepping stone. In parallel with V3 scale-up, we are working on a lateralised two-hemisphere architecture (LORN) that places a separate structural-observer (R) on top of an ORN (L) predictor, exchanging a low-bandwidth gist signal that R distills from L's residual-stream dynamics. LORN is developed in a companion paper. The current paper establishes the ORN half of that partition: a shared coupling rule, a trained $\M$ that is a single small low-rank object you can reason about, and a residual-stream trajectory that carries exactly the kind of structural content a second system can read. What ORN gives up in per-layer attention specialisation is what LORN's R is designed to take on, observed rather than stored.
+
 
 % ======================================================================
 \section{Conclusion}
