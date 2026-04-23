@@ -160,6 +160,25 @@ orn diagnose --checkpoint orn-v3-605m
 </code></pre>
 <p>Every key result lives as a separate Python module that returns its headline numbers as a dict and, for most, emits the published figure as a PNG. A registry maps short codes (SPE-01, COU-02, COM-01) to modules. Pytest exercises every module as a smoke test. If a refactor breaks a claim, the test for that claim fails and the figure stops matching what the code produces.</p>
 <p>The technical report, the published checkpoints, and the experimental harness are at <a href="https://github.com/Percolation-Labs/orn">github.com/Percolation-Labs/orn</a>. Feedback welcome.</p>
+<h2>References</h2>
+<p><strong>Cited prior work on parameter sharing in transformers.</strong></p>
+<ol>
+<li>Lan, Z., Chen, M., Goodman, S., Gimpel, K., Sharma, P., and Soricut, R. <em>ALBERT: A Lite BERT for Self-supervised Learning of Language Representations.</em> ICLR 2020. <a href="https://arxiv.org/abs/1909.11942">arXiv:1909.11942</a>.</li>
+<li>Shazeer, N. <em>Fast Transformer Decoding: One Write-Head is All You Need.</em> 2019. <a href="https://arxiv.org/abs/1911.02150">arXiv:1911.02150</a>. <em>(Multi-Query Attention.)</em></li>
+<li>Ainslie, J., Lee-Thorp, J., de Jong, M., Zemlyanskiy, Y., Lebron, F., and Sanghai, S. <em>GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints.</em> EMNLP 2023. <a href="https://arxiv.org/abs/2305.13245">arXiv:2305.13245</a>.</li>
+<li>Pires, T., Vilar, D., Lopes, A. V., et al. <em>One Wide Feedforward is All You Need.</em> EMNLP / WMT 2023. <a href="https://arxiv.org/abs/2309.01826">arXiv:2309.01826</a>. <em>(The prior work ORN V3 builds on for the wide shared FFN.)</em></li>
+<li>Bae, S., et al. <em>Relaxing Recursive Transformers with Per-Layer Low-Rank Adaptation.</em> ICLR 2025. <a href="https://arxiv.org/abs/2410.20672">arXiv:2410.20672</a>.</li>
+<li><em>Share Your Attention: Transformer Weight Sharing via Matrix-based Dictionary Learning (MASA).</em> 2025. <a href="https://arxiv.org/abs/2503.08040">arXiv:2503.08040</a>.</li>
+</ol>
+<p><strong>Published ORN checkpoints (HuggingFace).</strong></p>
+<ol>
+<li>ORN V2 108M on 8B tokens of FineWeb-Edu: <a href="https://huggingface.co/mr-saoirse/orn-v2-108m">huggingface.co/mr-saoirse/orn-v2-108m</a>.</li>
+<li>ORN V3 605M on 3B tokens of FineWeb-Edu: <a href="https://huggingface.co/mr-saoirse/orn-v3-605m">huggingface.co/mr-saoirse/orn-v3-605m</a>. Intermediate 1B and 2B snapshots alongside.</li>
+</ol>
+<p><strong>Repository and reproducible experiments.</strong></p>
+<ol>
+<li>ORN source, CLI, reproduce registry, and technical report: <a href="https://github.com/Percolation-Labs/orn">github.com/Percolation-Labs/orn</a>. The fast-tier reproductions in the article (COU-02 coupling invariance, SPE-01 spectral universality across seeds, COM-01 colour-matching compression) all finish in under fifteen seconds on a laptop via <code>orn reproduce</code>.</li>
+</ol>
 </article>
 </body>
 </html>
