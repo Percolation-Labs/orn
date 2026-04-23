@@ -10,13 +10,13 @@ The more interesting question is: if the data could tell you what is already inv
 
 ## The observation
 
-Every transformer layer learns its own pair of coupling matrices $W_Q$ and $W_K$. The object that actually determines which tokens attend to which is not either matrix alone but the product $M_l = W_Q^{\top} W_K$. If you look at the eigenvalue magnitudes of $M_l$ at every layer of a trained transformer and plot them on top of each other, they line up.
+Every transformer layer learns its own pair of coupling matrices *W_Q* and *W_K*. The object that actually determines which tokens attend to which is not either matrix alone but the product *M_l* = *W_Q*ᵀ *W_K*. If you look at the eigenvalue magnitudes of *M_l* at every layer of a trained transformer and plot them on top of each other, they line up.
 
 ![Per-layer coupling eigenspectra overlap; Spearman heatmap across layers](https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/COU-02_coupling_manifold_8d.png)
 
-The raw matrices point in different directions. Cosine similarity between any two $M_l$ matrices sits around 0.005. But the spectrum is the same everywhere. On a small trained transformer in the repo, the pairwise Spearman correlation of sorted eigenvalue magnitudes is 0.999 across layers. On real pretrained transformers (three GPT-2 sizes, SmolLM2-135M, Qwen2.5-0.5B), the correlation sits between 0.93 and 0.99.
+The raw matrices point in different directions. Cosine similarity between any two *M_l* matrices sits around 0.005. But the spectrum is the same everywhere. On a small trained transformer in the repo, the pairwise Spearman correlation of sorted eigenvalue magnitudes is 0.999 across layers. On real pretrained transformers (three GPT-2 sizes, SmolLM2-135M, Qwen2.5-0.5B), the correlation sits between 0.93 and 0.99.
 
-$M$ is a bilinear form. Its spectrum is invariant under orthogonal rotation. What the data is telling us is that every layer has learned the same bilinear form, up to rotation. The layers are not independent draws from a distribution of coupling rules. They are one rule, expressed in different coordinate frames, acting on a residual stream that rotates through those frames as depth increases.
+*M* is a bilinear form. Its spectrum is invariant under orthogonal rotation. What the data is telling us is that every layer has learned the same bilinear form, up to rotation. The layers are not independent draws from a distribution of coupling rules. They are one rule, expressed in different coordinate frames, acting on a residual stream that rotates through those frames as depth increases.
 
 I spent a while checking whether this is an artefact of training, a quirk of one model, or a feature of one scale. It reproduces across model families, across seeds, and across training runs. Same thing showing up every time.
 
@@ -24,15 +24,15 @@ I spent a while checking whether this is an artefact of training, a quirk of one
 
 ## Exploiting it
 
-If one rule is enough for every layer, parameterise it once. Replace per-layer $W_Q$ and $W_K$ with a single shared pair $A, B \in \mathbb{R}^{d \times d}$, and define
+If one rule is enough for every layer, parameterise it once. Replace per-layer *W_Q* and *W_K* with a single shared pair *A*, *B* ∈ ℝ^(d×d), and define
 
-$$
-Q_l = h_l \cdot A, \quad K_l = h_l \cdot B, \quad M = AB^{\top}
-$$
+```
+Q_l = h_l · A        K_l = h_l · B        M = A Bᵀ
+```
 
-applied at every layer of a stack. Per-layer variation comes from the residual stream $h_l$, which the transformer already updates layer by layer. Response heads ($W_V$, $W_O$, the FFN) stay per-layer, because the response to coupling legitimately varies with depth.
+applied at every layer of a stack. Per-layer variation comes from the residual stream *h_l*, which the transformer already updates layer by layer. Response heads (*W_V*, *W_O*, the FFN) stay per-layer, because the response to coupling legitimately varies with depth.
 
-We call this an Orbital Response Network. One pair $A, B$ governs coupling across the whole stack. The asymmetry matters: $M = AB^{\top}$, not $M = LL^{\top}$. Language coupling is directed (subjects and verbs couple differently depending on who is attending to whom), and symmetric coupling loses about 3.6% on validation on autoregressive tasks.
+We call this an Orbital Response Network. One pair *A*, *B* governs coupling across the whole stack. The asymmetry matters: *M* = *A Bᵀ*, not *M* = *L Lᵀ*. Language coupling is directed (subjects and verbs couple differently depending on who is attending to whom), and symmetric coupling loses about 3.6% on validation on autoregressive tasks.
 
 ## How this is different from prior weight sharing
 
