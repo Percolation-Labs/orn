@@ -555,6 +555,22 @@ TinyStories & \textbf{2.004} & 2.317 & $-13.5\%$ \\
 \label{tab:transfer}
 \end{table}
 
+\subsection{ORN-native diagnostics}
+\label{sec:native_diag}
+
+Some quantities are cheap to measure on an ORN and either impossible or expensive on a transformer, because the ORN exposes a single shared object to interrogate rather than $L$ distributed ones.
+Reporting these alongside standard benchmarks gives a different view of what the architecture is doing; they are not substitutes for external benchmarks, they are complementary evidence.
+
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item \textbf{Spectral crystallisation trajectory.} Effective rank, condition number and asymmetry of $\M$ across training checkpoints (Section~\ref{sec:geometry}). On a transformer this would mean tracking $L$ separate $\M_l$; on ORN it is a single curve per quantity. We report it for both V1 (rank $19$ stable from 1B tokens) and V2 (rank $70\pm 1$ stable from 3B tokens).
+\item \textbf{Residual-stream syntactic separation.} Per-depth cosine between minimal pairs, directly measured on a shared-coupling model because syntax cannot hide in per-layer weight differences (Section~\ref{sec:discussion}). On GPT-2 the equivalent measurement is diluted by per-layer specialisation; we report a $60\times$ gap as preliminary evidence, and BLiMP per layer as the follow-up.
+\item \textbf{Correction-gate magnitude as a depth diagnostic.} The per-layer sigmoid-gated correction is initialised near zero; its mean magnitude at trained state indicates where the mean-field coupling needs the most help. Gate magnitudes vary by modality (audio $0.163$, text $0.106$, images $0.058$) and by depth within a given run. The transformer has no analogue; there is no discrete knob you can read to tell which layers the shared coupling approximation is under-serving.
+\item \textbf{Frozen-backbone adaptation cost.} Table~\ref{tab:frozen} reports the validation-loss gap when only response heads are retrained on a new dataset ($1.4\%$). The transformer analogue (freezing all $W_Q, W_K$ layer-by-layer) is the baseline in Table~\ref{tab:transfer}: shared-$\M$ transfer is $12$--$19\%$ better, consistent with the shared backbone being a genuine data-general object.
+\item \textbf{Where shared coupling compresses} (for MoE / routing). In an ORN-MoE, routing choices and expert specialisation can be reported in isolation from coupling, since the coupling is one object serving all experts. The correct comparison for expert entropy on an ORN-MoE is against TF-MoE experts that include their own attention; we report Table~\ref{tab:moe} as a preliminary snapshot of this axis.
+\end{enumerate}
+
+These diagnostics are not benchmark wins; they are the measurements the architecture makes newly practical. Where an external benchmark is ambiguous (matched-compute comparisons pending), the internal diagnostics give an independent read on whether the model is behaving as the theory predicts.
+
 \subsection{Multimodal Experiments}
 
 If coupling geometry is truly a domain-general relational structure, a single $\M$ should work across modalities.
