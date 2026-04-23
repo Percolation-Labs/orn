@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Helvetica, Arial, sans-serif">
+  <!-- Canonical AIAYN-style two-panel architecture diagram.
+       Left: Standard transformer layer.  Right: Orbital Response Network layer.
+       Uses the same stacked-rounded-rect idiom with pastel fills.         -->
+
+  <defs>
+    <!-- Arrow marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4b5563"/>
+    </marker>
+    <!-- Subtle drop-shadow for depth on the multi-head stack -->
+    <filter id="soft" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <style>
+    .title  { font-size: 18px; font-weight: 600; fill: #111827; }
+    .ptitle { font-size: 14px; font-weight: 600; fill: #111827; }
+    .block  { stroke-width: 1.1; filter: url(#soft); }
+    .btxt   { font-size: 13px; font-weight: 500; fill: #1f2937; }
+    .sub    { font-size: 10.5px; fill: #4b5563; }
+    .side   { font-size: 10.5px; font-style: italic; }
+    .label  { font-size: 11px; fill: #6b7280; }
+    .stream { stroke: #4b5563; stroke-width: 1.2; fill: none; }
+    .tick   { stroke: #9ca3af; stroke-width: 1; stroke-dasharray: 3 3; }
+  </style>
+
+  <!-- ── Title ── -->
+  <text x="480" y="28" class="title" text-anchor="middle">
+    Decomposing attention: what to share, what to keep per-layer
+  </text>
+
+  <!-- ========================================================= -->
+  <!-- LEFT PANEL: Standard Transformer Layer                    -->
+  <!-- ========================================================= -->
+  <g transform="translate(0,0)">
+    <!-- Panel frame -->
+    <rect x="40" y="50" width="420" height="540" rx="10" ry="10"
+          fill="white" stroke="#e5e7eb" stroke-width="1"/>
+    <text x="250" y="76" class="ptitle" text-anchor="middle">Standard transformer layer</text>
+
+    <!-- residual in -->
+    <text x="250" y="100" class="label" text-anchor="middle">residual stream (from layer l-1)</text>
+    <line class="stream" x1="250" y1="108" x2="250" y2="134" marker-end="url(#arrow)"/>
+
+    <!-- Multi-Head Attention: three stacked boxes to suggest "multi-head" -->
+    <g>
+      <rect class="block" x="130" y="158" width="240" height="58" rx="7" ry="7"
+            fill="#fef3c7" stroke="#f59e0b"/>
+      <rect class="block" x="124" y="152" width="240" height="58" rx="7" ry="7"
+            fill="#fef3c7" stroke="#f59e0b"/>
+      <rect class="block" x="118" y="146" width="240" height="58" rx="7" ry="7"
+            fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="238" y="173" class="btxt" text-anchor="middle">Multi-Head Attention</text>
+      <text x="238" y="189" class="sub" text-anchor="middle">
+        Q = h·W_Q^(l),  K = h·W_K^(l)
+      </text>
+    </g>
+    <text x="384" y="176" class="side" fill="#b45309">per-layer W_Q, W_K</text>
+
+    <line class="stream" x1="250" y1="208" x2="250" y2="232" marker-end="url(#arrow)"/>
+
+    <!-- Add & Norm 1 -->
+    <rect class="block" x="150" y="232" width="200" height="40" rx="7" ry="7"
+          fill="#dbeafe" stroke="#3b82f6"/>
+    <text x="250" y="258" class="btxt" text-anchor="middle">Add &amp; Norm</text>
+
+    <line class="stream" x1="250" y1="276" x2="250" y2="304" marker-end="url(#arrow)"/>
+
+    <!-- Feed Forward -->
+    <rect class="block" x="130" y="304" width="240" height="58" rx="7" ry="7"
+          fill="#d1fae5" stroke="#10b981"/>
+    <text x="250" y="327" class="btxt" text-anchor="middle">Feed Forward</text>
+    <text x="250" y="345" class="sub" text-anchor="middle">SwiGLU, per-layer</text>
+    <text x="384" y="333" class="side" fill="#047857">per-layer FFN</text>
+
+    <line class="stream" x1="250" y1="366" x2="250" y2="390" marker-end="url(#arrow)"/>
+
+    <!-- Add & Norm 2 -->
+    <rect class="block" x="150" y="390" width="200" height="40" rx="7" ry="7"
+          fill="#dbeafe" stroke="#3b82f6"/>
+    <text x="250" y="416" class="btxt" text-anchor="middle">Add &amp; Norm</text>
+
+    <!-- residual out -->
+    <line class="stream" x1="250" y1="434" x2="250" y2="480" marker-end="url(#arrow)"/>
+    <text x="250" y="498" class="label" text-anchor="middle">residual stream (to layer l+1)</text>
+  </g>
+
+  <!-- ========================================================= -->
+  <!-- RIGHT PANEL: Orbital Response Network Layer               -->
+  <!-- ========================================================= -->
+  <g transform="translate(0,0)">
+    <rect x="500" y="50" width="420" height="540" rx="10" ry="10"
+          fill="white" stroke="#e5e7eb" stroke-width="1"/>
+    <text x="710" y="76" class="ptitle" text-anchor="middle">Orbital Response Network layer</text>
+
+    <!-- residual in -->
+    <text x="710" y="100" class="label" text-anchor="middle">residual stream (from layer l-1)</text>
+    <line class="stream" x1="710" y1="108" x2="710" y2="134" marker-end="url(#arrow)"/>
+
+    <!-- Multi-Head Attention stack -->
+    <g>
+      <rect class="block" x="590" y="158" width="240" height="58" rx="7" ry="7"
+            fill="#fef3c7" stroke="#f59e0b"/>
+      <rect class="block" x="584" y="152" width="240" height="58" rx="7" ry="7"
+            fill="#fef3c7" stroke="#f59e0b"/>
+      <rect class="block" x="578" y="146" width="240" height="58" rx="7" ry="7"
+            fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="698" y="173" class="btxt" text-anchor="middle">Multi-Head Attention</text>
+      <text x="698" y="189" class="sub" text-anchor="middle">
+        Q = h·A,  K = h·B   (shared)
+      </text>
+    </g>
+    <text x="844" y="176" class="side" fill="#1d4ed8">shared A, B</text>
+    <text x="844" y="192" class="side" fill="#4b5563">V, O: per-layer</text>
+
+    <line class="stream" x1="710" y1="208" x2="710" y2="232" marker-end="url(#arrow)"/>
+
+    <rect class="block" x="610" y="232" width="200" height="40" rx="7" ry="7"
+          fill="#dbeafe" stroke="#3b82f6"/>
+    <text x="710" y="258" class="btxt" text-anchor="middle">Add &amp; Norm</text>
+
+    <line class="stream" x1="710" y1="276" x2="710" y2="304" marker-end="url(#arrow)"/>
+
+    <!-- Feed Forward: highlight it's a SINGLE shared wide FFN in V3 -->
+    <rect class="block" x="590" y="304" width="240" height="58" rx="7" ry="7"
+          fill="#ede9fe" stroke="#7c3aed"/>
+    <text x="710" y="327" class="btxt" text-anchor="middle">Shared Wide FFN</text>
+    <text x="710" y="345" class="sub" text-anchor="middle">SwiGLU, 8× width, shared</text>
+    <text x="844" y="333" class="side" fill="#6d28d9">shared (ORN-V3)</text>
+
+    <line class="stream" x1="710" y1="366" x2="710" y2="390" marker-end="url(#arrow)"/>
+
+    <rect class="block" x="610" y="390" width="200" height="40" rx="7" ry="7"
+          fill="#dbeafe" stroke="#3b82f6"/>
+    <text x="710" y="416" class="btxt" text-anchor="middle">Add &amp; Norm</text>
+
+    <line class="stream" x1="710" y1="434" x2="710" y2="458" marker-end="url(#arrow)"/>
+
+    <!-- Perturbative correction (per-layer) -->
+    <rect class="block" x="610" y="458" width="200" height="40" rx="7" ry="7"
+          fill="#d1fae5" stroke="#10b981"/>
+    <text x="710" y="484" class="btxt" text-anchor="middle">Perturbative correction</text>
+    <text x="844" y="483" class="side" fill="#047857">per-layer gate + MLP</text>
+
+    <line class="stream" x1="710" y1="502" x2="710" y2="534" marker-end="url(#arrow)"/>
+    <text x="710" y="552" class="label" text-anchor="middle">residual stream (to layer l+1)</text>
+  </g>
+
+  <!-- ========================================================= -->
+  <!-- Legend                                                    -->
+  <!-- ========================================================= -->
+  <g transform="translate(140, 600)">
+    <rect x="0"   y="-9" width="14" height="14" rx="2" fill="#fef3c7" stroke="#f59e0b"/>
+    <text x="22" y="2" class="sub">Multi-Head Attention</text>
+    <rect x="180" y="-9" width="14" height="14" rx="2" fill="#dbeafe" stroke="#3b82f6"/>
+    <text x="202" y="2" class="sub">Add &amp; Norm (residual)</text>
+    <rect x="360" y="-9" width="14" height="14" rx="2" fill="#d1fae5" stroke="#10b981"/>
+    <text x="382" y="2" class="sub">per-layer response</text>
+    <rect x="540" y="-9" width="14" height="14" rx="2" fill="#ede9fe" stroke="#7c3aed"/>
+    <text x="562" y="2" class="sub">shared across all L layers</text>
+  </g>
+</svg>
