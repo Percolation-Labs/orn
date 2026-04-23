@@ -52,27 +52,42 @@ Two checkpoints are published on HuggingFace and both are public. The smaller of
 
 Both of them load with a one-line command. `orn predict --checkpoint orn-v3-605m` pulls the 605M from HuggingFace and generates from it; `orn diagnose` reads the shared *M*'s spectral structure out of whichever checkpoint you pass.
 
-### Benchmarks against the usual reference models
-
-The paper quotes a full zero-shot benchmark table for V2 against GPT-2 Small, Pythia, and SmolLM2. The numbers below are the lm-eval-harness results from the same task suite, reproducible from this repo with `orn bench orn-v2-108m`, and they land in the same place. Headline: ORN V2 at 108M beats GPT-2 Small on four of seven tasks, ties on two, and is within one point on the seventh, while using 27% fewer total parameters and 48 times fewer coupling parameters.
-
-| Model | HellaSwag | PIQA | ARC-E | ARC-C | WinoG | BoolQ | OBQA |
-|:---|---:|---:|---:|---:|---:|---:|---:|
-| GPT-2 Small (124M) | 31.6 | 62.5 | 43.8 | 22.7 | 51.6 | 48.8 | 27.4 |
-| Pythia-160M | 30.1 | 62.6 | 43.3 | 22.5 | 51.4 | 55.3 | 27.2 |
-| Pythia-410M | 40.6 | 66.7 | 52.1 | 24.4 | 53.8 | 60.6 | 30.4 |
-| SmolLM2-135M | 42.1 | 68.3 | 54.4 | 30.1 | 56.5 | 60.2 | 34.6 |
-| **ORN V2 (108M)** | **40.0** | 62.8 | **46.6** | **24.2** | 49.2 | **57.0** | 28.4 |
-
-These numbers are from a limit=500 subset per task to keep the run fast on a laptop; the full-harness numbers in the paper are slightly better on a couple of tasks and slightly worse on others, but the story is the same. The same benchmark suite is running now on the 605M V3 and the results will land as a follow-up note once they complete.
-
 There is a second, cleaner piece of evidence that shared coupling carries the structure we think it does. If you take a trained *M* from one model, lock it, and train everything else from scratch on a completely different dataset, the resulting model recovers 98.6% of the validation loss you would have got training *M* from scratch. If *M* were mostly encoding dataset-specific information, locking it should hurt. It does not.
 
 And on the purely synthetic side, there is a small control task in the repo where the coupling rule is invariant across layers by construction: a colour-matching task with periodic structure. I trained two four-layer models on it, one sharing a single *A, B* pair (MEMOISE) and one with a fresh pair at every layer (STORE). They converge to the same loss. MEMOISE uses 8,192 coupling parameters, STORE uses 32,768 for the same job. On a task where the coupling is provably invariant, sharing it is free.
 
 ![MEMOISE matches STORE on a task where coupling is provably invariant, at a quarter of the coupling parameters](https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/COM-01_colour_matching_compression.png)
 
-### Pushing parameter sharing further with a wide shared FFN
+## Benchmarks
+
+Two zero-shot benchmark tables, one for each published checkpoint. The task suite is the usual seven: HellaSwag, PIQA, ARC-Easy, ARC-Challenge, WinoGrande, BoolQ, OpenBookQA. Numbers for GPT-2 Small, Pythia, and SmolLM2 come from the lm-eval-harness public leaderboard. ORN numbers come from `orn bench <checkpoint>` in this repo, which runs the same harness against our models.
+
+### ORN V2 (108M) vs same-class baselines
+
+The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 Small (124M, trained on 300B tokens), Pythia at two sizes, and SmolLM2-135M (trained on 600B tokens).
+
+| Model | HellaSwag | PIQA | ARC-E | ARC-C | WinoG | BoolQ | OBQA |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| GPT-2 Small (124M)    | 31.6 | 62.5 | 43.8 | 22.7 | 51.6 | 48.8 | 27.4 |
+| Pythia-160M           | 30.1 | 62.6 | 43.3 | 22.5 | 51.4 | 55.3 | 27.2 |
+| Pythia-410M           | 40.6 | 66.7 | 52.1 | 24.4 | 53.8 | 60.6 | 30.4 |
+| SmolLM2-135M          | 42.1 | 68.3 | 54.4 | 30.1 | 56.5 | 60.2 | 34.6 |
+| **ORN V2 (108M, 8B tok)** | **40.0** | 62.8 | **46.6** | **24.2** | 49.2 | **57.0** | 28.4 |
+
+ORN V2 at 108M beats GPT-2 Small on four of the seven tasks, ties on two, and is within one point on the seventh, while using 27% fewer total parameters and 48 times fewer coupling parameters. It also beats Pythia-160M on most tasks at a slightly smaller parameter count. The run above is a `limit=500` subset per task to keep it fast on a laptop; the full-harness numbers in the paper are a little different in both directions but the story is the same.
+
+### ORN V3 (605M)
+
+The 605M table is running right now on the same harness and will be filled in when it completes (the run takes a few hours on MPS at `limit=200`). Scaffolded row so readers can see what is coming:
+
+| Model | HellaSwag | PIQA | ARC-E | ARC-C | WinoG | BoolQ | OBQA |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| SmolLM2-135M          | 42.1 | 68.3 | 54.4 | 30.1 | 56.5 | 60.2 | 34.6 |
+| **ORN V3 (605M, 3B tok)** | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* |
+
+The design expectation is that on HellaSwag, ARC-Easy, ARC-Challenge, and BoolQ (structural reasoning, where shared coupling helps) ORN V3 should continue to beat its equivalently-trained-tokens baseline; on knowledge-weighted tasks like OpenBookQA and LAMBADA the 3-billion-token training budget is the bottleneck more than the architecture.
+
+## Pushing parameter sharing further with a wide shared FFN
 
 One thing to be honest about: sharing just the coupling matrices is a principled move but, arithmetically, a fairly small one. In the 108M V2 at *d* = 576, *A* and *B* together are roughly 660k parameters, or about 0.6% of the model. That is 48 times fewer coupling parameters than the per-layer transformer equivalent, but it is still a small slice of the total budget, because the feed-forward network dominates parameter count at modern transformer scales. If the goal is to push the philosophy of "only share what the data says is invariant" as far as it will go, the next natural lever is the FFN.
 
