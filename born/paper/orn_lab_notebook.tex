@@ -51,7 +51,7 @@
     {\small Percolation Labs}\\
     {\small \url{https://github.com/Percolation-Labs/orn}}%
 }
-\date{March 2026 \quad{\small\textnormal{--- Theory Document}}}
+\date{March 2026 \quad{\small\textnormal{,  Theory Document}}}
 
 \begin{document}
 \maketitle
@@ -66,16 +66,16 @@ Per-layer variation arises not from different parameters but from the field stat
 The ORN separates coupling (shared $\M$), content transformation (per-layer $W_V$, $W_O$, FFN), and context-dependent refinement (perturbative corrections with learned gates).
 We develop the mathematical framework using differential geometry, semigroup theory, and the analogy to renormalised field theories, and validate each component through a programme of micro-experiments from toy scale to 50M parameters.
 
-We conjecture that a parallel \emph{ontological layer}---a sparse, separately trained system for binding discrete identities---is necessary to complement the orbital world model, mirroring the cortex--hippocampus division in biological memory.
+We conjecture that a parallel \emph{ontological layer}, a sparse, separately trained system for binding discrete identities, is necessary to complement the orbital world model, mirroring the cortex--hippocampus division in biological memory.
 The orbital system learns \emph{what kinds of things exist}; the ontological system learns \emph{which specific things are present}.
 
-The full architecture admits a field-theoretic interpretation: the shared metric tensor $\M$ acts as a semigroup generator (the Hamiltonian), producing the classical path through coupling space, while the ontological components---context-gated perturbative corrections---provide first-order corrections around this path.
+The full architecture admits a field-theoretic interpretation: the shared metric tensor $\M$ acts as a semigroup generator (the Hamiltonian), producing the classical path through coupling space, while the ontological components, context-gated perturbative corrections, provide first-order corrections around this path.
 The sum of orbital dynamics and perturbative corrections maps onto the structure of a renormalised field theory: $\M$ defines the coupling at all scales, the per-layer response heads implement the renormalisation group flow, and the corrections break the mean-field symmetry to recover instance-specific detail.
 \end{abstract}
 
 \paragraph{Naming convention.}
 The \textbf{Orbital Response Network (ORN)} is the full architecture: shared coupling $\M = AB^\top$ + per-layer response heads ($W_V$, $W_O$, FFN) + perturbative corrections (context-gated).
-Throughout this document, ``SharedM'' refers to the \emph{shared coupling component only}---an ablation of the ORN, not the target architecture.
+Throughout this document, ``SharedM'' refers to the \emph{shared coupling component only}, an ablation of the ORN, not the target architecture.
 Where experimental results compare ``SharedM'' vs ``Transformer,'' they are testing the coupling component in isolation.
 The full ORN (with corrections) is the architecture we propose to scale.
 
@@ -83,14 +83,14 @@ The full ORN (with corrections) is the architecture we propose to scale.
 ALBERT shares \emph{everything} across layers (Q, K, V, O, FFN) and loses ${\sim}1.5\%$.
 The ORN shares \emph{only the coupling geometry} ($A$, $B$) and keeps the response heads ($W_V$, $W_O$, FFN) per-layer.
 This distinction is critical.
-The coupling geometry $\M = AB^\top$ determines \emph{which tokens attend to which}---the relational structure.
+The coupling geometry $\M = AB^\top$ determines \emph{which tokens attend to which}, the relational structure.
 The response heads determine \emph{what information flows through those relations} and \emph{how the residual field is updated}.
-Our spectral universality study (five pretrained models, three architecture families) shows the coupling geometry IS invariant across layers---the eigenvalue distribution of $W_Q^\top W_K$ correlates at $0.97$ while raw matrices are unrelated.
+Our spectral universality study (five pretrained models, three architecture families) shows the coupling geometry IS invariant across layers, the eigenvalue distribution of $W_Q^\top W_K$ correlates at $0.97$ while raw matrices are unrelated.
 Sharing coupling exploits a redundancy that already exists.
 
 The per-layer response heads serve a dual role: (1)~they extract content from the coupling pattern ($W_V$, $W_O$), and (2)~they \textbf{rotate the residual field} for the next layer.
 When layer $\ell$'s response heads update $h$, they change the coordinate frame that layer $\ell{+}1$'s shared $\M$ operates in.
-This rotation is entirely implicit---learned by gradient descent, never imposed---but it is what makes the semigroup rich: one coupling rule applied in $L$ progressively rotated frames produces $L$ distinct coupling patterns.
+This rotation is entirely implicit, learned by gradient descent, never imposed, but it is what makes the semigroup rich: one coupling rule applied in $L$ progressively rotated frames produces $L$ distinct coupling patterns.
 ALBERT cannot do this because its shared response heads produce the same update at every layer, so the field state barely evolves and the coupling patterns barely vary.
 
 \tableofcontents
@@ -101,7 +101,7 @@ ALBERT cannot do this because its shared response heads produce the same update 
 % ======================================================================
 \section{Primitives: What Memoisation Actually Is}
 
-Before describing the architecture, we must be precise about what \emph{memoisation} means computationally---not as metaphor, but as a concrete operation on hardware.
+Before describing the architecture, we must be precise about what \emph{memoisation} means computationally, not as metaphor, but as a concrete operation on hardware.
 
 \subsection{Classical Memoisation}
 
@@ -121,9 +121,9 @@ If different call sites need different outputs for the same input, memoisation i
 
 \paragraph{What memoisation stores.}
 Exactly one thing: the mapping $x \mapsto f(x)$ for previously seen inputs.
-It does \emph{not} store the function $f$ itself---$f$ is defined once (in the code) and shared across all calls.
+It does \emph{not} store the function $f$ itself, $f$ is defined once (in the code) and shared across all calls.
 The cache is a lookup table.
-The function is a \emph{generator}---a compact rule that produces outputs on demand.
+The function is a \emph{generator}, a compact rule that produces outputs on demand.
 
 \paragraph{What memoisation exploits.}
 The assumption that the same computation will be requested multiple times.
@@ -135,13 +135,13 @@ If many calls share inputs, memoisation avoids redundant computation.
 Modern GPU performance is dominated by \textbf{memory bandwidth}, not arithmetic throughput.
 An A100 can perform 312 TFLOPS (bf16) but has only 2~TB/s of HBM bandwidth.
 This means: for every byte loaded from memory, the GPU can perform $\sim$156 arithmetic operations.
-Any operation with an arithmetic intensity below this ratio is \emph{memory-bound}---waiting for data, not compute.
+Any operation with an arithmetic intensity below this ratio is \emph{memory-bound}, waiting for data, not compute.
 
 \paragraph{The embedding table on a GPU.}
 An embedding lookup is pure memory access: load one row of $E$ per token.
 For a batch of $B \times S$ tokens at $d = 512$, this reads $B \times S \times 512 \times 2$ bytes (bf16).
 At $B{=}32$, $S{=}256$: 8.4~MB per forward pass.
-The GPU does essentially zero compute---it just copies memory.
+The GPU does essentially zero compute, it just copies memory.
 
 \paragraph{A memoised function on a GPU.}
 A memoised function \emph{computes} the output from a compact representation.
@@ -171,7 +171,7 @@ Gradient checkpointing~\cite{chen2016sublinear} applies the same principle to ac
 \paragraph{Literature support.}
 The roofline model quantifies this tradeoff precisely.
 Modern GPUs (A100, H100) have a ``ridge point'' of $\sim$100--200 FLOPs per byte of memory bandwidth.
-Any operation with arithmetic intensity below this threshold is \emph{memory-bound}---waiting for data, not compute.
+Any operation with arithmetic intensity below this threshold is \emph{memory-bound}, waiting for data, not compute.
 Embedding lookup has near-zero arithmetic intensity (pure memory read).
 Orbital computation has arithmetic intensity $\sim T \times d$ (high, compute-bound).
 The hardware trend strongly favours our proposal.
@@ -206,16 +206,16 @@ Convolutional neural networks provide a concrete precedent for memoisation in ne
 \paragraph{What a CNN does.}
 A CNN learns a small set of filters (kernels) that are convolved across the entire input.
 The same $3 \times 3$ kernel is applied at every spatial position.
-This is \emph{weight sharing}---the filter is a shared function, and the output at each position is computed by running that function on the local input.
+This is \emph{weight sharing}, the filter is a shared function, and the output at each position is computed by running that function on the local input.
 
 \paragraph{The frequency-domain view.}
 In the frequency domain, a convolution becomes a pointwise multiplication: $\hat{y} = \hat{h} \cdot \hat{x}$ where $\hat{h}$ is the filter's Fourier transform.
-The learned filters are analogous to \emph{wavelets}---basis functions that detect features at particular scales and orientations.
-The CNN does not store ``there is an edge at position (47, 23)''---it stores ``this is what an edge looks like'' (the filter) and \emph{computes} the edge map by running the filter everywhere.
+The learned filters are analogous to \emph{wavelets}, basis functions that detect features at particular scales and orientations.
+The CNN does not store ``there is an edge at position (47, 23)'', it stores ``this is what an edge looks like'' (the filter) and \emph{computes} the edge map by running the filter everywhere.
 
 \paragraph{This is memoisation.}
 The filter is the \emph{memoised function}: learned once, applied everywhere.
-A dense alternative would store a separate feature detector at every spatial position---$H \times W$ different detectors instead of one shared kernel.
+A dense alternative would store a separate feature detector at every spatial position, $H \times W$ different detectors instead of one shared kernel.
 This is exactly what a fully-connected layer does, and exactly why CNNs are more parameter-efficient than MLPs for image processing.
 
 \paragraph{The analogy to our proposal.}
@@ -235,7 +235,7 @@ Learns & Feature detectors & Coupling geometry + dynamics \\
 
 The CNN learns wavelets that \emph{generate} feature maps through convolution.
 The orbital ORN learns dynamics that \emph{generate} token representations through iteration.
-Neither stores the output explicitly---both store the function and compute the output.
+Neither stores the output explicitly, both store the function and compute the output.
 
 The key difference: CNNs exploit \emph{spatial} translation invariance (the same edge detector works everywhere).
 The orbital ORN exploits \emph{functional} role invariance (the same dynamical rule generates all tokens that share a role).
@@ -252,7 +252,7 @@ A memoised embedding is a representation system where:
     \item The representation is \textbf{generated} by $\Phi^T(c_w)$: $T$ iterations of $\Phi$ on the code.
     \item The function $\Phi$ is the \textbf{same function} used for all other processing (attention, transformation).
 \end{enumerate}
-The token's meaning is not stored---it is \emph{computed} by running a shared function on a compressed address.
+The token's meaning is not stored, it is \emph{computed} by running a shared function on a compressed address.
 The function is the generator.
 The codes are coordinates.
 The orbit is the representation.
@@ -263,12 +263,12 @@ The embedding table is a cache of precomputed outputs: $V$ entries, each a full 
 The orbital embedding deletes the cache and recomputes from the function every time.
 The function is shared, so it adds no per-token storage.
 The codes are minimal, so they add negligible per-token storage.
-The computation is the price---and on modern hardware, computation is cheap.
+The computation is the price, and on modern hardware, computation is cheap.
 
 \paragraph{Functional roles as phases, not features.}
 A critical distinction from standard latent-space representations: the orbit is a \emph{trajectory}, not a point.
 A token does not ``have'' noun-ness as a stored feature in its vector.
-It \emph{visits} a region of the shared geometry where coupling to modifiers and determiners is strong---noun-ness is a \emph{phase} of the orbit, not a property of the endpoint.
+It \emph{visits} a region of the shared geometry where coupling to modifiers and determiners is strong, noun-ness is a \emph{phase} of the orbit, not a property of the endpoint.
 The same orbit, at different iterations, may pass through regions corresponding to different functional roles.
 A word can behave as a noun at one depth and as an argument at another, not because it encodes both roles simultaneously, but because its trajectory passes through both regions of the coupling geometry.
 
@@ -284,23 +284,23 @@ This is why our experiments show structure emerging before lexicon: the shared d
 \subsection{What Embeddings Actually Store}
 
 A standard embedding table $E \in \R^{V \times d}$ maps each token $w$ to a row $\mathbf{e}_w = E[w]$.
-This is a \emph{lookup table}---the same data structure the theory paper identifies as extensional storage.
+This is a \emph{lookup table}, the same data structure the theory paper identifies as extensional storage.
 
 At $V = 50{,}000$ and $d = 512$, the embedding table alone is 25.6M parameters.
-For GPT-2 ($V = 50{,}257$, $d = 768$), it is 38.6M parameters---roughly 31\% of the entire 124M model.
+For GPT-2 ($V = 50{,}257$, $d = 768$), it is 38.6M parameters, roughly 31\% of the entire 124M model.
 The output head, tied with the embedding, adds no extra parameters but doubles the architectural dependence on this lookup.
 
 \paragraph{What lives in these 25M parameters?}
 Consider the embedding vectors for related tokens:
 \begin{itemize}[nosep]
-    \item ``Emma'', ``Max'', ``Lily'', ``Tom'' --- character names in children's stories
-    \item ``wanted'', ``wished'', ``needed'' --- desire verbs
-    \item ``happy'', ``glad'', ``smiled'' --- positive resolution markers
+    \item ``Emma'', ``Max'', ``Lily'', ``Tom'' ,  character names in children's stories
+    \item ``wanted'', ``wished'', ``needed'' ,  desire verbs
+    \item ``happy'', ``glad'', ``smiled'' ,  positive resolution markers
 \end{itemize}
 
 Training pushes these into clusters because they appear in similar contexts.
 But each vector is stored \emph{independently}.
-The model does not learn ``these are interchangeable instances of the CHARACTER role''---it learns that these specific vectors happen to be close.
+The model does not learn ``these are interchangeable instances of the CHARACTER role'', it learns that these specific vectors happen to be close.
 The cluster structure is an accident of co-occurrence statistics, not a learned abstraction.
 
 \subsection{The Distinction: Map vs.\ Territory}
@@ -416,7 +416,7 @@ Consider 8 tokens whose embeddings form a regular octagon in $\R^2$.
 \caption{\textbf{The core visual.}
 Eight embeddings on a circle.
 \textbf{Left:} lookup stores all 16 coordinates.
-The octagonal structure is implicit---nothing in the table says ``these lie on a circle.''
+The octagonal structure is implicit, nothing in the table says ``these lie on a circle.''
 \textbf{Right:} orbit stores 8 one-dimensional seeds (angles) plus the shared circle equation $\Phi$.
 The structure is \emph{explicit} in $\Phi$; only the per-token position is stored.
 As $V$ grows, orbit's advantage grows proportionally: $V \times 2 \to V \times 1 + |\Phi|$.}
@@ -454,7 +454,7 @@ The only question: can $\Phi$ actually do the work?
 
 \subsection{Orbit Unfolding: Watching Seeds Become Embeddings}
 
-The circle example is too simple---$\Phi$ is a closed-form function.
+The circle example is too simple, $\Phi$ is a closed-form function.
 Real embeddings require learned dynamics.
 The key intuition: seeds start compressed, and \textbf{each iteration of $\Phi$ expands and refines them} until they match the targets.
 
@@ -591,7 +591,7 @@ such that $\Phi^T(P \cdot \s_w) = f(w)$ for all $w$ and some finite $T$.
 
 \begin{proof}[Proof sketch]
 The trivial case: set $d_s = d$, $\s_w = f(w)$, $P = I$, $\Phi = \text{id}$, $T = 0$.
-This \emph{is} the lookup table---a degenerate orbit with zero iterations.
+This \emph{is} the lookup table, a degenerate orbit with zero iterations.
 
 For compressed seeds ($d_s < d$): set $\s_w = w/V \in \R^1$ (scalar encoding).
 A single feedforward layer with $V$ hidden units can map $V$ distinct inputs
@@ -622,10 +622,10 @@ with high probability.
 
 \noindent
 \textbf{Translation:}
-Structured targets have low Kolmogorov complexity---a short program (the manifold equation)
+Structured targets have low Kolmogorov complexity, a short program (the manifold equation)
 generates all $V$ points.
 Orbit stores the program ($\Phi$) and the coordinates ($d_s$ per token).
-Random targets are incompressible---no program is shorter than the data.
+Random targets are incompressible, no program is shorter than the data.
 Orbit reduces to lookup with overhead.
 
 The critical question: \textbf{where do real embeddings sit?}
@@ -672,7 +672,7 @@ The critical question: \textbf{where do real embeddings sit?}
 \caption{\textbf{The structure spectrum.}
 Compression ratio depends on target structure.
 Real embeddings have rich cluster structure (semantic roles, syntactic categories)
-and intrinsic dimensionality far below ambient $d$---they sit firmly in orbit-favourable territory.
+and intrinsic dimensionality far below ambient $d$, they sit firmly in orbit-favourable territory.
 PCA of GPT-2 embeddings: $\sim$90\% of variance in the top $\sim$50 of 768 components.}
 \label{fig:spectrum}
 \end{figure}
@@ -685,7 +685,7 @@ PCA on GPT-2 embeddings shows $\sim$90\% of variance in the top $\sim$50 out of 
 This places real embeddings deep in the ``orbit wins'' regime.
 
 \paragraph{Literature evidence.}
-Ansuini et al.~\cite{ansuini2019intrinsic} showed that intrinsic dimensionality of representations \emph{progressively decreases} through network layers---the network compresses data onto lower-dimensional manifolds.
+Ansuini et al.~\cite{ansuini2019intrinsic} showed that intrinsic dimensionality of representations \emph{progressively decreases} through network layers, the network compresses data onto lower-dimensional manifolds.
 This is direct evidence that trained embeddings have low intrinsic dimension and should be compressible via our orbital factorisation.
 The manifold hypothesis is well-established: high-dimensional data concentrates on low-dimensional submanifolds, and neural networks learn to exploit this~\cite{bronstein2021geometric}.
 
@@ -762,7 +762,7 @@ Even at identical reconstruction quality, the learned representation is \textbf{
 \textbf{Right:} orbital embeddings share a dynamical landscape $\Phi$;
 perturbing $\Phi$ moves all tokens coherently.
 This is an \emph{inductive bias}: nearby seeds $\to$ nearby embeddings (continuity of $\Phi$).
-Lookup has no such guarantee---two alphabetically adjacent tokens can have arbitrarily different embeddings.}
+Lookup has no such guarantee, two alphabetically adjacent tokens can have arbitrarily different embeddings.}
 \label{fig:coherence}
 \end{figure}
 
@@ -773,14 +773,14 @@ Any similarity structure must be learned entirely from gradient signal.
 
 \paragraph{Orbit learns a landscape.}
 The shared dynamics $\Phi$ define a vector field through which all tokens flow.
-Changing $\Phi$ changes all embeddings simultaneously and coherently---nearby seeds produce nearby embeddings because $\Phi$ is continuous.
+Changing $\Phi$ changes all embeddings simultaneously and coherently, nearby seeds produce nearby embeddings because $\Phi$ is continuous.
 The structure is not an accident of training; it is \emph{enforced by the architecture}.
 
 \paragraph{This is both a strength and a constraint.}
 \begin{itemize}[nosep]
     \item \textbf{Strength:} for vocabularies with natural cluster structure
           (which real language has), the continuity prior is \emph{correct} and helps
-          learning---it provides free geometric priors.
+          learning, it provides free geometric priors.
     \item \textbf{Constraint:} tokens that genuinely need unrelated embeddings
           (e.g., punctuation vs content words) must be placed in different basins of $\Phi$'s
           attractor landscape. The seed space must be rich enough for this.
@@ -823,8 +823,8 @@ FLOPs & $\approx 0$ & $T \times |\Phi|$ per token \\
 Modern GPUs have orders-of-magnitude more compute than memory bandwidth.
 An A100: 312~TFLOPS arithmetic, 2~TB/s memory bandwidth.
 For every byte loaded, the GPU can perform $\sim$156 operations.
-Embedding lookup is \emph{memory-bound}---the GPU mostly waits.
-Orbital computation is \emph{compute-bound}---the GPU does what it was built for.
+Embedding lookup is \emph{memory-bound}, the GPU mostly waits.
+Orbital computation is \emph{compute-bound}, the GPU does what it was built for.
 
 This is the same insight behind Flash Attention, quantisation, and mixture-of-experts:
 \textbf{modern hardware prefers computation over storage.}
@@ -847,14 +847,14 @@ Learned (trained LM) & 32 & 2 & 0.900 & 2.0$\times$ \\
 \end{center}
 
 \noindent
-Structured targets (high manifold structure): 0.985 cosine---near-perfect.
-Learned targets (moderate structure): 0.90---good but imperfect, consistent with higher intrinsic dimension.
+Structured targets (high manifold structure): 0.985 cosine, near-perfect.
+Learned targets (moderate structure): 0.90, good but imperfect, consistent with higher intrinsic dimension.
 $T{=}2$ optimal in both cases; $T{\geq}4$ overshoots.
 
 \textbf{What Level~0 proves:} the factorisation $\mathbf{e}_w \approx \Phi^T(\s_w)$ exists.
 \textbf{What it does not prove:} that orbital embeddings work in an end-to-end model.
 Reconstruction fidelity $\neq$ task utility.
-The 10\% ``lost'' cosine similarity on learned embeddings might be noise---or it might be signal.
+The 10\% ``lost'' cosine similarity on learned embeddings might be noise, or it might be signal.
 Only an end-to-end experiment can resolve this.
 
 
@@ -875,9 +875,9 @@ We seek a factorisation:
 \]
 where:
 \begin{itemize}[nosep]
-    \item $D \in \R^{V \times d_s}$ is a \textbf{compressed code} ($d_s \ll d$) --- one row per token
+    \item $D \in \R^{V \times d_s}$ is a \textbf{compressed code} ($d_s \ll d$) ,  one row per token
     \item $f_\theta: \R^{d_s} \to \R^d$ is a \textbf{shared function} parameterised by $\theta$, applied row-wise
-    \item $\theta$ is shared across all $V$ tokens --- the function is the same for every token
+    \item $\theta$ is shared across all $V$ tokens ,  the function is the same for every token
 \end{itemize}
 
 \noindent
@@ -992,7 +992,7 @@ The choice of $f_\theta$ defines a hierarchy of increasingly powerful factorisat
 Each takes a compressed code $D \in \R^{V \times d_s}$ and maps it to an approximation of $E$.
 \textbf{Linear:} optimal for Gaussian targets (PCA), but misses all nonlinear structure.
 \textbf{MLP:} captures nonlinear manifolds in one pass, but must do all the work at once.
-\textbf{Orbit:} applies the same block $T$ times, progressively expanding and refining---the
+\textbf{Orbit:} applies the same block $T$ times, progressively expanding and refining, the
 function doesn't just map, it \emph{develops}.}
 \label{fig:factorisation-levels}
 \end{figure}
@@ -1023,7 +1023,7 @@ A 2-layer MLP with $H \geq 8$ learns this to machine precision.
 The critical question: \textbf{how large must $H$ be?}
 \begin{itemize}[nosep]
     \item For $V$ points in \emph{general position} (no structure): $H \geq V$ is necessary.
-          The MLP must memorise each point---no better than lookup.
+          The MLP must memorise each point, no better than lookup.
     \item For $V$ points on a $k$-dimensional manifold: $H = \calO(\text{poly}(k))$ suffices,
           independent of $V$.
           The MLP learns the manifold map, which is a $k \to d$ function regardless of how many
@@ -1075,9 +1075,9 @@ For any embedding table $E \in \R^{V \times d}$ and any seed dimension $d_s \geq
 \noindent
 \textbf{Translation:} a neural network can always factorise $E$, but the \emph{cost} depends on
 $E$'s structure.
-The trivial factorisation (memorise everything in the weights) costs $\calO(Vd)$ ---
+The trivial factorisation (memorise everything in the weights) costs $\calO(Vd)$ , 
 the same as the lookup table.
-The structured factorisation costs $\calO(\text{poly}(d))$ --- independent of $V$.
+The structured factorisation costs $\calO(\text{poly}(d))$ ,  independent of $V$.
 The gap between these is the \emph{compression gain}.
 
 \begin{figure}[h]
@@ -1192,7 +1192,7 @@ Three conditions must hold simultaneously:
     $d_s \geq k$ seeds placed at cluster centres, with within-cluster perturbations encoding
     individual identity.
     If $d_s < k$, some roles are forced to share seed-space coordinates and $f$ cannot
-    separate them---no matter how expressive $f$ is.
+    separate them, no matter how expressive $f$ is.
 
     \item \textbf{The map $f$ must be smooth with respect to the loss.}
     If $E$ varies smoothly as a function of the underlying manifold coordinates,
@@ -1246,8 +1246,8 @@ But it treats $E$ as the ground truth and $D$ as an approximation.
 
 \paragraph{Generative view (the real point).}
 $D$ is not a compression of $E$.
-$D$ is the \emph{native} representation---the natural coordinate system of the vocabulary.
-$f$ is the physics---the shared law that unfolds compressed identity into usable representation.
+$D$ is the \emph{native} representation, the natural coordinate system of the vocabulary.
+$f$ is the physics, the shared law that unfolds compressed identity into usable representation.
 $E$ (the lookup table) is the \emph{materialised cache} of $f(D)$.
 
 In this view, the lookup table is the approximation:
@@ -1256,7 +1256,7 @@ The orbit is the ground truth.
 Training a lookup table is memoising a function you haven't discovered yet.
 
 \paragraph{Why this matters.}
-If $D$ is just a compression of $E$, then orbital embeddings are a parameter-saving trick---
+If $D$ is just a compression of $E$, then orbital embeddings are a parameter-saving trick, 
 useful but architecturally uninteresting.
 If $D$ is the native representation, then orbital embeddings change \emph{what the model learns}:
 not $V$ independent vectors, but a shared dynamical law $f$ and $V$ positions in its phase space.
@@ -1268,7 +1268,7 @@ An orbital system where ``cat'' and ``kitten'' have nearby seeds \emph{forces} t
 similar dynamics, producing similar embeddings \emph{by construction}.
 New tokens (unseen words, rare morphological variants) can be assigned seeds by interpolation
 in $D$, and $f$ generates plausible embeddings automatically.
-A lookup table has no such mechanism---every new token starts from zero.
+A lookup table has no such mechanism, every new token starts from zero.
 
 \begin{figure}[h]
 \centering
@@ -1332,7 +1332,7 @@ A lookup table has no such mechanism---every new token starts from zero.
 \textbf{Right:} $D$ is the native coordinate system; $E$ is a materialised cache of $f(D)$;
 $f$ is the shared dynamical law.
 The generative view is the one that changes what the model learns:
-the lookup table is not compressed---it is \emph{replaced} by a more fundamental representation.}
+the lookup table is not compressed, it is \emph{replaced} by a more fundamental representation.}
 \label{fig:two-views}
 \end{figure}
 
@@ -1342,9 +1342,9 @@ the lookup table is not compressed---it is \emph{replaced} by a more fundamental
 
 \subsection{The Phase Space of Token Representations}
 
-Let $\calM$ be the representation manifold---the space of possible token representations.
+Let $\calM$ be the representation manifold, the space of possible token representations.
 In a standard transformer, $\calM = \R^d$ and each token is a point.
-In the orbital framework, a token is not a point but a \emph{trajectory}---a path through $\calM$ generated by iterating shared dynamics.
+In the orbital framework, a token is not a point but a \emph{trajectory}, a path through $\calM$ generated by iterating shared dynamics.
 
 \begin{definition}[Phase space]
 The phase space $\calM$ is a smooth manifold equipped with a Riemannian metric induced by the shared coupling tensor $\M$.
@@ -1367,7 +1367,7 @@ Given a dynamical system $\Phi: \calM \to \calM$ defined by one iteration of the
 \[
     \calO_w = (\s_w, \Phi(\s_w), \Phi^2(\s_w), \ldots, \Phi^T(\s_w))
 \]
-The representation of token $w$ at depth $t$ is $\Phi^t(\s_w)$---the point reached after $t$ iterations of the shared dynamics starting from seed $\s_w$.
+The representation of token $w$ at depth $t$ is $\Phi^t(\s_w)$, the point reached after $t$ iterations of the shared dynamics starting from seed $\s_w$.
 \end{definition}
 
 This is a group action.
@@ -1379,7 +1379,7 @@ Two tokens $w_1, w_2$ are \emph{orbitally equivalent} if their orbits converge:
 \[
     w_1 \sim w_2 \iff \lim_{t \to \infty} \| \Phi^t(\s_{w_1}) - \Phi^t(\s_{w_2}) \| = 0
 \]
-Orbitally equivalent tokens are functionally interchangeable---they reach the same attractor regardless of their surface form.
+Orbitally equivalent tokens are functionally interchangeable, they reach the same attractor regardless of their surface form.
 \end{definition}
 
 In a children's story dataset, ``Emma'', ``Max'', ``Lily'' should be orbitally equivalent: they are all instances of the CHILD-CHARACTER role.
@@ -1392,7 +1392,7 @@ In a standard transformer, the ``orbit'' is degenerate:
     \calO_w^{\text{transformer}} = (\mathbf{e}_w, f_1(\mathbf{e}_w, \text{context}), f_2(f_1(\ldots), \text{context}), \ldots)
 \]
 where each $f_l$ uses different parameters ($W_Q^{(l)}, W_K^{(l)}$, etc.).
-The seed $\mathbf{e}_w$ is a full $d$-dimensional vector---it already contains the complete representation.
+The seed $\mathbf{e}_w$ is a full $d$-dimensional vector, it already contains the complete representation.
 The ``dynamics'' at each layer use different rules.
 There is no generator; each layer is a separate lookup of what transformation to apply.
 
@@ -1438,8 +1438,8 @@ There is no generator; each layer is a separate lookup of what transformation to
     \node[left=0.4cm of seed, font=\small\bfseries] {Orbital ORN:};
 
     % Annotations
-    \node[below=1.0cm of l1, text=red!70!black, font=\footnotesize, align=center] {$\bigO(Vd + Ld^2)$ --- extensional: separate lookup $+$ separate rules};
-    \node[below=1.0cm of p1, text=blue!70!black, font=\footnotesize, align=center] {$\bigO(Vd_s + d^2)$ --- intensional: micro-code $+$ shared generator};
+    \node[below=1.0cm of l1, text=red!70!black, font=\footnotesize, align=center] {$\bigO(Vd + Ld^2)$ ,  extensional: separate lookup $+$ separate rules};
+    \node[below=1.0cm of p1, text=blue!70!black, font=\footnotesize, align=center] {$\bigO(Vd_s + d^2)$ ,  intensional: micro-code $+$ shared generator};
 
 \end{tikzpicture}
 \caption{Architectural comparison.
@@ -1463,18 +1463,18 @@ Vacher~\cite{vacher2026ifs} formalises deep networks as \emph{iterated function 
 The orbital embedding is an IFS: the shared block $\Phi$ is the iterated map, the seeds $\s_w$ are initial conditions, and the attractors correspond to semantic roles.
 
 Let $G$ be the group generated by $\Phi$.
-In the orbital model, the representation of token $w$ is the orbit $G \cdot \s_w$---the set of all points reachable from seed $\s_w$ by applying elements of $G$.
+In the orbital model, the representation of token $w$ is the orbit $G \cdot \s_w$, the set of all points reachable from seed $\s_w$ by applying elements of $G$.
 
 \begin{proposition}[Orbit--stabiliser structure]
 For each seed $\s_w$, the orbit $G \cdot \s_w$ and the stabiliser $G_{\s_w} = \{g \in G : g \cdot \s_w = \s_w\}$ satisfy:
 \[
     |G| = |G \cdot \s_w| \times |G_{\s_w}|
 \]
-Tokens with large stabilisers (many iterations leave them unchanged) are at or near fixed points---they have stable, attractor-like representations.
-Tokens with small stabilisers (each iteration changes them significantly) are in transient regions---their representations are still forming.
+Tokens with large stabilisers (many iterations leave them unchanged) are at or near fixed points, they have stable, attractor-like representations.
+Tokens with small stabilisers (each iteration changes them significantly) are in transient regions, their representations are still forming.
 \end{proposition}
 
-The group $G$ is the same for all tokens---it is determined by $\M$ and the shared block.
+The group $G$ is the same for all tokens, it is determined by $\M$ and the shared block.
 Different tokens explore different parts of the same group's action.
 This is exactly the ``generators, not trajectories'' idea: $G$ is compact (one shared block), but $G \cdot \s_w$ can be arbitrarily complex.
 
@@ -1488,8 +1488,8 @@ where $\alpha_t$ are weights (e.g., exponentially increasing to emphasise later 
 
 This metric captures something the Euclidean distance between embedding vectors cannot: \emph{functional similarity is measured by convergent dynamics, not by proximity in a lookup table}.
 
-Two tokens may start far apart (different seeds) but converge under iteration---they are functionally equivalent.
-Two tokens may start nearby (similar surface forms) but diverge under iteration---they have different roles.
+Two tokens may start far apart (different seeds) but converge under iteration, they are functionally equivalent.
+Two tokens may start nearby (similar surface forms) but diverge under iteration, they have different roles.
 
 \begin{remark}[Basins of attraction]
 If $\Phi$ has attractors $\{A_1, A_2, \ldots, A_k\}$, then the vocabulary is partitioned into basins:
@@ -1505,11 +1505,11 @@ This is directly measurable: count the number of distinct clusters in $\{\Phi^T(
 
 \subsection{Why This Is Hard}
 
-In a standard transformer, the embedding table provides a ``warm start''---every token begins with a rich, distinct $d$-dimensional vector.
+In a standard transformer, the embedding table provides a ``warm start'', every token begins with a rich, distinct $d$-dimensional vector.
 The attention mechanism receives well-separated inputs from step zero.
 
 In the orbital model, every token starts as a point in a $d_{\text{seed}}$-dimensional space, projected into $\R^d$.
-At iteration $t{=}0$, the representations are low-rank---they live in a $d_{\text{seed}}$-dimensional subspace of $\R^d$.
+At iteration $t{=}0$, the representations are low-rank, they live in a $d_{\text{seed}}$-dimensional subspace of $\R^d$.
 The attention mechanism must bootstrap from these impoverished inputs.
 
 \paragraph{The chicken-and-egg problem.}
@@ -1520,7 +1520,7 @@ The shared block $\Phi$ (including $\M$) must learn to:
     \item \emph{Transform} representations via the FFN (the knowledge function).
 \end{enumerate}
 These are three different jobs performed by the same shared weights.
-At initialisation, none of them work---the representations are random, the coupling is random, and the transforms are random.
+At initialisation, none of them work, the representations are random, the coupling is random, and the transforms are random.
 There is no gradient signal to shape any of them because the others are broken.
 
 This is the fundamental training challenge.
@@ -1566,10 +1566,10 @@ Natural language mixes two kinds of information:
 
 \begin{description}[nosep, leftmargin=1.5em]
     \item[Structural:] ``A character wanted something, faced an obstacle, resolved it.'' \\
-    This is orbital---it is a path through narrative space, invariant across specific instances.
+    This is orbital, it is a path through narrative space, invariant across specific instances.
 
     \item[Referential:] ``Caesar crossed the Rubicon in 49~BC.'' \\
-    This is discrete---it binds a specific name to a specific event. No amount of geometric iteration derives ``49~BC'' from the structure of ``ruler crosses a boundary.''
+    This is discrete, it binds a specific name to a specific event. No amount of geometric iteration derives ``49~BC'' from the structure of ``ruler crosses a boundary.''
 \end{description}
 
 The orbital model handles structural knowledge naturally.
@@ -1616,7 +1616,7 @@ Its representations are continuous orbits in $\M$'s geometry.
 All heads share the same coupling rules.
 
 \paragraph{The ontological layer} learns discrete bindings.
-It is a sparse, per-token system---closer to a key--value store than a neural network.
+It is a sparse, per-token system, closer to a key--value store than a neural network.
 It maps token IDs to low-rank perturbations: $\x_{\text{onto}} = U_w$ where $U_w \in \R^d$ is a sparse or low-rank vector specific to token $w$.
 This is where ``Caesar $\to$ Roman, ruler, betrayed'' lives.
 
@@ -1628,7 +1628,7 @@ The final representation is:
 where $\lambda$ is a gate that controls how much ontological information to inject.
 
 \paragraph{The critical constraint: force structure into the orbit.}
-If $\lambda$ is unconstrained, the model will collapse to $\lambda = 1$ and use the ontological layer for everything---recreating a dense embedding table.
+If $\lambda$ is unconstrained, the model will collapse to $\lambda = 1$ and use the ontological layer for everything, recreating a dense embedding table.
 The architectural enforcement is:
 \begin{itemize}[nosep]
     \item $U_w$ is low-rank (rank $r \ll d$) or sparse (at most $k$ nonzero entries).
@@ -1657,7 +1657,7 @@ Failure mode & Can't remember names & Can't generalise \\
 \end{center}
 
 The transformer collapses both into a single system (dense weight matrices) and asks gradient descent to sort out the mix.
-This works---transformers are powerful---but it is inefficient: you need enormous capacity because the storage format is wrong for both jobs.
+This works, transformers are powerful, but it is inefficient: you need enormous capacity because the storage format is wrong for both jobs.
 
 \subsection{Design Progression: Where Does the Ontological Layer Sit?}
 
@@ -1695,7 +1695,7 @@ Both pathways operate on the same input and combine at the output:
     \x_{l+1} = \x_l + \underbrace{W_O \left(\text{attn}_{\M}(\x_l) \cdot W_V(\x_l)\right)}_{\text{orbital: structural response}} + \underbrace{W_O^{\text{onto}} \left(\text{attn}_{\text{onto}}(\x_l, u) \cdot W_V^{\text{onto}}(u)\right)}_{\text{ontological: identity routing}}
 \]
 
-The orbital pathway cannot see the ontological codes---$\M$ remains pure structural.
+The orbital pathway cannot see the ontological codes, $\M$ remains pure structural.
 The ontological pathway has its own attention mechanism and can route by identity (coreference, entity tracking).
 But it operates in $r$ dimensions ($r = 4$--$8$), so it physically cannot replace $\M$: it can carry a few bits of identity information, not the full coupling geometry.
 
@@ -1707,7 +1707,7 @@ $\M$ wins by sheer capacity; onto fills the gaps.
 \paragraph{Training dynamics: who trains first?}
 In the dual-pathway design with $\lambda = 1$ from step~0, we predict the ontological pathway trains first (path of least resistance): it provides per-token identity signal immediately via its own $Q, K$, while $\M$ is still random.
 As training progresses, $\M$ develops structural coupling and dominates by capacity.
-The ontological contribution should peak early and decline proportionally---not because it is annealed, but because $\M$ takes over.
+The ontological contribution should peak early and decline proportionally, not because it is annealed, but because $\M$ takes over.
 
 This gives the ontological layer two distinct roles:
 \begin{description}[nosep]
@@ -1729,7 +1729,7 @@ The parallel attention mechanism competes with $\M$ rather than complementing it
 
 \paragraph{Design D: Perturbative corrections (the path integral analogy).}
 The exp7 failure motivates a redesign.
-The orbital model produces the \emph{classical path}---the dominant trajectory through $\M$'s coupling geometry.
+The orbital model produces the \emph{classical path}, the dominant trajectory through $\M$'s coupling geometry.
 Context provides the boundary conditions.
 The ontological correction should be a \emph{perturbation} around this path, not a parallel system:
 \[
@@ -1749,7 +1749,7 @@ Key properties:
 This is analogous to path integrals in physics: the semigroup gives the classical trajectory, and the perturbation provides context-dependent quantum corrections around it.
 
 An important distinction (explored in detail in the companion document \textit{Path Integrals and the ORN}): the ORN is \emph{not} a path integral and should not be.
-The path integral computes $T^L$ (the propagator---averaging over all possible intermediate paths), which converges to the stationary distribution at large $L$, forgetting the starting context.
+The path integral computes $T^L$ (the propagator, averaging over all possible intermediate paths), which converges to the stationary distribution at large $L$, forgetting the starting context.
 The ORN uses the same semigroup structure as a geometric scaffold, but its deeper layers \emph{refine} the context-specific prediction rather than \emph{composing} statistical propagators.
 The coupling geometry is the grammar; the response heads speak the language.
 This is why the ORN preserves context (via the residual connection) while a path integral would average it away.
@@ -1761,7 +1761,7 @@ The diagnostic predictions: (i)~$\bar{g}$ increases over training as context rep
 
 \paragraph{Exp~8 results (10M, external machine).}
 All three predictions are confirmed.
-The perturbative model (d=172, L=4, 10.03M params) was forced to sacrifice a full layer vs SharedM (d=168, L=5, 9.96M params) for param matching---and still recovered to match SharedM by step~2{,}500:
+The perturbative model (d=172, L=4, 10.03M params) was forced to sacrifice a full layer vs SharedM (d=168, L=5, 9.96M params) for param matching, and still recovered to match SharedM by step~2{,}500:
 
 \begin{center}\small
 \begin{tabular}{@{}rcccccc@{}}
@@ -1776,19 +1776,19 @@ Step & SharedM & Perturbative & $\Delta$ & Gate $\bar{g}$ & $\|\delta\|/\|h\|$ &
 \end{center}
 
 \noindent The gate opened from 0.05 to 0.36 (prediction~i confirmed).
-The perturbation ratio settled at ${\sim}0.57$; the effective contribution is $g \times \delta/h \approx 0.20$ (prediction~ii confirmed---genuinely perturbative).
+The perturbation ratio settled at ${\sim}0.57$; the effective contribution is $g \times \delta/h \approx 0.20$ (prediction~ii confirmed, genuinely perturbative).
 The gate anticorrelates with attention entropy: corrections activate when coupling is confident, not when it is diffuse.
 Prediction~iii (late-position benefit) awaits the ablation from the completed run.
 
 The crossover dynamics are the same as SharedM vs transformer: structural investment early (corrections dormant, the missing layer hurts), exploitation late (gate opens, corrections compensate).
 Recovering a full layer of orbital depth through 1.1\% parameter overhead of structured corrections is a strong signal that the perturbative design is architecturally sound.
 
-An ablation study provides the strongest evidence: disabling the corrections at inference (forcing $g{=}0$) increases val loss from 2.755 to 3.204---a gap of \textbf{0.449~nats}.
+An ablation study provides the strongest evidence: disabling the corrections at inference (forcing $g{=}0$) increases val loss from 2.755 to 3.204, a gap of \textbf{0.449~nats}.
 This is larger than the entire improvement from step~1{,}000 to step~5{,}000 for SharedM alone.
 Per-position analysis confirms prediction~(iii): late positions benefit more (+0.440 nats) than early (+0.392), though both are large.
 
 The ablation also reveals that the orbital backbone \emph{co-adapted} with the corrections: it offloaded ${\sim}0.45$ nats of work to the correction pathway and reorganised its own coupling accordingly.
-The perturbative model learned a different orbital solution than standalone SharedM---the two systems are coupled, not independent.
+The perturbative model learned a different orbital solution than standalone SharedM, the two systems are coupled, not independent.
 
 The matched-depth follow-up (Exp~8b: same d, L as SharedM, corrections as extra params) is the clean test.
 If perturbative at matched depth beats SharedM, the corrections add genuine value beyond compensating for lost depth.
@@ -1806,7 +1806,7 @@ We decompose the problem into independently testable components.
 \paragraph{Setup.}
 Take a pretrained embedding table $E \in \R^{V \times d}$.
 Learn seeds $\s_w \in \R^{d_{\text{seed}}}$ and a shared block $\Phi$ such that $\Phi^T(\text{proj}(\s_w)) \approx \mathbf{e}_w$ for all $w$.
-This is pure reconstruction---no language modelling.
+This is pure reconstruction, no language modelling.
 
 \paragraph{Measurements.}
 \begin{itemize}[nosep]
@@ -1896,7 +1896,7 @@ Each token $w$ defines an orbit $G \cdot \s_w$.
 The map $w \mapsto G \cdot \s_w$ is a \emph{representation} of the vocabulary in the space of $G$-orbits.
 
 In representation theory, a representation is \emph{irreducible} if it cannot be decomposed into smaller invariant subspaces.
-The orbital embedding learns a representation that is as irreducible as possible---the shared geometry forces tokens into a single coherent space rather than allowing independent subspaces for each token.
+The orbital embedding learns a representation that is as irreducible as possible, the shared geometry forces tokens into a single coherent space rather than allowing independent subspaces for each token.
 
 \subsection{The Tangent Space and Local Linearisation}
 
@@ -1909,7 +1909,7 @@ describes how small perturbations evolve.
 The eigenvalues of $J_t$ determine local stability:
 \begin{itemize}[nosep]
     \item $|\lambda_i| < 1$: perturbations along eigenvector $\mathbf{v}_i$ contract. The orbit is locally stable in this direction.
-    \item $|\lambda_i| > 1$: perturbations grow. The orbit is locally unstable---small seed differences amplify.
+    \item $|\lambda_i| > 1$: perturbations grow. The orbit is locally unstable, small seed differences amplify.
     \item $|\lambda_i| \approx 1$: perturbations neither grow nor shrink. The orbit is locally neutral.
 \end{itemize}
 
@@ -1920,7 +1920,7 @@ For the orbital embedding to work, we need:
 \end{itemize}
 
 This is a \emph{mixed-stability} regime: the dynamics must simultaneously contract some dimensions and preserve others.
-This is precisely what attractor dynamics in dissipative systems do---they collapse trajectories onto low-dimensional manifolds while preserving information along the manifold.
+This is precisely what attractor dynamics in dissipative systems do, they collapse trajectories onto low-dimensional manifolds while preserving information along the manifold.
 
 \subsection{Connections to Existing Mathematics}
 
@@ -1938,29 +1938,29 @@ All four support our proposal: \emph{weight sharing across depth works when the 
 \paragraph{Riemannian geometry.}
 The metric $\M$ induces a geometry on $\calM$.
 Geodesics in this geometry are the ``shortest paths'' between token representations.
-The orbital dynamics need not follow geodesics---they follow the flow of $\Phi$---but the distance function defined by $\M$ determines the coupling (attention) between tokens.
+The orbital dynamics need not follow geodesics, they follow the flow of $\Phi$, but the distance function defined by $\M$ determines the coupling (attention) between tokens.
 There is a deep connection: the coupling geometry ($\M$) and the dynamical geometry ($\Phi$) must be compatible.
 
 \textit{Evidence:} Hauser \& Ray~\cite{hauser2017riemannian} established that residual networks perform geometric transformations on data manifolds, with learned weights defining the local metric.
-Benfenati \& Marta~\cite{benfenati2022singular} extended this to \emph{singular} Riemannian geometry, handling the degenerate metrics that arise at saddle points and representation collapse regions---precisely the regimes our orbital dynamics must navigate.
+Benfenati \& Marta~\cite{benfenati2022singular} extended this to \emph{singular} Riemannian geometry, handling the degenerate metrics that arise at saddle points and representation collapse regions, precisely the regimes our orbital dynamics must navigate.
 A key result~\cite{training2023geometry}: at infinite width with random initialisation, the induced metric is highly symmetric (isotropic).
 Feature learning \emph{breaks this symmetry}, creating an anisotropic metric that magnifies differences along decision boundaries.
-Our $\M$ develops condition number $> 10$ via SGD---this is the geometric signature of learned structure, not an artefact.
+Our $\M$ develops condition number $> 10$ via SGD, this is the geometric signature of learned structure, not an artefact.
 
 \paragraph{Information geometry.}
-If the orbital model is viewed as a statistical model---mapping seeds to probability distributions over next tokens---then the space of models is a statistical manifold with the Fisher information metric.
+If the orbital model is viewed as a statistical model, mapping seeds to probability distributions over next tokens, then the space of models is a statistical manifold with the Fisher information metric.
 The shared $\M$ can be interpreted as an approximation to the Fisher metric on this manifold.
 This connects the coupling geometry to the information-theoretic structure of the language.
 Amari's foundational work~\cite{amari2019fisher} shows that the parameter space of neural networks is a Riemannian manifold with Fisher information metric, and that natural gradient (which descends steepest in this geometry) avoids plateaus that trap ordinary SGD.
 
 \paragraph{Kolmogorov complexity and compression.}
-The memoisation hypothesis has a clean information-theoretic interpretation: we claim the coupling rule across $L$ transformer layers has low Kolmogorov complexity $K$---it can be described by a short program (shared $\M$) rather than stored explicitly ($2L$ separate matrices).
+The memoisation hypothesis has a clean information-theoretic interpretation: we claim the coupling rule across $L$ transformer layers has low Kolmogorov complexity $K$, it can be described by a short program (shared $\M$) rather than stored explicitly ($2L$ separate matrices).
 
 \textit{Evidence for:}
 Shaw et al.~\cite{shaw2026kolmogorov} formally bridge Kolmogorov complexity and transformers, constructing \emph{asymptotically optimal description length objectives} by mapping transformer weights to prefix Turing machines.
-Their result proves transformers can achieve compression quality comparable to $K(x)$ up to an additive constant---validating that our search for compressed representations is theoretically grounded.
+Their result proves transformers can achieve compression quality comparable to $K(x)$ up to an additive constant, validating that our search for compressed representations is theoretically grounded.
 Lotfi et al.~\cite{lotfi2024compression} show that models which compress training data more achieve better generalisation, obtaining non-vacuous generalisation bounds for actual LLMs.
-The complexity dynamics of grokking~\cite{demoss2024grokking} reveal that networks first memorise (high description length) then compress (low description length)---training actively reduces complexity by finding structure.
+The complexity dynamics of grokking~\cite{demoss2024grokking} reveal that networks first memorise (high description length) then compress (low description length), training actively reduces complexity by finding structure.
 Our spectral invariance finding (cosine sim 0.19 but spectrum correlation 0.98 across layers) is exactly the signature of low algorithmic complexity: the \emph{structure} is shared even when the \emph{representation} differs.
 
 \textit{Evidence against:}
@@ -1973,13 +1973,13 @@ This is a weaker (but still useful) form of memoisation.
 Recent work on Fourier-based token embeddings~\cite{fourier2025embeddings} replaces the learned embedding table with a deterministic Fourier basis plus a small MLP.
 Token representations are \emph{computed} as a smooth function of token ID rather than stored.
 This validates the core principle that structured computation can replace explicit storage for embeddings, though the mechanism is different from our orbital approach (fixed Fourier basis vs.\ learned iterative dynamics).
-ALBERT~\cite{lan2020albert} demonstrated that cross-layer weight sharing and factorised embedding parameterisation ($V \times d_s + d_s \times d$) reduces parameters with small quality loss---a direct predecessor to our approach.
+ALBERT~\cite{lan2020albert} demonstrated that cross-layer weight sharing and factorised embedding parameterisation ($V \times d_s + d_s \times d$) reduces parameters with small quality loss, a direct predecessor to our approach.
 
 
 % ======================================================================
 \section{Experimental Evidence}\label{sec:experimental-evidence}
 
-\subsection{Exp 5a --- Orbital Embeddings at 2M Scale (TinyStories)}
+\subsection{Exp 5a ,  Orbital Embeddings at 2M Scale (TinyStories)}
 
 Our first end-to-end test trains orbital embedding models on real language data: TinyStories (5M tokens, GPT-2 tokenizer, $V = 50{,}257$).
 All models are matched at ${\sim}2\text{M}$ total parameters.
@@ -1993,7 +1993,7 @@ Table~\ref{tab:exp5a} summarises the results.
 \toprule
 Model & $d_{\text{model}}$ & Layers & $d_{\text{seed}}$ & $T$ & Params & Val Loss & vs.\ Baseline \\
 \midrule
-\textsc{Baseline}   & 36  & 11 & ---  & --- & 1.99M & 3.389 & --- \\
+\textsc{Baseline}   & 36  & 11 & ,   & ,  & 1.99M & 3.389 & ,  \\
 \textsc{LowRank} ($T\!=\!0$) & 180 & 3  & 16  & 0   & 2.00M & 3.456 & $+1.9\%$ \\
 \textsc{Orbital-T1}  & 268 & 1  & 16  & 1   & 2.00M & 3.129 & $\mathbf{-7.7\%}$ \\
 \textsc{Orbital-T2}  & 96  & 10 & 16  & 2   & 1.97M & 3.593 & $+6.0\%$ \\
@@ -2018,10 +2018,10 @@ Model & $d_{\text{model}}$ & Layers & $d_{\text{seed}}$ & $T$ & Params & Val Los
     \item \textbf{The win is a systems-level win:} better parameter allocation via embedding compression, not a pure demonstration that ``dynamics beat lookup.''
         This is consistent with the ALBERT factorisation insight~\cite{lan2020albert} but goes further by using nonlinear orbital dynamics rather than a linear projection.
 
-    \item \textbf{\textsc{LowRank} ($T\!=\!0$) nearly matches the baseline ($+1.9\%$)}, confirming that embedding redundancy is real---a linear projection from $d_{\text{seed}} = 16$ to $d_{\text{model}} = 180$ loses almost nothing.
+    \item \textbf{\textsc{LowRank} ($T\!=\!0$) nearly matches the baseline ($+1.9\%$)}, confirming that embedding redundancy is real, a linear projection from $d_{\text{seed}} = 16$ to $d_{\text{model}} = 180$ loses almost nothing.
         But the orbital block at $T = 1$ is what pushes \emph{past} the baseline: dynamics add value beyond linear projection.
 
-    \item \textbf{\textsc{Orbital-T2} performs worse than \textsc{Orbital-T1}} because the configuration search allocated it a suboptimal architecture ($d = 96$, $L = 10$---too narrow for the parameter budget).
+    \item \textbf{\textsc{Orbital-T2} performs worse than \textsc{Orbital-T1}} because the configuration search allocated it a suboptimal architecture ($d = 96$, $L = 10$, too narrow for the parameter budget).
         This is a search artefact, not evidence against deeper iteration.
 
     \item \textbf{No bootstrap problem.}
@@ -2044,14 +2044,14 @@ Before running GPU experiments, we validated three theoretical claims on CPU wit
 
 \paragraph{Test 1: Universal approximation.}
 Small MLPs ($H = 4$--$8$, 38--106 parameters) perfectly fit structured targets (line, circle, spiral, figure-8), confirming that continuous manifolds need only tiny networks.
-Unstructured targets (random clusters, random noise) require $> 66{,}818$ parameters---they cannot be compressed and must be memorised.
+Unstructured targets (random clusters, random noise) require $> 66{,}818$ parameters, they cannot be compressed and must be memorised.
 This validates the core distinction: structured knowledge compresses; extensional knowledge does not.
 
 \paragraph{Test 2: Linear vs.\ nonlinear compression.}
 Comparing SVD (linear) to MLP (nonlinear) factorisation on 30 synthetic embedding matrices:
 MLP outperforms SVD in 23 of 30 cases.
 The largest gap appears on clustered targets (the most embedding-like distribution): at $d_{\text{seed}} = 4$, SVD achieves cosine similarity 0.57 while MLP achieves 0.94.
-This confirms that nonlinear factorisation captures structure that PCA misses---a prerequisite for the orbital hypothesis.
+This confirms that nonlinear factorisation captures structure that PCA misses, a prerequisite for the orbital hypothesis.
 
 \paragraph{Test 3: Intrinsic dimensionality.}
 Structured synthetic embeddings in 128 ambient dimensions concentrate 90\% of variance in 27 dimensions, with effective rank 77.
@@ -2081,12 +2081,12 @@ $d_{\text{seed}}$ & Transition variance captured \\
 \end{center}
 
 \noindent
-The transition matrix has effective rank \textbf{1302}---far above 16.
+The transition matrix has effective rank \textbf{1302}, far above 16.
 At face value, $d_{\text{seed}} = 16$ is a bottleneck (50\% variance).
 However, the \emph{actual} output distributions are highly concentrated:
 mean next-token entropy is only \textbf{3.5 bits} ($\approx 11$ effective tokens),
 and the top 10 tokens cover 81\% of probability mass.
-The output head need not represent the full transition matrix---only the peaked
+The output head need not represent the full transition matrix, only the peaked
 distributions the model actually produces.
 
 \textit{Implication:} $d_{\text{seed}} = 16$ survives by learning peaked output representations,
@@ -2126,7 +2126,7 @@ per-layer rotation parameters (which could be low-rank for further compression).
 The PPMI co-occurrence matrix of TinyStories' top 2000 tokens has effective rank
 \textbf{1471}, and $d_{\text{seed}} = 16$ captures only \textbf{21\%} of co-occurrence
 structure ($d_{\text{seed}} = 32$: 26\%).
-This confirms that the vocabulary's distributional structure is high-dimensional---the
+This confirms that the vocabulary's distributional structure is high-dimensional, the
 orbital model succeeds not by capturing all vocabulary structure in the seeds, but by
 learning to route the most task-relevant information through the bottleneck.
 
@@ -2135,14 +2135,14 @@ learning to route the most task-relevant information through the bottleneck.
 On a controlled micro-language (4-layer transformer, $d{=}48$, 32 tokens), the model achieves 100\% compositional generalisation to held-out character--object pairs (all 15 unseen combinations appear in top-5 predictions) and an 8.4$\times$ perplexity increase on role violations (correct sentences: ppl~2.1; role violations: ppl~17.6).
 Characters cluster in embedding space (within-role cosine 0.029 vs cross-role $-0.070$), confirming that the model learns functional roles rather than memorising specific instances.
 
-These results are pedagogical---they demonstrate the \emph{principle} of structural rule learning on a domain with clear regularity, not evidence for abstract concept formation in real language.
+These results are pedagogical, they demonstrate the \emph{principle} of structural rule learning on a domain with clear regularity, not evidence for abstract concept formation in real language.
 The micro-language has unambiguous structural rules that make compositional generalisation easy; real language has far more ambiguity, exceptions, and context-dependence.
 The value of this test is confirming that small transformers \emph{can} learn slots and roles (the mechanism the orbital model depends on), not that they always do.
 
 \subsection{Exp 5b: Orbital Embeddings at 10M Scale (Completed)}
 
 The 2M result is confounded by the baseline being pathologically narrow.
-At 10M parameters, the baseline achieves $d_{\text{head}} = 44$---genuinely functional attention---removing the confound.
+At 10M parameters, the baseline achieves $d_{\text{head}} = 44$, genuinely functional attention, removing the confound.
 
 \begin{center}\small
 \renewcommand{\arraystretch}{1.2}
@@ -2150,7 +2150,7 @@ At 10M parameters, the baseline achieves $d_{\text{head}} = 44$---genuinely func
 \toprule
 \textbf{Model} & $d_{\text{model}}$ & \textbf{Layers} & \textbf{Params} & \textbf{Val Loss} & \textbf{vs Baseline} \\
 \midrule
-Baseline & 176 & 3 & 10.0M & 2.921 & --- \\
+Baseline & 176 & 3 & 10.0M & 2.921 & ,  \\
 LowRank ($T{=}0$) & 308 & 8 & 10.0M & 3.908 & $+33.8\%$ \\
 Orbital-T1 & 476 & 3 & 10.0M & 3.008 & $+3.0\%$ \\
 Orbital-T2 & 296 & 8 & 9.7M & 3.202 & $+9.6\%$ \\
@@ -2160,17 +2160,17 @@ Orbital-T2 & 296 & 8 & 9.7M & 3.202 & $+9.6\%$ \\
 
 \paragraph{The dynamics recover 91\% of the compression bottleneck.}
 LowRank (static projection, no dynamics) is $+33.8\%$ worse than the baseline.
-Orbital-T1 (one iteration of shared dynamics) is only $+3.0\%$ worse---the dynamics close 91\% of the gap opened by compressing the embedding table.
+Orbital-T1 (one iteration of shared dynamics) is only $+3.0\%$ worse, the dynamics close 91\% of the gap opened by compressing the embedding table.
 $T{=}1$ again outperforms $T{=}2$: a single iteration suffices, and the extra iteration's parameters reduce available model width.
 
 \paragraph{Cross-scale comparison.}
 The most informative result is how each model scales from 2M to 10M:
-LowRank \emph{degraded} ($+1.9\% \to +33.8\%$)---the static projection bottleneck hurts more at larger scale, where the baseline can use its parameters effectively.
+LowRank \emph{degraded} ($+1.9\% \to +33.8\%$), the static projection bottleneck hurts more at larger scale, where the baseline can use its parameters effectively.
 Orbital-T1 \emph{improved in absolute terms} (val loss $3.13 \to 3.01$) but lost its advantage over the baseline ($-7.7\% \to +3.0\%$), confirming that the 2M win was partly architectural rebalancing as anticipated.
 
 \paragraph{The $d_{\text{seed}}{=}16$ bottleneck.}
 The remaining $3\%$ gap aligns with the CPU gap tests: $d_{\text{seed}}{=}16$ captures only 50\% of bigram transition variance.
-A $d_{\text{seed}}$ ablation ($32$, $64$) is the highest-priority follow-up---it would test whether the gap is an intrinsic limitation of orbital dynamics or merely an output bottleneck.
+A $d_{\text{seed}}$ ablation ($32$, $64$) is the highest-priority follow-up, it would test whether the gap is an intrinsic limitation of orbital dynamics or merely an output bottleneck.
 
 \paragraph{Computational viability confirmed.}
 No catastrophic failures, no training instabilities, no memory issues.
@@ -2186,16 +2186,16 @@ The question is no longer \emph{whether} they work, but \emph{how close} they ca
 Nature produces language from $\sim$86~billion neurons consuming $\sim$20~watts.
 It does not store a $50{,}000 \times 768$ lookup table for word representations.
 It does not maintain separate query-key matrices at each processing depth.
-Whatever it does, it is vastly more compressed than a transformer---and it generalises to novel situations that transformers handle poorly.
+Whatever it does, it is vastly more compressed than a transformer, and it generalises to novel situations that transformers handle poorly.
 
 \textbf{The compressed representation exists.}
-This is not a hypothesis---it is proven by existence.
+This is not a hypothesis, it is proven by existence.
 Every human who has ever learned a language is a proof that token meaning can be generated from compact shared structure rather than retrieved from massive lookup tables.
 
 The question is not \emph{whether} the decomposition exists.
 The question is \emph{what it looks like} and \emph{how to train a network to find it}.
 The transformer is the brute-force solution: throw memory at the problem, store everything extensionally, let gradient descent sort it out.
-It works---like a lookup table works---but it is the wrong representation.
+It works, like a lookup table works, but it is the wrong representation.
 Our job is not to accept the ugly solution because it is easy.
 It is to find the correct one, even if the path is harder.
 
@@ -2225,7 +2225,7 @@ The compression ratio $d / d_{\text{seed}}$ grows with model dimension:
 at 10M ($d = 176$), it is $5.5\times$;
 at 50M ($d = 384$), it is $12\times$;
 at 200M ($d = 768$), it is $24\times$.
-At GPT-2 scale, orbital seeds cost 1.6M parameters---less than 1\% of the model---while the lookup table they replace costs 38.6M (31\% of the model).
+At GPT-2 scale, orbital seeds cost 1.6M parameters, less than 1\% of the model, while the lookup table they replace costs 38.6M (31\% of the model).
 \textbf{Orbital embeddings become more attractive at larger scale, not less.}
 
 \paragraph{Factored sharing (resolved).}
@@ -2235,12 +2235,12 @@ This motivates a factored coupling architecture: $d$ shared eigenvalues + per-la
 
 \paragraph{Emergent rotation through response heads.}
 However, an explicit per-layer rotation $R_l$ may be unnecessary in the full ORN.
-The eigenvector rotation across layers is not a free parameter---it is a \emph{consequence} of the residual stream evolving under the per-layer response heads ($W_V^{(l)}, W_O^{(l)}$) and FFNs.
+The eigenvector rotation across layers is not a free parameter, it is a \emph{consequence} of the residual stream evolving under the per-layer response heads ($W_V^{(l)}, W_O^{(l)}$) and FFNs.
 When layer $l$'s response heads update the residual stream, they rotate the coordinate frame that layer $l{+}1$'s shared $\M$ will operate in.
 The coupling rule is fixed; the field it acts upon evolves; and the rotation emerges from that evolution.
 
 This gives the response heads a dual role in the ORN: (1) transforming content (their explicit job), and (2) implicitly steering the residual stream into the orientation that the shared coupling needs at the next layer.
-The coupling and response co-evolve through the shared residual field---the coupling shapes the attention pattern, the response updates the field, the updated field changes how the same coupling is expressed.
+The coupling and response co-evolve through the shared residual field, the coupling shapes the attention pattern, the response updates the field, the updated field changes how the same coupling is expressed.
 
 Whether this emergent rotation is sufficient, or whether a cheap explicit $R_l$ provides additional benefit, is an empirical question.
 But the architectural implication is significant: the response heads in an ORN are doing \emph{more work} than their transformer counterparts, because they carry the additional burden of implicit coordinate alignment.
@@ -2255,7 +2255,7 @@ Language mixes continuous structure (narrative arcs, semantic roles) with discre
 The orbital model handles continuous structure naturally.
 Discrete identity may require the parallel ontological layer.
 The Engram paper~\cite{engram2026} provides supporting evidence: their Sparsity Allocation Law shows $\sim$20\% of parameters are better spent on hash-based lookups for factual knowledge.
-The open question is where the boundary falls---how much of language is orbital and how much is ontological.
+The open question is where the boundary falls, how much of language is orbital and how much is ontological.
 
 \paragraph{Training dynamics.}
 Weight sharing across iterations creates well-known gradient challenges (vanishing/exploding through the unrolled graph).
@@ -2282,17 +2282,17 @@ All models are matched at ${\sim}7.5$M parameters, trained on TinyStories for 50
 \toprule
 Model & Val Loss & vs GRF-only & vs Transformer \\
 \midrule
-GRF-only (shared $\M$) & 2.949 & --- & $+1.4\%$ \\
+GRF-only (shared $\M$) & 2.949 & ,  & $+1.4\%$ \\
 GRF+Onto constrained (value-only, $r{=}4$) & 2.922 & $-0.9\%$ & $+0.5\%$ \\
 GRF+Onto unconstrained (embed, $r{=}4$) & \textbf{2.901} & $-1.6\%$ & $-0.2\%$ \\
-Standard transformer & 2.907 & $-1.4\%$ & --- \\
+Standard transformer & 2.907 & $-1.4\%$ & ,  \\
 \bottomrule
 \end{tabular}
 \caption{Exp~4b results. The unconstrained ontological correction brings the GRF to transformer parity.}
 \label{tab:exp4b}
 \end{table}
 
-The unconstrained variant achieves 2.901 vs the transformer's 2.907---the first time a GRF variant has matched or beaten the transformer on TinyStories.
+The unconstrained variant achieves 2.901 vs the transformer's 2.907, the first time a GRF variant has matched or beaten the transformer on TinyStories.
 The ontological correction accounts for only ${\sim}2.7\%$ of total parameters, yet closes the entire gap that shared coupling introduced.
 
 Three diagnostic findings motivate the next experiment.
@@ -2321,13 +2321,13 @@ We have a programme of incremental tests, each of which narrows the space of pos
 
 Each failed level does not kill the theory.
 It identifies a specific gap in our understanding of the decomposition.
-We adjust and try again, because the target exists---we just haven't found the path.
+We adjust and try again, because the target exists, we just haven't found the path.
 
 
 % ======================================================================
 \section{The Coupling Semigroup: Direct Evidence at 50M Scale}\label{sec:semigroup}
 
-The semigroup claim---that a single $\M = AB^\top$ generates diverse coupling patterns through interaction with an evolving field state---has been an architectural hypothesis throughout this paper.
+The semigroup claim, that a single $\M = AB^\top$ generates diverse coupling patterns through interaction with an evolving field state, has been an architectural hypothesis throughout this paper.
 We now provide direct evidence from the SharedM-50M checkpoint ($d{=}512$, $L{=}9$, trained for 8{,}000 steps on TinyStories).
 Full analysis and figures are in the companion document (\textit{The Coupling Semigroup in Practice}).
 
@@ -2353,13 +2353,13 @@ The orbit is neither random (cosine ${\sim}0$ expected for random vectors in $\R
 
 The key vector for ``Lily'' shows more dramatic behaviour: a \textbf{phase transition at layer~4}.
 Layers 0--3 are mutually correlated (cosine $0.67$--$0.97$), layers 4--8 are mutually correlated ($0.70$--$0.96$), but the two groups are nearly orthogonal (L0$\leftrightarrow$L6 cosine $= -0.22$).
-``Lily'' switches functional role mid-network---from lexical identity to narrative agent---driven entirely by the field state's evolution, not by layer-specific parameters.
+``Lily'' switches functional role mid-network, from lexical identity to narrative agent, driven entirely by the field state's evolution, not by layer-specific parameters.
 
 \subsection{Coreference Emerges in K-Space}
 
 We measured K-vector cosine similarity between ``Lily'' and ``She'' (co-referent) vs ``Lily'' and ``dog'' (different entity) across layers.
 At deeper layers, the co-referent pair maintains higher K-space similarity than the non-co-referent pairs.
-The shared coupling geometry, applied to field states shaped by narrative context, discovers that ``Lily'' and ``She'' should be findable by similar queries---without any explicit coreference supervision.
+The shared coupling geometry, applied to field states shaped by narrative context, discovers that ``Lily'' and ``She'' should be findable by similar queries, without any explicit coreference supervision.
 
 This supports the world-model interpretation: $\M$ encodes abstract relational roles (agent, patient, possessor), and the field state fills those roles with specific entities.
 
@@ -2373,7 +2373,7 @@ This specialisation arises from the field state's evolution, not from parameter 
 
 Meanwhile, the field state homogenises: mean pairwise token cosine rises from 0.21 (embedding) to 0.91 (layer~9).
 Attention entropy oscillates across layers, creating alternating focus/diffuse patterns.
-The residual stream converges toward a shared subspace---the ``convergent orbit''---with per-token variation shrinking at each depth.
+The residual stream converges toward a shared subspace, the ``convergent orbit'', with per-token variation shrinking at each depth.
 
 These observations ground the semigroup claim in concrete geometry.
 The abstract argument (one generator, many orbits) is now backed by measurable quantities: smooth Q-vector rotation, K-vector phase transitions, emergent coreference, and training-driven spectral crystallisation.
@@ -2383,7 +2383,7 @@ The abstract argument (one generator, many orbits) is now backed by measurable q
 There is a practical consequence of coupling memoisation that is easy to overlook: because $\M$ is a single, shared object, it can be \textbf{directly inspected, probed, and diagnosed} from a checkpoint without retraining.
 
 In a standard transformer, the coupling behaviour is distributed across $2L$ independent matrices ($W_Q^{(\ell)}, W_K^{(\ell)}$ at each layer).
-Understanding what the model has learned about coupling requires analysing all of them jointly---a high-dimensional, layer-entangled picture.
+Understanding what the model has learned about coupling requires analysing all of them jointly, a high-dimensional, layer-entangled picture.
 There is no single object to inspect.
 
 In SharedM, the coupling geometry is $\M = AB^\top$: one matrix pair.
@@ -2391,25 +2391,25 @@ From a single checkpoint, without any additional training or data, we can:
 \begin{itemize}[nosep]
     \item Compute $\M$'s eigenspectrum to measure effective coupling rank and condition number.
     \item Track spectral evolution across training checkpoints to observe geometry crystallisation.
-    \item Run the model at variable depth (iterate the same $\M$ more or fewer times) to test convergence, divergence, and depth-sensitivity---no architectural changes needed.
+    \item Run the model at variable depth (iterate the same $\M$ more or fewer times) to test convergence, divergence, and depth-sensitivity, no architectural changes needed.
     \item Project the residual stream onto $\M$'s singular vectors to measure whether per-token contrast is being maintained where coupling reads it.
     \item Trace Q/K vector orbits for specific tokens to observe functional role transitions and coreference emergence.
 \end{itemize}
 
 All of the semigroup analyses in this section were performed on a single 191MB checkpoint with a few minutes of CPU computation.
 No retraining, no ablation runs, no additional data.
-The shared coupling geometry is a \emph{window into the model's relational world model}---something that per-layer coupling matrices, by their distributed nature, cannot provide.
+The shared coupling geometry is a \emph{window into the model's relational world model}, something that per-layer coupling matrices, by their distributed nature, cannot provide.
 
 This inspectability has implications beyond research.
 In deployment, $\M$'s spectral structure could serve as a diagnostic: a sudden change in effective rank or condition number during fine-tuning would signal that the relational geometry is being disrupted.
-In model comparison, $\M$'s spectrum provides a compact, interpretable signature of what the model has learned about coupling---a fingerprint of the world model that does not require running the model on evaluation sets.
+In model comparison, $\M$'s spectrum provides a compact, interpretable signature of what the model has learned about coupling, a fingerprint of the world model that does not require running the model on evaluation sets.
 
 % ======================================================================
 \section{Learning Capacity vs.\ Snapshot Performance}\label{sec:learning-capacity}
 
 SharedM matches the standard transformer at every scale tested (1M--50M) with $12\times$ fewer coupling parameters.
 But matching is not the ambition.
-The question is whether SharedM can \emph{keep learning}---whether it scales better, not just performs comparably.
+The question is whether SharedM can \emph{keep learning}, whether it scales better, not just performs comparably.
 
 This is a different question from ``who wins at 50M.''
 A model that is 2\% worse at 50M but has a steeper learning curve will overtake the competitor at some larger scale.
@@ -2419,8 +2419,8 @@ We want to understand the \emph{trajectory}, not the snapshot.
 \subsection{Why SharedM Might Scale Better}
 
 The transformer stores $2L$ independent coupling matrices.
-Each can encode arbitrary coupling patterns---maximum representational flexibility.
-SharedM stores one generator that must produce all coupling patterns through the field state---a strict constraint.
+Each can encode arbitrary coupling patterns, maximum representational flexibility.
+SharedM stores one generator that must produce all coupling patterns through the field state, a strict constraint.
 At any fixed parameter count, the transformer has at least as much representational capacity.
 \textbf{SharedM can never beat the transformer on raw capacity.}
 
@@ -2430,7 +2430,7 @@ Three arguments suggest SharedM extracts more from each gradient update and each
 \paragraph{1. Gradient concentration.}
 The transformer spreads coupling gradients across $2L$ matrices.
 SharedM concentrates them in one pair $(A, B)$.
-Every training example that teaches something about relational structure---``verbs attend to subjects,'' ``pronouns resolve to antecedents''---updates the single $\M$ directly.
+Every training example that teaches something about relational structure, ``verbs attend to subjects,'' ``pronouns resolve to antecedents'', updates the single $\M$ directly.
 The transformer must independently discover the same relational pattern $L$ times, once per layer.
 This predicts that SharedM is more \emph{sample efficient}: it learns more per token of training data.
 
@@ -2438,13 +2438,13 @@ This predicts that SharedM is more \emph{sample efficient}: it learns more per t
 We observe a recurring pattern across experiments: SharedM starts slower, then catches up or overtakes.
 In Experiment~3 (TinyStories, 10M), SharedM crosses the transformer at step ${\sim}2{,}800$.
 In C1 at 10M, SharedM starts behind and closes the gap by the end of training.
-This is the learning curve of a model that invests early computation in \emph{discovering the coupling geometry}---a structural investment that pays off once the geometry crystallises.
+This is the learning curve of a model that invests early computation in \emph{discovering the coupling geometry}, a structural investment that pays off once the geometry crystallises.
 The transformer learns faster initially because it has no structural bottleneck, but its per-step improvement should flatten earlier because each layer's coupling is learned in isolation.
 
 \paragraph{3. Rules generalise; tables do not.}
 $\M$ encodes a \emph{generative rule} for coupling: given any field state, produce the appropriate coupling pattern.
 Per-layer $W_Q, W_K$ encode a \emph{lookup table}: for each layer, store the coupling pattern.
-As data diversity increases---more domains, more languages, more relational structures---the rule should generalise to novel combinations that the table has not seen.
+As data diversity increases, more domains, more languages, more relational structures, the rule should generalise to novel combinations that the table has not seen.
 The world model test (100\% compositional generalisation on held-out character-object pairs) provides preliminary evidence at toy scale.
 The prediction: at larger scale and more diverse data, SharedM's advantage grows because the coverage requirement exceeds what a lookup table can memorise.
 
@@ -2465,7 +2465,7 @@ The learning capacity question requires experiments that distinguish \emph{traje
 
     \item \textbf{M's spectral rank vs.\ scale.}
     At 50M, $\M$ uses 51 of 512 dimensions (effective rank at 90\% energy).
-    If we train at 200M and the effective rank grows---$\M$ uses more of its capacity---there is room for continued improvement.
+    If we train at 200M and the effective rank grows, $\M$ uses more of its capacity, there is room for continued improvement.
     If it saturates at 51 regardless of scale, $\M$ has hit its ceiling and further scaling requires increasing $d$.
     The spectral rank is a direct, measurable capacity diagnostic with no transformer equivalent.
 
@@ -2477,7 +2477,7 @@ The learning capacity question requires experiments that distinguish \emph{traje
     Plot loss vs.\ training step for both architectures.
     SharedM should show a characteristic S-curve: slow start (geometry crystallisation), steep descent (exploitation of the crystallised geometry), then plateau.
     The transformer should show a smoother, more linear descent.
-    The crossover point should move earlier with scale---at larger models, the crystallisation phase is a smaller fraction of total training.
+    The crossover point should move earlier with scale, at larger models, the crystallisation phase is a smaller fraction of total training.
 \end{enumerate}
 
 \subsection{Transfer Results (OWT $\to$ WikiText, Code)}
@@ -2505,13 +2505,13 @@ Transformer $\to$ Code (frozen Q,K) & 5.93 & 2.39 & 3.54 nats \\
 Three findings:
 
 \paragraph{1. $\M$ transfers far better than per-layer Q,K.}
-At zero-shot (no fine-tuning), the ORN with frozen $\M$ scores 5.96 on WikiText vs the transformer's 7.24---a \textbf{1.3 nat advantage}.
-After 3{,}000 steps of fine-tuning, the ORN reaches 4.19 vs the transformer's 4.78---a \textbf{0.59 nat advantage} persists.
+At zero-shot (no fine-tuning), the ORN with frozen $\M$ scores 5.96 on WikiText vs the transformer's 7.24, a \textbf{1.3 nat advantage}.
+After 3{,}000 steps of fine-tuning, the ORN reaches 4.19 vs the transformer's 4.78, a \textbf{0.59 nat advantage} persists.
 The shared coupling geometry learned on web text generalises to Wikipedia far better than per-layer coupling patterns.
 
 \paragraph{2. $\M$ transfers to code even better than to Wikipedia.}
-The ORN's zero-shot on Python code is 3.89---much better than its 5.96 on WikiText, and \textbf{2.04 nats ahead} of the transformer's 5.93 on code.
-After fine-tuning, the ORN reaches 1.94 vs the transformer's 2.39---a \textbf{0.45 nat advantage} that persists through adaptation.
+The ORN's zero-shot on Python code is 3.89, much better than its 5.96 on WikiText, and \textbf{2.04 nats ahead} of the transformer's 5.93 on code.
+After fine-tuning, the ORN reaches 1.94 vs the transformer's 2.39, a \textbf{0.45 nat advantage} that persists through adaptation.
 Code has highly regular coupling structure (brackets match, functions call functions, indentation defines scope) that aligns closely with $\M$'s learned geometry.
 The transformer catches up during fine-tuning (from 2.04 nats behind to 0.45 behind) but never closes the gap.
 
@@ -2521,7 +2521,7 @@ More complex, diverse data produces a richer coupling geometry.
 The rank diagnostic (Experiment~11, not yet run) would sweep $r$ across domains to map $r^*$ per data type.
 
 \paragraph{Interpretation.}
-This is the strongest evidence for the learning capacity argument: $\M$ does not just match the transformer on a single domain---it learns something \emph{more transferable}.
+This is the strongest evidence for the learning capacity argument: $\M$ does not just match the transformer on a single domain, it learns something \emph{more transferable}.
 Per-layer $W_Q$, $W_K$ encode domain-specific coupling patterns that fail at zero-shot transfer.
 Shared $\M$ encodes abstract relational structure that applies across domains.
 The coupling geometry is a world model, not a dataset model.
@@ -2531,12 +2531,12 @@ The coupling geometry is a world model, not a dataset model.
 We now have evidence that SharedM has a \emph{qualitative} advantage: better domain transfer.
 This is not a scaling claim (the single-domain results are within noise) but a generalisation claim.
 $\M$ learns coupling structure that transfers across text domains (OWT $\to$ WikiText: $+1.3$ nats at zero-shot) and even across programming paradigms (OWT $\to$ Python code: $+$ fast adaptation).
-The convergence crossover and the spectral crystallisation are no longer just suggestive---the transfer results confirm that $\M$'s structural investment produces a more universal representation.
+The convergence crossover and the spectral crystallisation are no longer just suggestive, the transfer results confirm that $\M$'s structural investment produces a more universal representation.
 
-The strongest version of the claim---that SharedM will overtake the transformer at some scale---is a prediction, not a finding.
+The strongest version of the claim, that SharedM will overtake the transformer at some scale, is a prediction, not a finding.
 The experiments above are designed to either confirm or kill this prediction.
 If the data scaling experiment (test~1) shows no sample efficiency advantage, or if $\M$'s spectral rank saturates (test~3), the scaling argument fails and SharedM's contribution reduces to a constant-factor efficiency gain.
-That is still valuable---$12\times$ fewer coupling parameters composes with MoE and enables deeper models---but it is a smaller claim.
+That is still valuable, $12\times$ fewer coupling parameters composes with MoE and enables deeper models, but it is a smaller claim.
 
 % ======================================================================
 \section{Positioning Against the Literature}
@@ -2550,7 +2550,7 @@ None asks \emph{why} sharing works, \emph{what} the geometric structure of the s
     \item[ALBERT~\cite{lan2020albert}:]
     Shares all transformer weights across layers.
     Key ablation: sharing attention weights alone costs only $-0.7$ points (near zero at small embedding); sharing FFN costs $-1.5$.
-    \emph{This is empirical confirmation of our Claim~1}---coupling is the redundant part---but ALBERT does not explain \emph{why} or analyse the geometric structure.
+    \emph{This is empirical confirmation of our Claim~1}, coupling is the redundant part, but ALBERT does not explain \emph{why} or analyse the geometric structure.
 
     \item[Universal Transformer~\cite{dehghani2018universal}:]
     Full block sharing with adaptive computation time (ACT).
@@ -2564,16 +2564,16 @@ None asks \emph{why} sharing works, \emph{what} the geometric structure of the s
 
     \item[Relaxed Recursive Transformers~\cite{mol2025}:]
     Ties all weights, adds per-layer LoRA corrections $A_\ell B_\ell^\top$.
-    Structurally closest to ORN---but \emph{inverts the framing}: for RRT, sharing is the base and low-rank correction is the perturbation away from it.
+    Structurally closest to ORN, but \emph{inverts the framing}: for RRT, sharing is the base and low-rank correction is the perturbation away from it.
     For ORN, the low-rank $\M = AB^\top$ IS the fundamental object; per-layer response heads carry the variation.
 
     \item[Neural Sheaf Diffusion~\cite{bodnar2022sheaf}:]
-    Restriction maps (shared linear transport operators on graph edges) define a sheaf Laplacian that drives diffusion for $T$ steps---genuinely iterative, with semigroup character in the continuous limit ($e^{-tL_F}$).
+    Restriction maps (shared linear transport operators on graph edges) define a sheaf Laplacian that drives diffusion for $T$ steps, genuinely iterative, with semigroup character in the continuous limit ($e^{-tL_F}$).
     Structurally identical to SharedM in the graph setting: a fixed coupling geometry, applied at every step, with the field state evolving.
-    Key differences: (1)~sheaf Laplacians are symmetric; $\M = AB^\top$ is asymmetric (essential for autoregressive tasks). (2)~Tested only on tiny graphs (183--19K nodes); never applied to language or at LLM scale. (3)~The sheaf connection adds \emph{more} parameters than standard GNNs---the goal is heterophily, not compression. (4)~No spectral analysis, no scaling curves, no transfer tests.
+    Key differences: (1)~sheaf Laplacians are symmetric; $\M = AB^\top$ is asymmetric (essential for autoregressive tasks). (2)~Tested only on tiny graphs (183--19K nodes); never applied to language or at LLM scale. (3)~The sheaf connection adds \emph{more} parameters than standard GNNs, the goal is heterophily, not compression. (4)~No spectral analysis, no scaling curves, no transfer tests.
 
     Crucially, the semigroup structure in NSD is \textbf{present but unintentional}.
-    The sheaf Laplacian $L_F$ is iterated $T$ times as a discretisation of the heat equation on the sheaf---a PDE motivation, not an algebraic one.
+    The sheaf Laplacian $L_F$ is iterated $T$ times as a discretisation of the heat equation on the sheaf, a PDE motivation, not an algebraic one.
     They never ask ``does this compose?'' or ``what does $L_F^T$ compute?''
     They never use the word semigroup.
     The iteration exists because diffusion iterates; the compositional properties of the shared operator are not analysed.
@@ -2585,9 +2585,9 @@ None asks \emph{why} sharing works, \emph{what} the geometric structure of the s
     Tested at real LLM scale (110M--729M trained from scratch, Llama~3.1 8B post-hoc compression).
 
     Three MASA findings independently confirm our design:
-    (i)~Q,K are more compressible than O---``compressing O introduces a bottleneck''---validating our choice to share coupling but not response;
+    (i)~Q,K are more compressible than O, ``compressing O introduces a bottleneck'', validating our choice to share coupling but not response;
     (ii)~quality gap widens at 729M ($-0.82\%$), suggesting static coefficients cannot capture depth-dependent variation as well as the ORN's field-state dynamics;
-    (iii)~no spectral analysis---``spectral clustering left for future work''---the mechanistic explanation is exactly our contribution.
+    (iii)~no spectral analysis, ``spectral clustering left for future work'', the mechanistic explanation is exactly our contribution.
 
     The fundamental difference: MASA is \textbf{static} (each layer independently combines atoms, no inter-layer dynamics) while the ORN is \textbf{dynamic} (one $\M$ applied to an evolving field state, each layer's coupling depends on all previous layers).
     MASA treats sharing as compression (fewer basis elements for $L$ matrices); ORN treats it as dynamics (one generator iterated through an evolving field).
@@ -2599,7 +2599,7 @@ None asks \emph{why} sharing works, \emph{what} the geometric structure of the s
     Motivation: PreNorm causes hidden-state magnitudes to grow $O(L)$, diluting each layer's contribution; and layers become redundantly prunable.
 
     \emph{Same diagnosis, different cure.}
-    Their root-cause observation---cross-layer redundancy under uniform aggregation---is precisely our Claim~1 stated in the dual direction.
+    Their root-cause observation, cross-layer redundancy under uniform aggregation, is precisely our Claim~1 stated in the dual direction.
     AttnRes manages the redundancy at aggregation time (learn how to combine prior layer outputs); ORN eliminates it at parameterisation time (share the coupling generator $\M$).
     Their motivating evidence for layer prunability is independent empirical support for our memoisation claim.
 
@@ -2608,7 +2608,7 @@ None asks \emph{why} sharing works, \emph{what} the geometric structure of the s
 
     \emph{What we do not yet claim.}
     Whether ORN also sidesteps the downstream symptoms of PreNorm dilution (O(L) norm growth, non-uniform gradient distribution across depth, layer-prune sensitivity) is an open empirical question.
-    The mechanism they identify---PreNorm with per-layer accumulation---is still present in ORN.
+    The mechanism they identify, PreNorm with per-layer accumulation, is still present in ORN.
     Three measurements would upgrade the ``same diagnosis, more surgical cure'' framing to a stronger ``also sidesteps dilution'' claim: (1)~$\|h_\ell\|$ vs depth in ORN vs matched transformer, (2)~per-layer gradient magnitude uniformity, (3)~layer-pruning sensitivity (remove a middle layer, measure val-loss degradation).
     These are staged in \texttt{experiments/exp\_attnres\_dilution\_compare.py} on V2 checkpoints.
 
@@ -2644,23 +2644,23 @@ Our specific contributions that no prior work provides:
 
     \noindent Every model: spectrum correlation $> 0.93$, raw cosine $< 0.01$.
     The coupling shape is invariant; the orientation varies.
-    This is not a GPT-2 artifact---it is a universal property of trained transformers.
+    This is not a GPT-2 artifact, it is a universal property of trained transformers.
     The effective rank varies by architecture (225 for GPT-2 Large vs 48 for Qwen2.5), confirming the rank diagnostic: different models use different numbers of coupling dimensions.
 
     \paragraph{Related spectral work.}
     The eigenspectrum of attention has been studied within single layers: Bao et al.~\cite{bao2024qk} showed that low eigenspectrum variance of $W_Q^\top W_K$ within a single head prevents rank collapse, and proposed regularisation based on this.
     Aubry et al.~\cite{aubry2024block} measured alignment of top singular vectors of whole-block Jacobians across depth, finding that cross-layer coupling correlates with generalisation.
     MASA~\cite{masa2025} exploits cross-layer redundancy in Q,K projections empirically but notes ``spectral clustering is left for future work.''
-    None of these measures the \emph{cross-layer correlation of the $W_Q^\top W_K$ eigenvalue distribution}---the specific quantity that reveals the coupling geometry is invariant while the orientation varies.
+    None of these measures the \emph{cross-layer correlation of the $W_Q^\top W_K$ eigenvalue distribution}, the specific quantity that reveals the coupling geometry is invariant while the orientation varies.
 
     \paragraph{Why spectral invariance occurs.}
     Three possible explanations, likely all contributing:
-    (i)~\textbf{Simplicity bias}~\cite{louis2025occam}: SGD prefers low-complexity solutions, and the minimum-complexity coupling for language has a specific spectral shape---one dominant mode, several secondary modes, a long tail---that every model converges to independently.
+    (i)~\textbf{Simplicity bias}~\cite{louis2025occam}: SGD prefers low-complexity solutions, and the minimum-complexity coupling for language has a specific spectral shape, one dominant mode, several secondary modes, a long tail, that every model converges to independently.
     (ii)~\textbf{The structure of language}: the relational structure of language (subjects relate to verbs, modifiers to heads, pronouns to antecedents) has an intrinsic spectral fingerprint that all models learn because it is in the data.
     (iii)~\textbf{Rotation by response heads}: per-layer coupling matrices may not encode independent rules at all.
     Each layer's response heads ($W_V$, $W_O$, FFN) transform the residual stream, effectively \emph{rotating the coordinate frame} that the next layer's coupling operates in.
     Layer $\ell$'s coupling matrix $M_\ell$ may be approximately layer~1's coupling rotated by the cumulative effect of response heads $1$ through $\ell{-}1$: $M_\ell \approx R_\ell M_1 R_\ell^\top$.
-    Eigenvalues are preserved under rotation---only eigenvectors change---which is exactly what we observe.
+    Eigenvalues are preserved under rotation, only eigenvectors change, which is exactly what we observe.
 
     This interpretation reframes the ``redundancy'' in per-layer Q,K: the transformer stores $L$ copies of the same coupling rule, each pre-rotated to account for the response heads' cumulative effect.
     SharedM eliminates this redundancy by sharing the rule and letting the rotation arise naturally from the evolving field state.
@@ -2669,15 +2669,15 @@ Our specific contributions that no prior work provides:
     \paragraph{An important clarification: implicit vs explicit semigroup.}
     The ORN's semigroup is \textbf{emergent, not coded}.
     The implementation is simple sharing: one $A$, one $B$, referenced by every layer.
-    At layer $\ell$, the computation is $q = \text{LN}(h_\ell) \cdot A$, $k = \text{LN}(h_\ell) \cdot B$---the same $A$, $B$ applied to a different field state $h_\ell$.
+    At layer $\ell$, the computation is $q = \text{LN}(h_\ell) \cdot A$, $k = \text{LN}(h_\ell) \cdot B$, the same $A$, $B$ applied to a different field state $h_\ell$.
     We do not compute $\M^L$ or compose coupling matrices explicitly.
     The semigroup structure arises because the per-layer response heads ($W_V$, $W_O$, FFN) transform $h$ between layers, so the same $A$, $B$ produces a different coupling pattern at each depth.
 
     This is architecturally identical to ALBERT sharing attention weights, with one critical difference: ALBERT shares \emph{everything} (Q, K, V, O, FFN), while the ORN shares \emph{only the coupling} (A, B) and keeps response heads per-layer.
-    The per-layer response heads are what make the semigroup rich---they drive the field state evolution that causes the same coupling rule to produce $L$ distinct coupling patterns.
+    The per-layer response heads are what make the semigroup rich, they drive the field state evolution that causes the same coupling rule to produce $L$ distinct coupling patterns.
     ALBERT's shared response heads cannot drive this variation, which is why ALBERT loses ${\sim}1.5\%$ while the ORN does not.
 
-    An open question: would an \textbf{explicit} semigroup computation---where $\M$'s effect is accumulated or composed in coupling space, not just through the residual stream---produce different (better? worse?) results?
+    An open question: would an \textbf{explicit} semigroup computation, where $\M$'s effect is accumulated or composed in coupling space, not just through the residual stream, produce different (better? worse?) results?
     The path integral experiments (companion technical report) suggest that explicit composition (G6: direct propagator training) is needed for physics tasks but that the implicit semigroup (through the field state) is better for language, where contextual refinement outperforms statistical composition.
     Designing an architecture that interpolates between implicit and explicit composition is a direction for future work.
 
@@ -2686,7 +2686,7 @@ Our specific contributions that no prior work provides:
     ORN specifically identifies $\M = AB^\top$ as the invariant component, keeps response heads per-layer, and redistributes the saved budget to depth or width.
 
     \item \textbf{The semigroup interpretation.}
-    $\M$ is not just a compressed weight matrix---it is a generator of a coupling semigroup.
+    $\M$ is not just a compressed weight matrix, it is a generator of a coupling semigroup.
     $L$ iterations of one generator produce $L$ distinct coupling patterns (demonstrated in the semigroup deep dive).
     Prior work treats sharing as compression; ORN treats it as a geometric property of the dynamics.
 
@@ -2772,7 +2772,7 @@ Late (loss 3.8--3.5) & \textbf{19} & $\sim$150M \\
 
 $\M$'s rank crystallised from 189 to 19 over the first half of training and has been stable at 19--20 for the remainder.
 Only 19--20 coupling dimensions (out of 512) carry 90\% of the energy for general-purpose web text.
-This is more compressed than the 50M TinyStories model (rank 51), suggesting that \textbf{larger models with more response-head capacity need fewer coupling dimensions from $\M$}---the response heads absorb more of the representational burden, leaving $\M$ to encode only the core relational structure.
+This is more compressed than the 50M TinyStories model (rank 51), suggesting that \textbf{larger models with more response-head capacity need fewer coupling dimensions from $\M$}, the response heads absorb more of the representational burden, leaving $\M$ to encode only the core relational structure.
 
 \paragraph{V1 final results.}
 Training completed after 2.5B tokens (305K steps, 18.6 hours on RTX 4090, \$4.40).
@@ -2829,7 +2829,7 @@ Shallow reasoning and occasional non-sequiturs are expected at 91M params undert
 
 The rank-19 finding directly informs the V2 architecture: thin matrices $A, B \in \R^{d \times r}$ with $r \approx 20$--$32$ would capture the coupling geometry at a further $25\times$ compression.
 Combined with the $L\times$ sharing savings, total coupling compression vs a standard transformer would exceed $600\times$.
-At this compression ratio, the coupling geometry is negligible in the parameter budget---the model is almost entirely response heads and FFN.
+At this compression ratio, the coupling geometry is negligible in the parameter budget, the model is almost entirely response heads and FFN.
 
 \subsection{Spectral Universality Across Pretrained Models}
 
@@ -2868,7 +2868,7 @@ Eight embedding variants tested on CIFAR-10 next-patch prediction, all sharing t
 \toprule
 \textbf{Variant} & \textbf{Params} & \textbf{MSE} & \textbf{vs TF} \\
 \midrule
-TF + Linear (baseline) & 683K & 0.4486 & --- \\
+TF + Linear (baseline) & 683K & 0.4486 & ,  \\
 SharedM + Linear & 591K & 0.4366 & $-2.7\%$ \\
 SharedM + MLP & 605K & 0.4346 & $-3.1\%$ \\
 SharedM + ModToken & 591K & 0.4037 & $-10.0\%$ \\
@@ -2906,7 +2906,7 @@ Delta & $-7.0\%$ & $+2.2\%$ & $+2.3\%$ & $+2.2\%$ \\
 
 ORN wins on images ($-7.0\%$), slightly behind on audio and text ($+2.2\%$ each).
 Combined loss within $2.2\%$ of transformer, well inside the $5\%$ multimodal memoisation threshold.
-Gate values: image 0.042, audio 0.094, text 0.109---spatial modalities need less perturbative correction.
+Gate values: image 0.042, audio 0.094, text 0.109, spatial modalities need less perturbative correction.
 
 \subsection{When Does M Matter? Scale Control Sweep}
 
@@ -2939,9 +2939,9 @@ At sufficient scale where $\M$ matters, adding modalities produces sub-linear ra
 \toprule
 \textbf{Config} & \textbf{Rank} & \textbf{Sum of singles} & \textbf{Compression} \\
 \midrule
-img & 4 & --- & --- \\
-aud & 4 & --- & --- \\
-txt & 2 & --- & --- \\
+img & 4 & ,  & ,  \\
+aud & 4 & ,  & ,  \\
+txt & 2 & ,  & ,  \\
 \midrule
 img+aud & 4 & 8 & 2$\times$ \\
 img+txt & 3 & 6 & 2$\times$ \\
@@ -2982,7 +2982,7 @@ Key findings:
 
 \subsection{Eigenvector Ablation}
 
-Zeroing the top-$k$ singular vectors of jointly-trained $\M$ showed no clear per-modality pattern---all modalities degraded similarly, suggesting shared rather than partitioned eigenvectors.
+Zeroing the top-$k$ singular vectors of jointly-trained $\M$ showed no clear per-modality pattern, all modalities degraded similarly, suggesting shared rather than partitioned eigenvectors.
 This is consistent with the sub-linear rank finding: $\M$ does not allocate separate subspaces to each modality but instead finds a shared coupling geometry that all modalities use.
 
 \subsection{LP1: Local Frozen Coupling Transfer ($d{=}512$, $L{=}6$, 2000 steps)}
@@ -3005,7 +3005,7 @@ C: Random frozen $\M$   & 3.330 & 191          & $+13.9\%$ \\
 Key findings:
 \begin{enumerate}[nosep]
 \item \textbf{Frozen V1 $\M$ beats random frozen $\M$ by $6.7\%$.}
-V1's coupling geometry \emph{is} useful---genuine transfer from OWT to TinyStories, across depth configurations ($L{=}24 \to L{=}6$).
+V1's coupling geometry \emph{is} useful, genuine transfer from OWT to TinyStories, across depth configurations ($L{=}24 \to L{=}6$).
 
 \item \textbf{Trainable $\M$ beats frozen V1 $\M$ by $6.2\%$.}
 At $L{=}6$ / 2000 steps, a fresh $\M$ that adapts outperforms borrowed geometry.
@@ -3015,7 +3015,7 @@ $\M$ was optimised for 24~layers of response-head rotation.
 At $L{=}6$, the response heads cannot fully exploit the geometry.
 
 \item \textbf{Definitive test in progress.}
-The vast.ai frozen-$\M$ test (same $L{=}24$, same $d{=}512$, FineWeb-Edu) is the controlled comparison---running, step~66K, loss~3.63.
+The vast.ai frozen-$\M$ test (same $L{=}24$, same $d{=}512$, FineWeb-Edu) is the controlled comparison, running, step~66K, loss~3.63.
 \end{enumerate}
 
 The validation trajectory shows A and B nearly tied at step ${\sim}800$, then B pulled ahead as its $\M$ adapted.
@@ -3047,7 +3047,7 @@ diffusion generation ($t$-schedule, bidirectional),
 and composable reasoning (variable $t$, semigroup consistency).
 
 \medskip
-\noindent\textit{Results pending---experiments running overnight.}
+\noindent\textit{Results pending, experiments running overnight.}
 
 \subsection{March 2026: Scale Results and First Benchmark Win}
 
@@ -3062,14 +3062,14 @@ The frozen-$\M$ FineWeb-Edu run converged to val~3.3985, within 1.4\% of V1's fu
 
 \subsection{CORN is Free at Scale}
 
-The CORN stories experiment tests the composability constraint on TinyStories at $d_{\mathrm{model}}=256$, $L=8$, 15K training steps with GPT-2 tokenisation --- doubling the model width from the previous $d=128$ CORN runs.
+The CORN stories experiment tests the composability constraint on TinyStories at $d_{\mathrm{model}}=256$, $L=8$, 15K training steps with GPT-2 tokenisation ,  doubling the model width from the previous $d=128$ CORN runs.
 
 \paragraph{Results.}
 \begin{itemize}[nosep]
   \item \textbf{Val loss:} ORN 2.182, CORN 2.183 ($+0.06\%$, within noise).
   \item \textbf{Semigroup error:} identical (2.341 both).
-  \item \textbf{CORN rank 10} (vs ORN rank 20) --- rank halving with zero prediction cost.
-  \item \textbf{CORN $\sigma_1 = 14.63$} (vs ORN $\sigma_1 = 11.38$) --- stronger top Koopman mode.
+  \item \textbf{CORN rank 10} (vs ORN rank 20) ,  rank halving with zero prediction cost.
+  \item \textbf{CORN $\sigma_1 = 14.63$} (vs ORN $\sigma_1 = 11.38$) ,  stronger top Koopman mode.
   \item \textbf{Generated text:} both produce readable TinyStories with characters, plots, dialogue. No visible quality difference.
 \end{itemize}
 
@@ -3084,18 +3084,18 @@ The fundamental tension between composability and prediction is a small-scale ar
 \section{Conclusion}
 
 The dense embedding table is the largest piece of trajectory storage in a neural language model.
-Replacing it with orbital dynamics---where token meaning is \emph{generated} by iterating shared geometry rather than \emph{retrieved} from a lookup table---is the natural completion of the memoisation programme.
+Replacing it with orbital dynamics, where token meaning is \emph{generated} by iterating shared geometry rather than \emph{retrieved} from a lookup table, is the natural completion of the memoisation programme.
 
 The mathematical framework is clear: tokens are orbits in a phase space defined by the shared metric $\M$, the dynamical system $\Phi$ is the generator, and functional equivalence is orbital convergence.
 The connection to differential geometry (Riemannian metrics, tangent space stability), group theory (orbits, stabilisers, representations), and dynamical systems (attractors, basins, convergence) provides precise vocabulary for what would otherwise be architectural hand-waving.
 
 The training problem is hard.
 We decompose it into five levels of independently testable micro-experiments, each with a kill criterion.
-We conjecture that a parallel ontological layer---sparse, per-token, handling discrete bindings---is necessary to complement the continuous orbital world model.
+We conjecture that a parallel ontological layer, sparse, per-token, handling discrete bindings, is necessary to complement the continuous orbital world model.
 The key architectural constraint is that all attention coupling must use the shared orbital geometry; the ontological layer contributes only to the value stream, never to the coupling.
 
 This forces the model to learn structural rules in the orbital system and reserve the ontological system for genuinely discrete, referential knowledge.
-The prediction is not that this architecture will beat the transformer immediately, but that it will scale differently---steeper $\beta$---because it stores generators where the transformer stores trajectories.
+The prediction is not that this architecture will beat the transformer immediately, but that it will scale differently, steeper $\beta$, because it stores generators where the transformer stores trajectories.
 
 
 % ======================================================================
@@ -3224,14 +3224,14 @@ Attention Residuals.
 
 \subsection*{Two modes of knowing and the hemispheric parallel}
 
-The two-system architecture we propose---orbital world model plus ontological layer---has a striking structural parallel with Iain McGilchrist's account of hemispheric specialisation in the human brain \cite{mcgilchrist2009master, mcgilchrist2021matter}.
+The two-system architecture we propose, orbital world model plus ontological layer, has a striking structural parallel with Iain McGilchrist's account of hemispheric specialisation in the human brain \cite{mcgilchrist2009master, mcgilchrist2021matter}.
 
 McGilchrist argues that the right hemisphere engages the world holistically: it grasps context, relationship, pattern, and the interconnectedness of things.
 It is the seat of understanding that cannot be reduced to propositions.
-The left hemisphere, by contrast, excels at narrow focus, categorical precision, and the manipulation of things already known---naming, pinning down, making explicit.
+The left hemisphere, by contrast, excels at narrow focus, categorical precision, and the manipulation of things already known, naming, pinning down, making explicit.
 Neither hemisphere is dispensable.
 The right provides the ground of understanding; the left provides the tools of articulation.
-The pathology, in McGilchrist's account, is when the left hemisphere mistakes its own abstractions for the world itself---when the map is taken to be the territory.
+The pathology, in McGilchrist's account, is when the left hemisphere mistakes its own abstractions for the world itself, when the map is taken to be the territory.
 
 The parallel to our architecture is structural, not metaphorical:
 
@@ -3251,32 +3251,32 @@ Role & Primary world model & Serving complement \\
 
 \paragraph{Evolutionary bootstrapping.}
 This parallel may not be accidental.
-Consider the evolutionary pressure on any system---biological or artificial---that must both \emph{generalise} across experience and \emph{individuate} within it.
+Consider the evolutionary pressure on any system, biological or artificial, that must both \emph{generalise} across experience and \emph{individuate} within it.
 
-A purely orbital system (or a purely right-hemispheric one) can learn that characters want things, that obstacles arise, that narratives resolve---but it cannot learn that \emph{this} character is Caesar, that \emph{this} event happened in 49\,BC.
+A purely orbital system (or a purely right-hemispheric one) can learn that characters want things, that obstacles arise, that narratives resolve, but it cannot learn that \emph{this} character is Caesar, that \emph{this} event happened in 49\,BC.
 A purely ontological system (or a purely left-hemispheric one) can bind every specific fact, but stores each one independently.
 It has no generators, no compression, no way to predict structure it has not already memorised.
 It is our dense embedding table: powerful but wasteful, and it mistakes extensional coverage for understanding.
 
-Any organism that must navigate a structured world with specific contents---which is to say, any organism at all---faces this tension.
+Any organism that must navigate a structured world with specific contents, which is to say, any organism at all, faces this tension.
 The evolutionary solution, arrived at independently by the cortex--hippocampus division \cite{mcclelland1995complementary} and the hemispheric specialisation McGilchrist documents, is the same: \emph{two complementary systems}, one continuous and generative, one discrete and referential, with the generative system as the primary ground.
 
 \paragraph{Complementarity as prerequisite for higher cognition.}
-McGilchrist goes further: he argues that the highest forms of thought---metaphor, irony, wisdom, moral reasoning---require the \emph{integration} of both modes.
+McGilchrist goes further: he argues that the highest forms of thought, metaphor, irony, wisdom, moral reasoning, require the \emph{integration} of both modes.
 Metaphor, for instance, requires grasping structural similarity (right/orbital) across domains whose specific contents differ (left/ontological).
 Understanding that ``Juliet is the sun'' requires both the relational insight (warmth, centrality, life-giving) and the knowledge that Juliet and the sun are, in fact, distinct entities.
 
-In our framework, this would correspond to the regime where the orbital world model provides the structural scaffold and the ontological layer provides the specific grounding---and the model's power comes precisely from their interaction.
+In our framework, this would correspond to the regime where the orbital world model provides the structural scaffold and the ontological layer provides the specific grounding, and the model's power comes precisely from their interaction.
 The merge operation $\x_w = \Phi^T(\s_w) + \lambda \cdot U_w$ is, in this light, not merely an engineering convenience but a minimal expression of a deeper complementarity.
 
 \paragraph{Caution.}
 This is speculative.
 McGilchrist's hemispheric distinction concerns modes of \emph{attention and engagement with reality}, not information formats.
 The biological hemispheres are far messier than the clean architectural separation we propose.
-And the convergence between brains and our architecture could easily be coincidental rather than principled---two systems might be optimal for entirely different reasons in carbon and silicon.
+And the convergence between brains and our architecture could easily be coincidental rather than principled, two systems might be optimal for entirely different reasons in carbon and silicon.
 
 What we can say is narrower but still interesting: \emph{any system that must generalise over structure while binding specific instances seems to require at least two complementary representations}.
-Whether this is a deep necessity---a constraint that any sufficiently capable cognitive system must satisfy---or merely a recurrent engineering solution, remains an open question.
+Whether this is a deep necessity, a constraint that any sufficiently capable cognitive system must satisfy, or merely a recurrent engineering solution, remains an open question.
 That both evolution and our architectural reasoning arrive at the same decomposition is, at minimum, suggestive.
 
 \subsection*{Why Q and K are two matrices: asymmetry, not subspace selection}
@@ -3295,19 +3295,19 @@ This projects both tokens into a shared $r$-dimensional subspace and computes th
 Subspace selection: done.
 But this coupling is necessarily symmetric: $\text{score}_{ij} = \text{score}_{ji}$, because $M = W^\top W$ is symmetric.
 
-The \emph{only} reason attention needs $W_Q \neq W_K$ is to break this symmetry---to decouple ``what I'm looking for'' (query) from ``what I'm advertising'' (key).
+The \emph{only} reason attention needs $W_Q \neq W_K$ is to break this symmetry, to decouple ``what I'm looking for'' (query) from ``what I'm advertising'' (key).
 This is an inherently directional operation: a verb looks for its subject, but a subject does not look for its verb in the same way.
 
 \paragraph{Consequence for the ORN.}
 The shared coupling $\M = AB^\top$ is the ORN's version of $Q$ and $K$, learned once.
 $A$ and $B$ provide asymmetry ($A \neq B$); the rank of $A, B$ controls the effective subspace dimension.
-The per-layer response heads ($W_V^{(l)}, W_O^{(l)}$) handle content---what information flows along the routes the coupling has established.
+The per-layer response heads ($W_V^{(l)}, W_O^{(l)}$) handle content, what information flows along the routes the coupling has established.
 
 This decomposition is clean: coupling (shared, asymmetric, structural) is separated from content (per-layer, task-dependent).
 
 \paragraph{An empirical test.}
 On tasks where attention \emph{should} be symmetric (undirected graph reasoning, similarity judgements), does $LL^\top$ perform as well as $AB^\top$?
-Our experiments already show $LL^\top$ fails on autoregressive tasks---but it might succeed on symmetric ones.
+Our experiments already show $LL^\top$ fails on autoregressive tasks, but it might succeed on symmetric ones.
 This would confirm that Q/K separation exists specifically for asymmetry, not subspace selection.
 
 \subsection*{Eigenvector rotation: what per-layer orientation means}
@@ -3319,7 +3319,7 @@ The eigenvectors encode \emph{which directions in the residual stream} those str
 The rotation across layers reflects the fact that the residual stream content changes as information flows through the network.
 At layer 1, ``verb-ness'' might point in direction $[0.7, 0.3, \ldots]$.
 By layer 8, after several FFN updates, ``verb-ness'' points in direction $[0.1, 0.9, \ldots]$.
-The coupling \emph{rule} is still ``verbs attend to subjects with strength $\lambda_1$''---but the \emph{coordinate expression} of that rule must rotate to track the drifting representation.
+The coupling \emph{rule} is still ``verbs attend to subjects with strength $\lambda_1$'', but the \emph{coordinate expression} of that rule must rotate to track the drifting representation.
 
 This is not ``selecting which part of the vector to use'' in the sense of masking out dimensions.
 It is: the residual stream is a coordinate system that rotates as information flows through the network, and the coupling rule is fixed in \emph{semantic} space but must be re-expressed in the evolving coordinates.
@@ -3330,13 +3330,13 @@ This is much cheaper than per-layer $W_Q, W_K$, but richer than a single fixed $
 
 However, in the full ORN, the per-layer rotation may already be handled implicitly.
 The reason eigenvectors rotate across layers is that the response heads and FFNs \emph{modify the residual stream}.
-The rotation is not an independent parameter---it is a \emph{consequence} of the content updates.
+The rotation is not an independent parameter, it is a \emph{consequence} of the content updates.
 Layer 5's response heads shift the residual stream; when layer 6 applies the same shared $\M$, it ``sees'' a rotated input.
 The rotation is emergent, not parameterised.
 
 Whether this emergent rotation is sufficient, or whether a cheap explicit $R_l$ on the coupling side would help, is an empirical question.
 Gap Test 6 shows the rotation matters enormously (99.9\% error reduction vs.\ full sharing).
-But in the full ORN, the residual stream dynamics may provide it for free---the response heads \emph{create} the rotation by updating the field that the shared coupling acts upon.
+But in the full ORN, the residual stream dynamics may provide it for free, the response heads \emph{create} the rotation by updating the field that the shared coupling acts upon.
 
 \subsection*{State space models, Mamba, and the convergence with ORN}
 
@@ -3355,10 +3355,10 @@ The semigroup property is explicit in both: $A^{s+t} = A^s A^t$ in SSMs; iterate
 \paragraph{What differs.}
 \begin{itemize}[nosep]
     \item \textbf{Axis of iteration.} SSMs iterate across \emph{time} (position $t$ to $t{+}1$), evolving a per-position hidden state sequentially. ORN iterates across \emph{depth} (layer $l$ to $l{+}1$), evolving a shared field that all tokens read simultaneously. SSMs compress past context into a fixed-size state; ORN preserves all token states as field positions with full random access through $\M$.
-    \item \textbf{No shared field in SSMs.} Each position's hidden state evolves independently (with shared $A$ but separate state vectors). There is no medium through which tokens at the same timestep coordinate. In ORN, the residual stream \emph{is} the shared medium---the stigmergic field. Coupling is a field property, not a recurrence.
-    \item \textbf{Context compression vs preservation.} SSMs compress all past context into $\mathcal{O}(d)$ per position---lossy, which is why they struggle with recall/retrieval tasks. ORN keeps $\mathcal{O}(Nd)$---the full field. The ontological pathway addresses identity binding, not information retrieval from a compressed state.
+    \item \textbf{No shared field in SSMs.} Each position's hidden state evolves independently (with shared $A$ but separate state vectors). There is no medium through which tokens at the same timestep coordinate. In ORN, the residual stream \emph{is} the shared medium, the stigmergic field. Coupling is a field property, not a recurrence.
+    \item \textbf{Context compression vs preservation.} SSMs compress all past context into $\mathcal{O}(d)$ per position, lossy, which is why they struggle with recall/retrieval tasks. ORN keeps $\mathcal{O}(Nd)$, the full field. The ontological pathway addresses identity binding, not information retrieval from a compressed state.
     \item \textbf{Selectivity mechanism.} Mamba gates the dynamics via learned projections of the input (explicit modulation of $B$, $C$, $\Delta$). ORN achieves input-dependence implicitly: the same $\M$ applied to different field configurations produces different coupling patterns. One is gating; the other is geometry.
-    \item \textbf{Training.} SSMs exploit the convolution view for parallel training (convolve the kernel across the sequence) while using the recurrent view for inference. ORN trains as a standard transformer with shared weights---no dual view needed.
+    \item \textbf{Training.} SSMs exploit the convolution view for parallel training (convolve the kernel across the sequence) while using the recurrent view for inference. ORN trains as a standard transformer with shared weights, no dual view needed.
 \end{itemize}
 
 \paragraph{The convergence.}
@@ -3368,14 +3368,14 @@ The Jamba hybrid (SSM for streaming context + attention for specific retrieval) 
 Several cross-pollination opportunities exist:
 \begin{itemize}[nosep]
     \item \textbf{From SSMs to ORN:} SSMs exploit linearity to parallelise recurrence via convolution during training. ORN's nonlinear blocks (softmax, GELU) preclude this directly, but linearised approximations of the orbital dynamics near convergence could enable similar tricks for variable-depth training (Exp~10b).
-    \item \textbf{From ORN to SSMs:} Our spectral invariance finding (eigenvalue distributions of coupling matrices are nearly identical across layers in GPT-2) could inform SSM design---if the $A$ matrix has invariant spectral structure across positions, factored sharing might help.
+    \item \textbf{From ORN to SSMs:} Our spectral invariance finding (eigenvalue distributions of coupling matrices are nearly identical across layers in GPT-2) could inform SSM design, if the $A$ matrix has invariant spectral structure across positions, factored sharing might help.
     \item \textbf{From Jamba to ORN:} The empirically optimal ratio of SSM-to-attention layers could inform capacity allocation between orbital and ontological pathways.
     \item \textbf{The deepest connection:} Both SSMs and ORN can be seen as implementations of the same abstract programme: replace a large lookup table (full attention / dense embeddings) with a compact dynamics generator. SSMs do this along the time axis; ORN does this along the depth axis. A full theory would unify both under the semigroup framework, treating time-iteration and depth-iteration as different projections of the same algebraic structure.
 \end{itemize}
 
 \paragraph{JEPA and latent-space world models.}
 LeCun's JEPA programme~\cite{lecun2022jepa} proposes world models that predict in representation space, not observation space.
-Our shared $\M$ is a latent-space coupling operator---it defines how representations relate without touching raw tokens.
+Our shared $\M$ is a latent-space coupling operator, it defines how representations relate without touching raw tokens.
 JEPA's predictor (context $\to$ target in latent space) and our $\M$ (coupling strength between any two representations) are both dynamics in a learned geometry.
 The difference: JEPA's predictor is a directional function; $\M$ is a relational metric.
 JEPA is naturally temporal (predict the next state); ORN is naturally spatial (couple all states simultaneously).
@@ -3388,21 +3388,21 @@ Three implementation ideas transfer directly:
 
 \textbf{1.\ Structured $\M$ (from Mamba's diagonal $A$).}
 Mamba constrains $A$ to be diagonal (plus structured corrections), reducing coupling parameters from $\mathcal{O}(d^2)$ to $\mathcal{O}(d)$.
-Our $\M = AB^\top$ is full rank, but Exp~0b shows effective rank ${\sim}50/64$ in GPT-2---the spectral mass is concentrated.
+Our $\M = AB^\top$ is full rank, but Exp~0b shows effective rank ${\sim}50/64$ in GPT-2, the spectral mass is concentrated.
 We can try $\M = \text{diag}(\mathbf{d}) + UV^\top$ where $U, V \in \mathbb{R}^{d \times r}$: a diagonal baseline plus a low-rank correction.
 This is $\mathcal{O}(d + 2rd)$ instead of $\mathcal{O}(2d^2)$.
-At $d = 512$, $r = 16$: 17K parameters instead of 524K---a further $30\times$ compression on top of the $L\times$ sharing.
+At $d = 512$, $r = 16$: 17K parameters instead of 524K, a further $30\times$ compression on top of the $L\times$ sharing.
 If the spectral structure from Exp~0b is mostly captured by a few dominant modes plus a uniform baseline, this should match full $\M$ with far fewer parameters.
 This is Exp~11.
 
 \textbf{2.\ Spectral initialisation (from HiPPO).}
 SSMs initialise $A$ using the HiPPO matrix, designed to optimally compress continuous signals into finite state.
 Our $\M$ is randomly initialised.
-Exp~0b gives us the \emph{target spectrum}---the eigenvalue distribution that trained transformers converge to.
+Exp~0b gives us the \emph{target spectrum}, the eigenvalue distribution that trained transformers converge to.
 Initialising $\M$ to have this distribution from step~0 could accelerate convergence, particularly for the deep SharedM configurations ($L = 13$) where the shared geometry needs more steps to crystallise (the convergence crossover at step 2800 in Exp~3).
 
 \textbf{3.\ Ontological capacity ratio (from Jamba).}
-Jamba found ${\sim}1{:}7$ attention-to-SSM layers optimal---roughly 12.5\% of layers dedicated to specific lookup.
+Jamba found ${\sim}1{:}7$ attention-to-SSM layers optimal, roughly 12.5\% of layers dedicated to specific lookup.
 Our ontological pathway uses ${\sim}2.8\%$ of parameters (215K out of 7.7M in Exp~4d).
 This suggests we may be under-allocating.
 Testing $r = 8$ or $r = 16$ (instead of $r = 4$) would roughly match Jamba's ratio.
@@ -3412,7 +3412,7 @@ Testing $r = 8$ or $r = 16$ (instead of $r = 4$) would roughly match Jamba's rat
 \begin{itemize}[nosep]
     \item \textbf{Shared dynamics work at scale.} Mamba-3B matches transformers with a shared $A$ across all sequence positions. Different axis (time vs depth), same principle: a single dynamics operator can model language.
     \item \textbf{Selectivity is necessary.} The jump from S4 (fixed $B$, $C$) to Mamba (input-dependent $B$, $C$, $\Delta$) was the key to competitive performance. This directly validates our ``fixed $\M$ + input-dependent response heads'' decomposition.
-    \item \textbf{Two-system hybrids win.} Jamba tried pure SSM, pure transformer, and hybrid. Hybrid won---attention layers handle recall that SSM layers cannot. This is our orbital + ontological argument, arrived at independently from engineering rather than theory.
+    \item \textbf{Two-system hybrids win.} Jamba tried pure SSM, pure transformer, and hybrid. Hybrid won, attention layers handle recall that SSM layers cannot. This is our orbital + ontological argument, arrived at independently from engineering rather than theory.
 \end{itemize}
 
 \bigskip
