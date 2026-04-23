@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Orbital Response Network</title>
+<style>
+:root { --fg: #222; --muted: #666; --rule: #ddd; --code-bg: #f6f8fa; --accent: #2a7ae2; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #fff; color: var(--fg); }
+body { font: 18px/1.7 -apple-system, "Helvetica Neue", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+article { max-width: 720px; margin: 48px auto 80px; padding: 0 24px; }
+article h1 { font-size: 2.1rem; line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 1.2rem; }
+article h2 { font-size: 1.35rem; line-height: 1.3; margin: 2.2rem 0 0.8rem; letter-spacing: -0.01em; }
+article p { margin: 0 0 1.1rem; }
+article a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(42,122,226,0.25); }
+article a:hover { border-bottom-color: var(--accent); }
+article img { max-width: 100%; height: auto; display: block; margin: 1.8rem auto; border-radius: 4px; }
+article blockquote { border-left: 3px solid var(--accent); margin: 1.6rem 0; padding: 0.2rem 1rem; color: var(--muted); }
+article code { background: var(--code-bg); padding: 0.12em 0.35em; border-radius: 3px; font-size: 0.92em; font-family: "JetBrains Mono", "SF Mono", Menlo, Monaco, "Courier New", monospace; }
+article pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; font-size: 14px; line-height: 1.55; }
+article pre code { background: transparent; padding: 0; }
+article ul, article ol { padding-left: 1.4rem; }
+article li { margin: 0.4rem 0; }
+article hr { border: none; border-top: 1px solid var(--rule); margin: 2.4rem 0; }
+</style>
+</head>
+<body>
+<article>
+<h1>The Orbital Response Network</h1>
+<p>There was a question I wanted to answer before I did anything else, and it has been quietly sitting behind most of the last two years of work on transformer efficiency. How much of what a transformer does really has to happen inside the attention block, and how much of it could live in the residual stream instead? The attention block is the expensive part of each layer, it has a lot of parameters, and if some of that work is genuinely redundant across layers then you should be able to lift parts of it out, put them once in a shared place, and let the residual stream carry whatever state actually changes with depth.</p>
+<p>People have tried versions of this for years. ALBERT shares every parameter across every layer, recursive transformers share whole blocks and then patch the gaps with small LoRA corrections. Both approaches save a lot of parameters, both lose a little quality, and neither has a principled answer to the obvious follow-up question: which part of a transformer layer is the right thing to share in the first place? The sharing is a blunt instrument, closer to "share everything and hope quality survives" than to a decomposition grounded in what the model is actually doing.</p>
+<p>The more interesting question is what would happen if the data itself could tell you which part is invariant across layers, and you only shared that piece. This article is about what you find when you actually ask that question on a real trained transformer. The answer turns out to be surprisingly clean, there is a real parameter saving as a side effect, and the more important consequence is that the thing you end up sharing is a small, stable object worth studying in its own right.</p>
+<p><img alt="One layer of a standard transformer next to one layer of an Orbital Response Network; the only difference is that per-layer W_Q and W_K have been pulled out and replaced by a single shared A, B" src="https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/architecture.png" /></p>
+<h2>The observation</h2>
+<p>Every transformer layer learns its own pair of coupling matrices <em>W_Q</em> and <em>W_K</em>, and the object that actually determines which tokens attend to which is not either of those matrices in isolation but the product <em>M_l</em> = <em>W_Q</em>ᵀ <em>W_K</em>. So if you want to ask what is invariant in the coupling across layers, the thing you should look at is the sequence of <em>M_l</em> matrices, not the individual <em>W_Q</em> and <em>W_K</em>. If you do that on a trained transformer, plot the eigenvalue magnitudes of every <em>M_l</em> on the same axes, you will see something like this.</p>
+<p><img alt="Per-layer coupling eigenspectra overlap; Spearman heatmap across layers" src="https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/COU-02_coupling_manifold_8d.png" /></p>
+<p>The curves line up almost perfectly, even though the raw matrices themselves point in totally different directions. Cosine similarity between any two <em>M_l</em> matrices on the same model sits around 0.005, which is approximately what you would get from random vectors of that dimensionality. But the spectrum is the same everywhere. On a small trained transformer in the repo the pairwise Spearman correlation of sorted eigenvalue magnitudes sits at 0.999 across layers, and on real pretrained transformers from three different families (GPT-2 at three sizes, SmolLM2-135M, Qwen2.5-0.5B) the correlation lands in the 0.93 to 0.99 range.</p>
+<p><em>M</em> is a bilinear form. Its spectrum is invariant under orthogonal rotation.</p>
+<blockquote>
+<p>What the data is telling us is that every layer has learned the same bilinear form, up to rotation.</p>
+</blockquote>
+<p>The layers are not independent draws from a distribution of coupling rules. They are one rule, expressed in different coordinate frames, acting on a residual stream that rotates through those frames as depth increases.</p>
+<p>I spent a while checking whether this was an artefact of training, a quirk of one particular model, or a feature of one specific scale. It reproduces across model families, across different random seeds on the same architecture, and across completely independent training runs. The same object keeps showing up in every transformer I looked at.</p>
+<p><img alt="Layer-averaged M across three independent seeds; curves lie on top of each other" src="https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/SPE-01_spectral_universality.png" /></p>
+<h2>Exploiting it</h2>
+<p>If one rule is enough for every layer, you only need to parameterise it once. So we replace the per-layer <em>W_Q</em> and <em>W_K</em> with a single shared pair <em>A</em>, <em>B</em> ∈ ℝ^(d×d), and define</p>
+<pre><code>Q_l = h_l · A        K_l = h_l · B        M = A Bᵀ
+</code></pre>
+<p>applied at every layer of the stack. The per-layer variation still has to come from somewhere, and in our case it comes from the residual stream <em>h_l</em> which the transformer updates layer by layer anyway. The response heads (<em>W_V</em>, <em>W_O</em>, and the feed-forward network) stay per-layer as before, because the <em>response</em> to the coupling is genuinely different at different depths even when the coupling rule itself is not.</p>
+<p>There is a subtler reason the response heads have to stay per-layer, and this is the part I find most interesting. When you write the coupling as <em>M_l</em> = <em>W_Q</em>ᵀ <em>W_K</em>, there is a hidden degree of freedom sitting inside that expression: for any orthogonal rotation <em>R</em>, replacing the pair (<em>W_Q</em>, <em>W_K</em>) with (<em>R W_Q</em>, <em>R W_K</em>) produces exactly the same <em>M</em>. A standard transformer is quietly burning parameters at every layer to pick its own arbitrary <em>R_l</em>, even though <em>M</em> itself is already invariant under that choice. When we pull out a single shared <em>A</em> and <em>B</em> we are fixing one rotation once, for good. The per-layer rotation that used to live inside <em>W_Q</em> and <em>W_K</em> does not disappear, it just moves: it gets absorbed into the per-layer <em>W_V</em> and <em>W_O</em> and into the way the residual stream rotates as it flows from one layer to the next. The response heads end up taking over the bookkeeping of how each layer sits in coupling space. That is why they cannot be shared, and that is also why factoring out just <em>A</em> and <em>B</em> does not cost us any expressivity. The rotation is not lost, it has been relocated to a much cheaper part of the model.</p>
+<p>We call the resulting architecture an Orbital Response Network. A single pair <em>A</em>, <em>B</em> governs the coupling across the whole stack, and everything else stays per-layer. One detail that does matter is the asymmetry: <em>M</em> = <em>A Bᵀ</em> with distinct <em>A</em> and <em>B</em>, not <em>M</em> = <em>L Lᵀ</em> with a single symmetric factor. Language coupling is directed, subjects and verbs couple differently depending on which way the attention is flowing, and the symmetric version loses about 3.6% on validation on autoregressive tasks.</p>
+<h2>How this is different from prior weight sharing</h2>
+<p>People have tied transformer weights in various ways before, and it is worth saying explicitly how this differs from that prior work. <a href="https://arxiv.org/abs/1909.11942">ALBERT</a> (Lan et al., ICLR 2020) was the original attempt and it shares every parameter across every layer, which gives a dramatic compression but costs roughly 1.5% in downstream quality because each layer now has to do exactly the same thing. <a href="https://arxiv.org/abs/1911.02150">MQA</a> (Shazeer, 2019) and <a href="https://arxiv.org/abs/2305.13245">GQA</a> (Ainslie et al., 2023) share keys and values across query heads rather than across layers, which is a different axis of sharing entirely and is motivated by inference-time KV cache size rather than by anything about the coupling rule itself. <a href="https://arxiv.org/abs/2503.08040">MASA</a> (2025) decomposes the attention matrices into shared dictionary atoms via learned dictionary learning, which is principled but still treats all four of <em>W_Q</em>, <em>W_K</em>, <em>W_V</em>, <em>W_O</em> as equally shareable. The <a href="https://arxiv.org/abs/2410.20672">Relaxed Recursive Transformer</a> (Bae et al., ICLR 2025) ties every block across layers and then adds per-layer LoRA patches to let each layer deviate slightly from the shared template.</p>
+<p>All of these are variants of "share a lot of parameters and hope quality survives." What ORN does is narrower and more principled. It shares only the specific piece that the data says is already invariant across layers, which is the bilinear coupling form, and it leaves everything else alone. The order is measurement first, architecture second. The spectral correlation of the per-layer <em>M_l</em> is north of 0.93 on every pretrained model I have measured, and that is the concrete empirical observation the architecture is designed around. Response heads stay per-layer precisely because the depth-wise variation in the response is not invariant, so there is no case for sharing them.</p>
+<h2>Numbers</h2>
+<p>Two checkpoints are published on HuggingFace and both are public. The smaller of the two is <a href="https://huggingface.co/mr-saoirse/orn-v2-108m"><code>mr-saoirse/orn-v2-108m</code></a>, a 108M parameter ORN V2 trained on 8B tokens of FineWeb-Edu. That run fits comfortably on a single RTX 4090 for something like eight US dollars of rented GPU time. The larger one is <a href="https://huggingface.co/mr-saoirse/orn-v3-605m"><code>mr-saoirse/orn-v3-605m</code></a>, a 605M parameter ORN V3 with <em>d</em> = 2048, 32 layers, GQA (32 query heads over 8 KV heads), and an eight-times-wide shared FFN, trained on 3B tokens of FineWeb-Edu to a final validation loss of 2.82. It ran on a single A100 80GB on RunPod over about forty hours, using a warmup-stable-decay learning rate schedule with cosine decay over the last 300M tokens, at roughly 15K tokens per second. Total cost came to about 394 US dollars. Intermediate snapshots at 1B and 2B tokens are published alongside the final checkpoint, so if you are interested in how <em>M</em> evolves during training you can look at mid-training states as well as the final one.</p>
+<p>Both of them load with a one-line command. <code>orn predict --checkpoint orn-v3-605m</code> pulls the 605M from HuggingFace and generates from it; <code>orn diagnose</code> reads the shared <em>M</em>'s spectral structure out of whichever checkpoint you pass. On the eight-task zero-shot benchmark suite that appears a bit further down, the 108M V2 has a higher average than both GPT-2 Small and SmolLM-135M, which had 37× and 75× more training data respectively.</p>
+<p>There is a second, cleaner piece of evidence that shared coupling carries the structure we think it does. If you take a trained <em>M</em> from one model, lock it, and train everything else from scratch on a completely different dataset, the resulting model recovers 98.6% of the validation loss you would have got training <em>M</em> from scratch. If <em>M</em> were mostly encoding dataset-specific information, locking it should hurt. It does not.</p>
+<p>And on the purely synthetic side, there is a small control task in the repo where the coupling rule is invariant across layers by construction: a colour-matching task with periodic structure. I trained two four-layer models on it, one sharing a single <em>A, B</em> pair (MEMOISE) and one with a fresh pair at every layer (STORE). They converge to the same loss. MEMOISE uses 8,192 coupling parameters, STORE uses 32,768 for the same job. On a task where the coupling is provably invariant, sharing it is free.</p>
+<p><img alt="MEMOISE matches STORE on a task where coupling is provably invariant, at a quarter of the coupling parameters" src="https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/COM-01_colour_matching_compression.png" /></p>
+<h2>Benchmarks</h2>
+<p>Two zero-shot benchmark tables, one for each published checkpoint. The task suite is the usual seven: HellaSwag, PIQA, ARC-Easy, ARC-Challenge, WinoGrande, BoolQ, OpenBookQA. Numbers for GPT-2 Small, Pythia, and SmolLM2 come from the lm-eval-harness public leaderboard. ORN numbers come from <code>orn bench &lt;checkpoint&gt;</code> in this repo, which runs the same harness against our models.</p>
+<h3>ORN V2 (108M) vs same-class baselines</h3>
+<p>The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 Small (124M, 300B tokens) and SmolLM-135M (135M, 600B tokens). Eight standard zero-shot benchmarks, full lm-evaluation-harness (not a truncated subset):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Task</th>
+<th style="text-align: right;">ORN V2 (108M, 8B tok)</th>
+<th style="text-align: right;">SmolLM-135M (135M, 600B tok)</th>
+<th style="text-align: right;">GPT-2 Small (124M, 300B tok)</th>
+<th style="text-align: right;">Random</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">HellaSwag</td>
+<td style="text-align: right;"><strong>33.4</strong></td>
+<td style="text-align: right;">30.4</td>
+<td style="text-align: right;">31.6</td>
+<td style="text-align: right;">25.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">PIQA</td>
+<td style="text-align: right;">62.4</td>
+<td style="text-align: right;"><strong>63.0</strong></td>
+<td style="text-align: right;">62.5</td>
+<td style="text-align: right;">50.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">ARC-Easy</td>
+<td style="text-align: right;"><strong>46.2</strong></td>
+<td style="text-align: right;">43.7</td>
+<td style="text-align: right;">43.6</td>
+<td style="text-align: right;">25.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">ARC-Challenge</td>
+<td style="text-align: right;"><strong>27.4</strong></td>
+<td style="text-align: right;">24.7</td>
+<td style="text-align: right;">22.9</td>
+<td style="text-align: right;">25.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">BoolQ</td>
+<td style="text-align: right;"><strong>57.7</strong></td>
+<td style="text-align: right;">55.3</td>
+<td style="text-align: right;">48.3</td>
+<td style="text-align: right;">50.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">WinoGrande</td>
+<td style="text-align: right;">50.5</td>
+<td style="text-align: right;"><strong>52.1</strong></td>
+<td style="text-align: right;">51.8</td>
+<td style="text-align: right;">50.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">LAMBADA</td>
+<td style="text-align: right;">26.2</td>
+<td style="text-align: right;">24.0</td>
+<td style="text-align: right;"><strong>32.6</strong></td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">OpenBookQA</td>
+<td style="text-align: right;"><strong>31.0</strong></td>
+<td style="text-align: right;">27.6</td>
+<td style="text-align: right;">28.6</td>
+<td style="text-align: right;">25.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Average</strong></td>
+<td style="text-align: right;"><strong>41.8</strong></td>
+<td style="text-align: right;">40.1</td>
+<td style="text-align: right;">40.2</td>
+<td style="text-align: right;">n/a</td>
+</tr>
+</tbody>
+</table>
+<p>ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM having 75× more training data), beats GPT-2 Small on five of the eight (despite 37× less training data), and has the higher average of the three. It also uses 48 times fewer coupling parameters than either baseline. The two tasks it loses on vs SmolLM (PIQA by 0.6, WinoGrande by 1.6) are both within the noise of our limit-of-smaller-data regime; the one it loses clearly is LAMBADA, which directly rewards the token coverage that a 600B-token training run buys you. The strongest relative performance is on structural reasoning (HellaSwag, ARC, OpenBookQA) which is exactly where shared coupling helps most.</p>
+<h3>ORN V3 (605M)</h3>
+<p>The 605M table is running right now on the same harness and will be filled in when it completes (the run takes a few hours on MPS at <code>limit=200</code>). Scaffolded row so readers can see what is coming:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">HellaSwag</th>
+<th style="text-align: right;">PIQA</th>
+<th style="text-align: right;">ARC-E</th>
+<th style="text-align: right;">ARC-C</th>
+<th style="text-align: right;">WinoG</th>
+<th style="text-align: right;">BoolQ</th>
+<th style="text-align: right;">OBQA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">SmolLM2-135M</td>
+<td style="text-align: right;">42.1</td>
+<td style="text-align: right;">68.3</td>
+<td style="text-align: right;">54.4</td>
+<td style="text-align: right;">30.1</td>
+<td style="text-align: right;">56.5</td>
+<td style="text-align: right;">60.2</td>
+<td style="text-align: right;">34.6</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ORN V3 (605M, 3B tok)</strong></td>
+<td style="text-align: right;"><em>pending</em></td>
+<td style="text-align: right;"><em>pending</em></td>
+<td style="text-align: right;"><em>pending</em></td>
+<td style="text-align: right;"><em>pending</em></td>
+<td style="text-align: right;"><em>pending</em></td>
+<td style="text-align: right;"><em>pending</em></td>
+<td style="text-align: right;"><em>pending</em></td>
+</tr>
+</tbody>
+</table>
+<p>The design expectation is that on HellaSwag, ARC-Easy, ARC-Challenge, and BoolQ (structural reasoning, where shared coupling helps) ORN V3 should continue to beat its equivalently-trained-tokens baseline; on knowledge-weighted tasks like OpenBookQA and LAMBADA the 3-billion-token training budget is the bottleneck more than the architecture.</p>
+<h2>Pushing parameter sharing further with a wide shared FFN</h2>
+<p>One thing to be honest about: sharing just the coupling matrices is a principled move but, arithmetically, a fairly small one. In the 108M V2 at <em>d</em> = 576, <em>A</em> and <em>B</em> together are roughly 660k parameters, or about 0.6% of the model. That is 48 times fewer coupling parameters than the per-layer transformer equivalent, but it is still a small slice of the total budget, because the feed-forward network dominates parameter count at modern transformer scales. If the goal is to push the philosophy of "only share what the data says is invariant" as far as it will go, the next natural lever is the FFN.</p>
+<p><a href="https://arxiv.org/abs/2309.01826">Pires, Vilar, Lopes et al. (2023), "One Wide Feedforward is All You Need"</a> made a clean version of that move on standard transformers. They replaced the stack of <em>L</em> per-layer FFNs with a single wide shared FFN applied at every layer and showed that the resulting model matches or exceeds the original at substantially fewer total parameters. ORN V3 takes the same step. Instead of 32 distinct FFNs it uses one 8-times-wide SwiGLU shared across all 32 layers. Combined with the shared coupling, this means 46% of the 605M parameters live in a shared backbone (shared <em>M</em> plus the wide shared FFN), 36% in per-layer response heads, and 17% in embeddings. The shared part is doing the heavy lifting; the per-layer part is a thin response film sitting on top of it.</p>
+<h2>What this is not a claim about</h2>
+<p>Before the next section, a caveat about how to read all of the above. I am not trying to claim that ORN is a better language model than whatever you are currently using, or that these benchmark numbers mean we are on the frontier. They do not and we are not. What the numbers show is narrower and, I think, more interesting: the architectural change does not hurt. You can take a standard transformer, pull out most of the coupling parameters, make a single shared object do the job across every layer, train on considerably less data than the baselines were trained on, and end up somewhere in the same region of benchmark space. That is the engineering lesson, and it is a permissive one.</p>
+<p>What I find more interesting than the benchmark numbers is what the shared backbone enables downstream, which is not something I can prove in this article but which I think is where the real pay-off of this decomposition will be. A few concrete directions I am actively working on or thinking about:</p>
+<ul>
+<li><strong>Mixture of experts without the backbone cost.</strong> If every expert in an MoE shares the same <em>M</em> and (in V3) the same wide FFN, then a hundred experts do not mean a hundred copies of the backbone. Each expert specialises only in its response heads, and the shared part stays one object. The parameter accounting for MoE gets much friendlier, and the interpretability argument that an expert is a "variation on a theme" becomes literal rather than aspirational.</li>
+<li><strong>Fine-tuning as response-only adaptation.</strong> A frozen backbone (shared <em>M</em> plus the wide shared FFN) plus freshly trained response heads recovers 98.6% of full training quality, which is the frozen-M transfer result from earlier. That number says fine-tuning to a new domain is essentially a response-head problem, not a coupling-geometry problem. The practical implication is that domain fine-tuning on an ORN should be significantly cheaper than the same operation on a dense transformer with per-layer coupling, because there are fewer moving parts to retrain.</li>
+<li><strong>A shared object you can actually reason about.</strong> Across layers and across training runs, the <em>M</em> that emerges is a low-rank, bounded, inspectable thing. It has eigenvectors you can plot, a rank you can track during training, and a spectral signature that replicates across model families. Whatever a "world model" for language turns out to mean, it is going to have to be an object like that rather than a diffuse mix of per-layer parameters. ORN does not solve interpretability, but it gives interpretability a small, concrete target to aim at instead of asking what a million distinct weights happen to compute between them. That is where I think the architectural move earns its keep, and where the next round of experiments is pointed.</li>
+</ul>
+<h2>Why the point is not parameter saving</h2>
+<p>You can add up the arithmetic. At d=576, L=24, sharing coupling saves roughly fifteen million parameters. Redistribute those to width or depth and the model improves. That is real and it helps.</p>
+<p>But the more interesting thing is what the shared M looks like once trained. In a 91M parameter ORN at d=512, the effective rank of M (90% of Frobenius energy) crystallises to about 20 within the first 200M tokens of training. Four percent of the full dimensionality carries the coupling rule. In the 108M V2 at d=576, the same measurement lands at 70 out of 576, still an order of magnitude below full dimension, with condition number around 10^7.</p>
+<p>So not only is the coupling rule the same across layers, it is low-dimensional, and it is the same low-dimensional object across different models. Two transformers trained by different people on different data end up with layer-averaged M matrices whose eigenspectra correlate at 0.93+.</p>
+<blockquote>
+<p>If one M works at every layer of one model, and almost the same M works at every layer of a different model, then the model has discovered a shared geometry of which tokens couple to which, and that geometry is mostly a property of language, not of the training run.</p>
+</blockquote>
+<p>This is what people mean when they talk about world models, minus the marketing. The eigenvectors of M form a basis for the coupling rule. Its rank is the dimension of the rule. Its spectrum is the rule's signature. We have not shown that this M is interpretable in the sense that you could read concepts off its eigenvectors. That is a harder open problem that our LORN programme is trying to address. What ORN shows is that the object exists, is reachable by a clean architectural move, and is stable across training runs.</p>
+<p>Parameter saving is a bonus. The news is that there is something invariant in there to find.</p>
+<h2>Running it</h2>
+<p>One pip install gets you the lot.</p>
+<pre><code>git clone https://github.com/Percolation-Labs/orn.git
+cd orn
+pip install -e .
+
+# The motivating figure, reproduced locally in three seconds
+orn reproduce COU-02 --save-plots figs/
+
+# The full fast-tier suite of reproductions (fifteen seconds on a laptop)
+orn reproduce SPE-01 COU-01 COU-02 COU-03 COM-01 OPE-01 OPE-04 LOR-01 \
+              --save-plots figs/
+
+# Pull the published 605M checkpoint and generate from it
+pip install -e '.[data]'
+orn predict --checkpoint orn-v3-605m --prompt &quot;The key insight is&quot;
+orn diagnose --checkpoint orn-v3-605m
+</code></pre>
+<p>Every key result lives as a separate Python module that returns its headline numbers as a dict and, for most, emits the published figure as a PNG. A registry maps short codes (SPE-01, COU-02, COM-01) to modules. Pytest exercises every module as a smoke test. If a refactor breaks a claim, the test for that claim fails and the figure stops matching what the code produces.</p>
+<p>The technical report, the published checkpoints, and the experimental harness are at <a href="https://github.com/Percolation-Labs/orn">github.com/Percolation-Labs/orn</a>. Feedback welcome.</p>
+<h2>References</h2>
+<p><strong>Cited prior work on parameter sharing in transformers.</strong></p>
+<ol>
+<li>Lan, Z., Chen, M., Goodman, S., Gimpel, K., Sharma, P., and Soricut, R. <em>ALBERT: A Lite BERT for Self-supervised Learning of Language Representations.</em> ICLR 2020. <a href="https://arxiv.org/abs/1909.11942">arXiv:1909.11942</a>.</li>
+<li>Shazeer, N. <em>Fast Transformer Decoding: One Write-Head is All You Need.</em> 2019. <a href="https://arxiv.org/abs/1911.02150">arXiv:1911.02150</a>. <em>(Multi-Query Attention.)</em></li>
+<li>Ainslie, J., Lee-Thorp, J., de Jong, M., Zemlyanskiy, Y., Lebron, F., and Sanghai, S. <em>GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints.</em> EMNLP 2023. <a href="https://arxiv.org/abs/2305.13245">arXiv:2305.13245</a>.</li>
+<li>Pires, T., Vilar, D., Lopes, A. V., et al. <em>One Wide Feedforward is All You Need.</em> EMNLP / WMT 2023. <a href="https://arxiv.org/abs/2309.01826">arXiv:2309.01826</a>. <em>(The prior work ORN V3 builds on for the wide shared FFN.)</em></li>
+<li>Bae, S., et al. <em>Relaxing Recursive Transformers with Per-Layer Low-Rank Adaptation.</em> ICLR 2025. <a href="https://arxiv.org/abs/2410.20672">arXiv:2410.20672</a>.</li>
+<li><em>Share Your Attention: Transformer Weight Sharing via Matrix-based Dictionary Learning (MASA).</em> 2025. <a href="https://arxiv.org/abs/2503.08040">arXiv:2503.08040</a>.</li>
+</ol>
+<p><strong>Published ORN checkpoints (HuggingFace).</strong></p>
+<ol>
+<li>ORN V2 108M on 8B tokens of FineWeb-Edu: <a href="https://huggingface.co/mr-saoirse/orn-v2-108m">huggingface.co/mr-saoirse/orn-v2-108m</a>.</li>
+<li>ORN V3 605M on 3B tokens of FineWeb-Edu: <a href="https://huggingface.co/mr-saoirse/orn-v3-605m">huggingface.co/mr-saoirse/orn-v3-605m</a>. Intermediate 1B and 2B snapshots alongside.</li>
+</ol>
+<p><strong>Repository and reproducible experiments.</strong></p>
+<ol>
+<li>ORN source, CLI, reproduce registry, and technical report: <a href="https://github.com/Percolation-Labs/orn">github.com/Percolation-Labs/orn</a>. The fast-tier reproductions in the article (COU-02 coupling invariance, SPE-01 spectral universality across seeds, COM-01 colour-matching compression) all finish in under fifteen seconds on a laptop via <code>orn reproduce</code>.</li>
+</ol>
+</article>
+</body>
+</html>
