@@ -38,8 +38,10 @@ These are all "share a lot of parameters and hope quality survives." ORN does so
 
 Two published checkpoints on HuggingFace, both public:
 
-- `mr-saoirse/orn-v3-605m` is a 605M parameter ORN V3 (d=2048, L=32, GQA 32 over 8, eight-times-wide shared FFN), trained on two billion tokens of FineWeb-Edu.
-- `mr-saoirse/orn-v2-108m` is a 108M parameter ORN V2 on seven billion tokens. On standard benchmarks it scores 33.4% on HellaSwag, 62.4% on PIQA, and 46.2% on ARC-Easy. That beats GPT-2 Small at 27% fewer total parameters and roughly 48 times fewer coupling parameters.
+- `mr-saoirse/orn-v3-605m` is a 605M parameter ORN V3 (d=2048, L=32, GQA 32 over 8, eight-times-wide shared FFN), trained on 3B tokens of FineWeb-Edu to a final val loss of 2.82. It ran on a single A100 80GB on RunPod, using a warmup-stable-decay schedule with cosine decay over the last 300M tokens. About 40 hours of GPU time, roughly 394 US dollars, ~15K tok/s throughput. Intermediate snapshots at 1B and 2B tokens are published alongside the final checkpoint so anyone can probe M at mid-training as well as at the end.
+- `mr-saoirse/orn-v2-108m` is a 108M parameter ORN V2 on 8B tokens of FineWeb-Edu. Trained on a single RTX 4090 for about 8 dollars. On standard benchmarks it scores 33.4% on HellaSwag, 62.4% on PIQA, and 46.2% on ARC-Easy. That beats GPT-2 Small at 27% fewer total parameters and roughly 48 times fewer coupling parameters.
+
+Both are public. `orn predict --checkpoint orn-v3-605m` will fetch the 605M and generate from it; `orn diagnose` reads out M's spectral structure on whichever checkpoint you pass.
 
 Frozen-M transfer: take a trained M, lock it, and train everything else from scratch on a different dataset. The resulting model recovers 98.6% of the validation loss you would have gotten training M from scratch. This is the cleanest confirmation that the coupling geometry is the invariant part. If M were encoding dataset-specific information, locking it would hurt. It does not.
 
