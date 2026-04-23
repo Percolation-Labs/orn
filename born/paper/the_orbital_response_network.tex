@@ -61,12 +61,13 @@ We exploit this spectral invariance with the \textbf{Orbital Response Network} (
 Per-layer variation comes from the changing field state, not from different parameters.
 Response heads ($W_V$, $W_O$) and feed-forward networks remain per-layer.
 
-At 108M parameters trained on 4B tokens of FineWeb-Edu, the \orn{} generates coherent multi-sentence English, beats GPT-2 Small (124M) on HellaSwag (33.0\% vs 31.6\%) with 48$\times$ fewer coupling parameters, and achieves a coupling manifold of just 5--7 dimensions.
+At 108M parameters trained on 8B tokens of FineWeb-Edu, the \orn{}-V2 generates coherent multi-sentence English, beats GPT-2 Small (124M) on HellaSwag (33.4\% vs 31.6\%) with 48$\times$ fewer coupling parameters, and achieves a coupling manifold of just 5--7 dimensions.
+A larger \orn{}-V3 at 605M parameters ($d{=}2048$, $L{=}32$, $8{\times}$ wide shared FFN) was trained on 3B tokens of FineWeb-Edu on a single A100 80GB (\textasciitilde40 hours, \textasciitilde\$394) to val loss 2.82.
 Freezing $\M$ from a prior run and training only response heads recovers 98.6\% of full training quality, confirming that coupling geometry transfers across datasets.
 On 4-modality tasks (images, music, environmental sounds, text), the composable variant \corn{} beats the transformer on 3 of 4 modalities at matched parameters.
 
-Code, checkpoints, and all experimental scripts are available at the repository above.
-Most diagnostics in this paper can be reproduced on a laptop (Apple M4, 24GB) in minutes; the two scaled runs used a single rented RTX 4090 for \$4 each.
+Code, published checkpoints (\texttt{mr-saoirse/orn-v2-108m} and \texttt{mr-saoirse/orn-v3-605m} on HuggingFace), and all experimental scripts are available at the repository above.
+Most diagnostics in this paper can be reproduced on a laptop (Apple M4, 24GB) in minutes; V1 and V2 used a single rented RTX 4090 (\$4 and \$8 respectively), V3 used a single RunPod A100 for \textasciitilde\$394.
 \end{abstract}
 
 % ======================================================================
@@ -408,6 +409,19 @@ This is consistent with the \orn{} thesis: shared coupling excels at structural 
 
 \paragraph{Generation quality.}
 V2 generates coherent multi-paragraph English with named entities, topic persistence, and paragraph structure: ``\textit{The history of mathematics begins with the Pythagorean Theorem. The Pythagoreans, born in Italy in the fourth century BC, discovered the Pythagorean theorem. In addition to being able to apply the theorem, they made significant contributions to the study of geometry.}'' (see repository for full samples and all 8 benchmark prompts).
+
+\paragraph{V3 (605M, FineWeb-Edu, 3B tokens, \$394).}
+The largest published \orn{}. Architecture: $d{=}2048$, $L{=}32$, GQA (32/8 heads), $d_\text{head}{=}64$, $d_\text{corr}{=}128$, seq=2048, FFN width multiplier $8\times$ on a single shared FFN. 46\% of parameters live in the shared backbone ($\M$ + SharedFFN), 36\% per-layer response ($W_V$, $W_O$, corrections), 17\% embeddings.
+
+Trained on RunPod A100 SXM 80GB over \textasciitilde 40 hours using a WSD (warmup--stable--decay) schedule: 2000 warmup steps, stable $3\mathrm{e}{-4}$ to 2.7B tokens, cosine decay to $3\mathrm{e}{-5}$ over the final 300M tokens. Throughput \textasciitilde15K tok/s (MFU $\sim$52\% on a single A100, limited by activation memory for the 8$\times$ wide shared FFN which forced microbatch $\le 4$). Total cost \textasciitilde\$394 at RunPod's \$0.75--\$1.39/hr A100 rates.
+
+Final val loss \textbf{2.82} at step corresponding to \texttt{tokens\_seen = 2,999,975,936}. Intermediate snapshots at 1B and 2B tokens are published alongside (\texttt{v3\_1B\_tok.pt}, \texttt{v3\_2B\_tok.pt}, \texttt{v3\_branch\_2B.pt}). All are public and auto-load via
+\begin{verbatim}
+orn predict --checkpoint orn-v3-605m
+orn diagnose --checkpoint orn-v3-605m
+\end{verbatim}
+
+The 3B-token budget was a cost ceiling, not a convergence point: the WSD decay continued to reduce val loss (Section~\ref{sec:results} cites V2's comparable +0.23 nat decay improvement from the same schedule shape). Scaling beyond 3B is the expected path to closer parity with SmolLM2-135M on knowledge-weighted benchmarks (PIQA, ARC-Challenge).
 
 \subsection{Frozen-M Transfer}
 
