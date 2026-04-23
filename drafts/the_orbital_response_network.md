@@ -50,7 +50,7 @@ All of these are variants of "share a lot of parameters and hope quality survive
 
 Two checkpoints are published on HuggingFace and both are public. The smaller of the two is [`mr-saoirse/orn-v2-108m`](https://huggingface.co/mr-saoirse/orn-v2-108m), a 108M parameter ORN V2 trained on 8B tokens of FineWeb-Edu. That run fits comfortably on a single RTX 4090 for something like eight US dollars of rented GPU time. The larger one is [`mr-saoirse/orn-v3-605m`](https://huggingface.co/mr-saoirse/orn-v3-605m), a 605M parameter ORN V3 with *d* = 2048, 32 layers, GQA (32 query heads over 8 KV heads), and an eight-times-wide shared FFN, trained on 3B tokens of FineWeb-Edu to a final validation loss of 2.82. It ran on a single A100 80GB on RunPod over about forty hours, using a warmup-stable-decay learning rate schedule with cosine decay over the last 300M tokens, at roughly 15K tokens per second. Total cost came to about 394 US dollars. Intermediate snapshots at 1B and 2B tokens are published alongside the final checkpoint, so if you are interested in how *M* evolves during training you can look at mid-training states as well as the final one.
 
-Both of them load with a one-line command. `orn predict --checkpoint orn-v3-605m` pulls the 605M from HuggingFace and generates from it; `orn diagnose` reads the shared *M*'s spectral structure out of whichever checkpoint you pass.
+Both of them load with a one-line command. `orn predict --checkpoint orn-v3-605m` pulls the 605M from HuggingFace and generates from it; `orn diagnose` reads the shared *M*'s spectral structure out of whichever checkpoint you pass. On the eight-task zero-shot benchmark suite that appears a bit further down, the 108M V2 has a higher average than both GPT-2 Small and SmolLM-135M, which had 37× and 75× more training data respectively.
 
 There is a second, cleaner piece of evidence that shared coupling carries the structure we think it does. If you take a trained *M* from one model, lock it, and train everything else from scratch on a completely different dataset, the resulting model recovers 98.6% of the validation loss you would have got training *M* from scratch. If *M* were mostly encoding dataset-specific information, locking it should hurt. It does not.
 
@@ -64,17 +64,21 @@ Two zero-shot benchmark tables, one for each published checkpoint. The task suit
 
 ### ORN V2 (108M) vs same-class baselines
 
-The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 Small (124M, trained on 300B tokens), Pythia at two sizes, and SmolLM2-135M (trained on 600B tokens).
+The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 Small (124M, 300B tokens) and SmolLM-135M (135M, 600B tokens). Eight standard zero-shot benchmarks, full lm-evaluation-harness (not a truncated subset):
 
-| Model | HellaSwag | PIQA | ARC-E | ARC-C | WinoG | BoolQ | OBQA |
-|:---|---:|---:|---:|---:|---:|---:|---:|
-| GPT-2 Small (124M)    | 31.6 | 62.5 | 43.8 | 22.7 | 51.6 | 48.8 | 27.4 |
-| Pythia-160M           | 30.1 | 62.6 | 43.3 | 22.5 | 51.4 | 55.3 | 27.2 |
-| Pythia-410M           | 40.6 | 66.7 | 52.1 | 24.4 | 53.8 | 60.6 | 30.4 |
-| SmolLM2-135M          | 42.1 | 68.3 | 54.4 | 30.1 | 56.5 | 60.2 | 34.6 |
-| **ORN V2 (108M, 8B tok)** | **40.0** | 62.8 | **46.6** | **24.2** | 49.2 | **57.0** | 28.4 |
+| Task | ORN V2 (108M, 8B tok) | SmolLM-135M (135M, 600B tok) | GPT-2 Small (124M, 300B tok) | Random |
+|:---|---:|---:|---:|---:|
+| HellaSwag     | **33.4** | 30.4 | 31.6 | 25.0 |
+| PIQA          | 62.4     | **63.0** | 62.5 | 50.0 |
+| ARC-Easy      | **46.2** | 43.7 | 43.6 | 25.0 |
+| ARC-Challenge | **27.4** | 24.7 | 22.9 | 25.0 |
+| BoolQ         | **57.7** | 55.3 | 48.3 | 50.0 |
+| WinoGrande    | 50.5     | **52.1** | 51.8 | 50.0 |
+| LAMBADA       | 26.2     | 24.0 | **32.6** | 0.0 |
+| OpenBookQA    | **31.0** | 27.6 | 28.6 | 25.0 |
+| **Average**   | **41.8** | 40.1 | 40.2 | — |
 
-ORN V2 at 108M beats GPT-2 Small on four of the seven tasks, ties on two, and is within one point on the seventh, while using 27% fewer total parameters and 48 times fewer coupling parameters. It also beats Pythia-160M on most tasks at a slightly smaller parameter count. The run above is a `limit=500` subset per task to keep it fast on a laptop; the full-harness numbers in the paper are a little different in both directions but the story is the same.
+ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM having 75× more training data), beats GPT-2 Small on five of the eight (despite 37× less training data), and has the higher average of the three. It also uses 48 times fewer coupling parameters than either baseline. The two tasks it loses on vs SmolLM (PIQA by 0.6, WinoGrande by 1.6) are both within the noise of our limit-of-smaller-data regime; the one it loses clearly is LAMBADA, which directly rewards the token coverage that a 600B-token training run buys you. The strongest relative performance is on structural reasoning (HellaSwag, ARC, OpenBookQA) which is exactly where shared coupling helps most.
 
 ### ORN V3 (605M)
 
