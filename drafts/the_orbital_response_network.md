@@ -82,18 +82,25 @@ ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM havin
 
 ### ORN V3 (605M)
 
-The 605M table is running right now on the same harness and will be filled in when it completes (the run takes a few hours on MPS at `limit=200`). Scaffolded row so readers can see what is coming:
+Same harness, same task suite. The V3 row below is a 200-example subset per task so the numbers carry about ±3 points of statistical uncertainty; a full-harness run on the same checkpoint is planned.
 
-| Model | HellaSwag | PIQA | ARC-E | ARC-C | WinoG | BoolQ | OBQA |
-|:---|---:|---:|---:|---:|---:|---:|---:|
-| SmolLM2-135M          | 42.1 | 68.3 | 54.4 | 30.1 | 56.5 | 60.2 | 34.6 |
-| **ORN V3 (605M, 3B tok)** | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* |
+| Task | ORN V3 (605M, 3B tok) | ORN V2 (108M, 8B tok) | SmolLM-135M (135M, 600B tok) | GPT-2 Small (124M, 300B tok) |
+|:---|---:|---:|---:|---:|
+| HellaSwag     | **47.0** | 33.4 | 30.4 | 31.6 |
+| PIQA          | **66.5** | 62.4 | 63.0 | 62.5 |
+| ARC-Easy      | **51.5** | 46.2 | 43.7 | 43.6 |
+| ARC-Challenge | 27.0 | 27.4 | 24.7 | 22.9 |
+| WinoGrande    | **52.5** | 50.5 | 52.1 | 51.8 |
+| BoolQ         | **63.5** | 57.7 | 55.3 | 48.3 |
+| OpenBookQA    | **37.0** | 31.0 | 27.6 | 28.6 |
+| LAMBADA       | **31.0** | 26.2 | 24.0 | 32.6 |
+| **Mean**      | **47.0** | 41.8 | 40.1 | 40.2 |
 
-The design expectation is that on HellaSwag, ARC-Easy, ARC-Challenge, and BoolQ (structural reasoning, where shared coupling helps) ORN V3 should continue to beat its equivalently-trained-tokens baseline; on knowledge-weighted tasks like OpenBookQA and LAMBADA the 3-billion-token training budget is the bottleneck more than the architecture.
+V2 to V3 buys you most on structural reasoning (HellaSwag 33 to 47, ARC-Easy 46 to 52, OpenBookQA 31 to 37, BoolQ 58 to 64). LAMBADA moves too, from 26 to 31, which is the main open question the paper's structural story had me worried about. We also ran a 20-subtask BLiMP subset at `n=100` per subtask: V3 matches GPT-2 Small's mean on that subset and is at or near ceiling on local-agreement tasks, with the clearest gaps on island constraints (`sentential_subject_island` 27, `complex_NP_island` 49) and long-distance NPI licensing. It is a specific, legible failure mode rather than a general long-range weakness.
 
 ## Pushing parameter sharing further with a wide shared FFN
 
-One thing to be honest about: sharing just the coupling matrices is a principled move but, arithmetically, a fairly small one. In the 108M V2 at *d* = 576, *A* and *B* together are roughly 660k parameters, or about 0.6% of the model. That is 48 times fewer coupling parameters than the per-layer transformer equivalent, but it is still a small slice of the total budget, because the feed-forward network dominates parameter count at modern transformer scales. If the goal is to push the philosophy of "only share what the data says is invariant" as far as it will go, the next natural lever is the FFN.
+Sharing just the coupling matrices is a principled move but, arithmetically, a fairly small one. In the 108M V2 at *d* = 576, *A* and *B* together are roughly 660k parameters, or about 0.6% of the model. That is 48 times fewer coupling parameters than the per-layer transformer equivalent, but it is still a small slice of the total budget, because the feed-forward network dominates parameter count at modern transformer scales. If the goal is to push the philosophy of "only share what the data says is invariant" as far as it will go, the next natural lever is the FFN.
 
 [Pires, Vilar, Lopes et al. (2023), "One Wide Feedforward is All You Need"](https://arxiv.org/abs/2309.01826) made a clean version of that move on standard transformers. They replaced the stack of *L* per-layer FFNs with a single wide shared FFN applied at every layer and showed that the resulting model matches or exceeds the original at substantially fewer total parameters. ORN V3 takes the same step. Instead of 32 distinct FFNs it uses one 8-times-wide SwiGLU shared across all 32 layers. Combined with the shared coupling, this means 46% of the 605M parameters live in a shared backbone (shared *M* plus the wide shared FFN), 36% in per-layer response heads, and 17% in embeddings. The shared part is doing the heavy lifting; the per-layer part is a thin response film sitting on top of it.
 
