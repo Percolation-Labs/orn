@@ -129,11 +129,6 @@ The Universal Transformer~\cite{dehghani2018universal} shares \emph{all} paramet
 The \orn{} shares only coupling, keeping response heads per-layer.
 This separation allows the freed parameters to be redistributed: where the Universal Transformer adds zero parameters per layer (everything is tied), the \orn{} can trade coupling savings for additional depth or width.
 
-\paragraph{State space models.}
-Mamba~\cite{gu2023mamba} and its successors share a fixed dynamics operator $A$ across time steps, with input-dependent response, structurally parallel to the \orn{}'s shared $\M$ across depth.
-Hybrid architectures like Jamba~\cite{lieber2024jamba} interleave SSM and attention layers, arriving empirically at a two-system decomposition (shared dynamics + selective lookup) that parallels our design.
-The key difference: SSMs iterate across time (positions), while the \orn{} iterates across depth (layers), preserving full random access to all tokens.
-
 \paragraph{Linear attention.}
 The \orn{}'s shared $\M = AB^\top$ admits a linear attention decomposition:
 $x_i^\top \M\, x_j = (A^\top x_i)^\top (B^\top x_j)$, yielding $\bigO(Nd^2)$ total cost, linear in sequence length.
@@ -146,7 +141,6 @@ At $d{=}512$, $L{=}24$, this is a $24\times$ reduction in coupling parameter mem
 
 \paragraph{Spectral structure and training dynamics.}
 SGD naturally creates spectral structure through eigenvalue repulsion~\cite{spectral2024rankcollapse}, which explains why $\M$ develops a heavy-tailed eigenspectrum without explicit regularisation.
-The coupling matrix's spectral evolution during training connects to Koopman operator theory~\cite{brunton2022data}: $\M$ can be interpreted as a finite-dimensional Koopman operator whose eigenvalues define dynamical timescales of the residual stream.
 
 % ======================================================================
 \section{The \orn{} Architecture}
@@ -867,16 +861,6 @@ M.~Dehghani et al.
 \newblock Universal Transformers.
 \newblock \emph{ICLR}, 2019.
 
-\bibitem{gu2023mamba}
-A.~Gu and T.~Dao.
-\newblock Mamba: Linear-Time Sequence Modeling with Selective State Spaces.
-\newblock \emph{arXiv:2312.00752}, 2023.
-
-\bibitem{lieber2024jamba}
-O.~Lieber et al.
-\newblock Jamba: A Hybrid Transformer-Mamba Language Model.
-\newblock \emph{arXiv:2403.19887}, 2024.
-
 \bibitem{katharopoulos2020transformers}
 A.~Katharopoulos et al.
 \newblock Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention.
@@ -899,11 +883,6 @@ Self-attention Networks Localize When QK-eigenspectrum Concentrates.
 \bibitem{spectral2024rankcollapse}
 Mind the Gap: A Spectral Analysis of Rank Collapse and Signal Propagation in Attention Layers.
 \newblock \emph{arXiv:2410.07799}, 2024.
-
-\bibitem{brunton2022data}
-S.~Brunton and J.~Kutz.
-\newblock \emph{Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control}.
-\newblock Cambridge University Press, 2nd edition, 2022.
 
 \bibitem{kornblith2019cka}
 S.~Kornblith et al.
