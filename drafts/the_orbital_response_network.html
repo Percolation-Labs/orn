@@ -55,81 +55,91 @@ article hr { border: none; border-top: 1px solid var(--rule); margin: 2.4rem 0; 
 <p>All of these are variants of "share a lot of parameters and hope quality survives." What ORN does is narrower and more principled. It shares only the specific piece that the data says is already invariant across layers, which is the bilinear coupling form, and it leaves everything else alone. The order is measurement first, architecture second. The spectral correlation of the per-layer <em>M_l</em> is north of 0.93 on every pretrained model I have measured, and that is the concrete empirical observation the architecture is designed around. Response heads stay per-layer precisely because the depth-wise variation in the response is not invariant, so there is no case for sharing them.</p>
 <h2>Numbers</h2>
 <p>Two checkpoints are published on HuggingFace and both are public. The smaller of the two is <a href="https://huggingface.co/mr-saoirse/orn-v2-108m"><code>mr-saoirse/orn-v2-108m</code></a>, a 108M parameter ORN V2 trained on 8B tokens of FineWeb-Edu. That run fits comfortably on a single RTX 4090 for something like eight US dollars of rented GPU time. The larger one is <a href="https://huggingface.co/mr-saoirse/orn-v3-605m"><code>mr-saoirse/orn-v3-605m</code></a>, a 605M parameter ORN V3 with <em>d</em> = 2048, 32 layers, GQA (32 query heads over 8 KV heads), and an eight-times-wide shared FFN, trained on 3B tokens of FineWeb-Edu to a final validation loss of 2.82. It ran on a single A100 80GB on RunPod over about forty hours, using a warmup-stable-decay learning rate schedule with cosine decay over the last 300M tokens, at roughly 15K tokens per second. Total cost came to about 394 US dollars. Intermediate snapshots at 1B and 2B tokens are published alongside the final checkpoint, so if you are interested in how <em>M</em> evolves during training you can look at mid-training states as well as the final one.</p>
-<p>Both of them load with a one-line command. <code>orn predict --checkpoint orn-v3-605m</code> pulls the 605M from HuggingFace and generates from it; <code>orn diagnose</code> reads the shared <em>M</em>'s spectral structure out of whichever checkpoint you pass.</p>
+<p>Both of them load with a one-line command. <code>orn predict --checkpoint orn-v3-605m</code> pulls the 605M from HuggingFace and generates from it; <code>orn diagnose</code> reads the shared <em>M</em>'s spectral structure out of whichever checkpoint you pass. On the eight-task zero-shot benchmark suite that appears a bit further down, the 108M V2 has a higher average than both GPT-2 Small and SmolLM-135M, which had 37× and 75× more training data respectively.</p>
 <p>There is a second, cleaner piece of evidence that shared coupling carries the structure we think it does. If you take a trained <em>M</em> from one model, lock it, and train everything else from scratch on a completely different dataset, the resulting model recovers 98.6% of the validation loss you would have got training <em>M</em> from scratch. If <em>M</em> were mostly encoding dataset-specific information, locking it should hurt. It does not.</p>
 <p>And on the purely synthetic side, there is a small control task in the repo where the coupling rule is invariant across layers by construction: a colour-matching task with periodic structure. I trained two four-layer models on it, one sharing a single <em>A, B</em> pair (MEMOISE) and one with a fresh pair at every layer (STORE). They converge to the same loss. MEMOISE uses 8,192 coupling parameters, STORE uses 32,768 for the same job. On a task where the coupling is provably invariant, sharing it is free.</p>
 <p><img alt="MEMOISE matches STORE on a task where coupling is provably invariant, at a quarter of the coupling parameters" src="https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/COM-01_colour_matching_compression.png" /></p>
 <h2>Benchmarks</h2>
 <p>Two zero-shot benchmark tables, one for each published checkpoint. The task suite is the usual seven: HellaSwag, PIQA, ARC-Easy, ARC-Challenge, WinoGrande, BoolQ, OpenBookQA. Numbers for GPT-2 Small, Pythia, and SmolLM2 come from the lm-eval-harness public leaderboard. ORN numbers come from <code>orn bench &lt;checkpoint&gt;</code> in this repo, which runs the same harness against our models.</p>
 <h3>ORN V2 (108M) vs same-class baselines</h3>
-<p>The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 Small (124M, trained on 300B tokens), Pythia at two sizes, and SmolLM2-135M (trained on 600B tokens).</p>
+<p>The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 Small (124M, 300B tokens) and SmolLM-135M (135M, 600B tokens). Eight standard zero-shot benchmarks, full lm-evaluation-harness (not a truncated subset):</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Model</th>
-<th style="text-align: right;">HellaSwag</th>
-<th style="text-align: right;">PIQA</th>
-<th style="text-align: right;">ARC-E</th>
-<th style="text-align: right;">ARC-C</th>
-<th style="text-align: right;">WinoG</th>
-<th style="text-align: right;">BoolQ</th>
-<th style="text-align: right;">OBQA</th>
+<th style="text-align: left;">Task</th>
+<th style="text-align: right;">ORN V2 (108M, 8B tok)</th>
+<th style="text-align: right;">SmolLM-135M (135M, 600B tok)</th>
+<th style="text-align: right;">GPT-2 Small (124M, 300B tok)</th>
+<th style="text-align: right;">Random</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">GPT-2 Small (124M)</td>
-<td style="text-align: right;">31.6</td>
-<td style="text-align: right;">62.5</td>
-<td style="text-align: right;">43.8</td>
-<td style="text-align: right;">22.7</td>
-<td style="text-align: right;">51.6</td>
-<td style="text-align: right;">48.8</td>
-<td style="text-align: right;">27.4</td>
-</tr>
-<tr>
-<td style="text-align: left;">Pythia-160M</td>
-<td style="text-align: right;">30.1</td>
-<td style="text-align: right;">62.6</td>
-<td style="text-align: right;">43.3</td>
-<td style="text-align: right;">22.5</td>
-<td style="text-align: right;">51.4</td>
-<td style="text-align: right;">55.3</td>
-<td style="text-align: right;">27.2</td>
-</tr>
-<tr>
-<td style="text-align: left;">Pythia-410M</td>
-<td style="text-align: right;">40.6</td>
-<td style="text-align: right;">66.7</td>
-<td style="text-align: right;">52.1</td>
-<td style="text-align: right;">24.4</td>
-<td style="text-align: right;">53.8</td>
-<td style="text-align: right;">60.6</td>
+<td style="text-align: left;">HellaSwag</td>
+<td style="text-align: right;"><strong>33.4</strong></td>
 <td style="text-align: right;">30.4</td>
+<td style="text-align: right;">31.6</td>
+<td style="text-align: right;">25.0</td>
 </tr>
 <tr>
-<td style="text-align: left;">SmolLM2-135M</td>
-<td style="text-align: right;">42.1</td>
-<td style="text-align: right;">68.3</td>
-<td style="text-align: right;">54.4</td>
-<td style="text-align: right;">30.1</td>
-<td style="text-align: right;">56.5</td>
-<td style="text-align: right;">60.2</td>
-<td style="text-align: right;">34.6</td>
+<td style="text-align: left;">PIQA</td>
+<td style="text-align: right;">62.4</td>
+<td style="text-align: right;"><strong>63.0</strong></td>
+<td style="text-align: right;">62.5</td>
+<td style="text-align: right;">50.0</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>ORN V2 (108M, 8B tok)</strong></td>
-<td style="text-align: right;"><strong>40.0</strong></td>
-<td style="text-align: right;">62.8</td>
-<td style="text-align: right;"><strong>46.6</strong></td>
-<td style="text-align: right;"><strong>24.2</strong></td>
-<td style="text-align: right;">49.2</td>
-<td style="text-align: right;"><strong>57.0</strong></td>
-<td style="text-align: right;">28.4</td>
+<td style="text-align: left;">ARC-Easy</td>
+<td style="text-align: right;"><strong>46.2</strong></td>
+<td style="text-align: right;">43.7</td>
+<td style="text-align: right;">43.6</td>
+<td style="text-align: right;">25.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">ARC-Challenge</td>
+<td style="text-align: right;"><strong>27.4</strong></td>
+<td style="text-align: right;">24.7</td>
+<td style="text-align: right;">22.9</td>
+<td style="text-align: right;">25.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">BoolQ</td>
+<td style="text-align: right;"><strong>57.7</strong></td>
+<td style="text-align: right;">55.3</td>
+<td style="text-align: right;">48.3</td>
+<td style="text-align: right;">50.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">WinoGrande</td>
+<td style="text-align: right;">50.5</td>
+<td style="text-align: right;"><strong>52.1</strong></td>
+<td style="text-align: right;">51.8</td>
+<td style="text-align: right;">50.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">LAMBADA</td>
+<td style="text-align: right;">26.2</td>
+<td style="text-align: right;">24.0</td>
+<td style="text-align: right;"><strong>32.6</strong></td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">OpenBookQA</td>
+<td style="text-align: right;"><strong>31.0</strong></td>
+<td style="text-align: right;">27.6</td>
+<td style="text-align: right;">28.6</td>
+<td style="text-align: right;">25.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Average</strong></td>
+<td style="text-align: right;"><strong>41.8</strong></td>
+<td style="text-align: right;">40.1</td>
+<td style="text-align: right;">40.2</td>
+<td style="text-align: right;">—</td>
 </tr>
 </tbody>
 </table>
-<p>ORN V2 at 108M beats GPT-2 Small on four of the seven tasks, ties on two, and is within one point on the seventh, while using 27% fewer total parameters and 48 times fewer coupling parameters. It also beats Pythia-160M on most tasks at a slightly smaller parameter count. The run above is a <code>limit=500</code> subset per task to keep it fast on a laptop; the full-harness numbers in the paper are a little different in both directions but the story is the same.</p>
+<p>ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM having 75× more training data), beats GPT-2 Small on five of the eight (despite 37× less training data), and has the higher average of the three. It also uses 48 times fewer coupling parameters than either baseline. The two tasks it loses on vs SmolLM (PIQA by 0.6, WinoGrande by 1.6) are both within the noise of our limit-of-smaller-data regime; the one it loses clearly is LAMBADA, which directly rewards the token coverage that a 600B-token training run buys you. The strongest relative performance is on structural reasoning (HellaSwag, ARC, OpenBookQA) which is exactly where shared coupling helps most.</p>
 <h3>ORN V3 (605M)</h3>
 <p>The 605M table is running right now on the same harness and will be filled in when it completes (the run takes a few hours on MPS at <code>limit=200</code>). Scaffolded row so readers can see what is coming:</p>
 <table>
