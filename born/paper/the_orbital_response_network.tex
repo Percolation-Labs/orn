@@ -152,50 +152,120 @@ The coupling matrix's spectral evolution during training connects to Koopman ope
 \section{The \orn{} Architecture}
 \label{sec:arch}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
 \begin{tikzpicture}[
-    scale=0.85, transform shape,
-    block/.style={draw, rounded corners, minimum width=2.2cm, minimum height=0.6cm, font=\small},
-    shared/.style={block, fill=blue!15},
-    perlayer/.style={block, fill=orange!15},
-    arrow/.style={-Stealth, thick},
+    scale=0.92, transform shape,
+    box/.style={draw, rounded corners=3pt, line width=0.6pt,
+                minimum width=3.5cm, minimum height=0.55cm, font=\small},
+    inner/.style={draw, rounded corners=2pt, line width=0.4pt,
+                  minimum width=3.2cm, minimum height=0.5cm, font=\footnotesize},
+    per/.style   ={inner, fill=orange!15, draw=orange!60!black},
+    share/.style ={inner, fill=blue!15,   draw=blue!60!black},
+    add/.style   ={inner, fill=gray!10,   draw=gray!60,     minimum height=0.42cm},
+    arr/.style   ={-Stealth, thick, color=gray!70!black},
+    xL/.style    ={font=\small\bfseries, color=red!70!black},
+    frame/.style ={draw=gray!30, rounded corners=4pt, line width=0.5pt},
 ]
-% Residual stream
-\node[font=\small\bfseries] at (0, 4.8) {Residual Stream $\mathbf{x}$};
-\draw[arrow, blue!60] (0, 4.5) -- (0, 3.8);
+% ==================== LEFT: Standard transformer ====================
+\begin{scope}[local bounding box=tf]
+  \node[font=\bfseries\small] at (0, 5.2) {Standard transformer layer};
 
-% Shared M
-\node[shared] (M) at (-1.8, 3.2) {Shared $\M = AB^\top$};
-\node[font=\tiny, blue!60] at (-1.8, 2.7) {$q = xA$, \quad $k = xB$};
+  % per-layer layer-block frame
+  \node[frame, minimum width=4.3cm, minimum height=4.2cm] (tfframe) at (0, 2.6) {};
 
-% Response heads
-\node[perlayer] (V) at (1.8, 3.2) {$W_V^{(l)}$, $W_O^{(l)}$};
-\node[font=\tiny, orange!60] at (1.8, 2.7) {per-layer};
+  \node[font=\footnotesize, gray!60!black] at (-3.1, 4.4) {residual in};
+  \draw[arr] (0, 4.5) -- (0, 4.15);
 
-% Attention
-\node[block, fill=green!10] (attn) at (0, 2.0) {$\text{softmax}(qk^\top\!/\!\sqrt{d})\, v$};
+  \node[per] (qk) at (0, 3.85) {$W_Q^{(l)}, W_K^{(l)}$};
+  \node[font=\scriptsize, orange!60!black, anchor=west] at (1.75, 3.85) {\emph{per-layer}};
 
-% FFN
-\node[perlayer] (ffn) at (0, 1.0) {FFN$^{(l)}$ (SwiGLU)};
+  \draw[arr] (0, 3.58) -- (0, 3.32);
+  \node[per] (attn) at (0, 3.02) {$W_V^{(l)}, W_O^{(l)}$, Attn};
 
-% Correction
-\node[perlayer] (corr) at (0, 0.0) {$\sigma(g) \cdot \delta$};
-\node[font=\tiny, orange!60] at (0, -0.45) {perturbative correction};
+  \draw[arr] (0, 2.75) -- (0, 2.52);
+  \node[add] (a1) at (0, 2.28) {Add \& Norm};
 
-% Arrows
-\draw[arrow] (M) -- (attn);
-\draw[arrow] (V) -- (attn);
-\draw[arrow] (attn) -- (ffn);
-\draw[arrow] (ffn) -- (corr);
-\draw[arrow, blue!60] (corr.south) -- ++(0, -0.5) node[below, font=\small\bfseries] {$\mathbf{x}_{l+1}$};
+  \draw[arr] (0, 2.04) -- (0, 1.80);
+  \node[per] (ffn) at (0, 1.50) {FFN$^{(l)}$};
 
-% Labels
-\node[font=\tiny, align=center, text=blue!60] at (-3.2, 3.2) {same $A, B$\\every layer};
+  \draw[arr] (0, 1.23) -- (0, 1.00);
+  \node[add] (a2) at (0, 0.76) {Add \& Norm};
+
+  % xL indicator
+  \node[xL] at (2.9, 2.6) {$\times\, L$};
+  \draw[red!60!black, line width=0.5pt] (2.5, 4.7) -- (2.5, 0.5);
+  \draw[red!60!black, line width=0.5pt] (2.4, 4.7) -- (2.6, 4.7);
+  \draw[red!60!black, line width=0.5pt] (2.4, 0.5) -- (2.6, 0.5);
+
+  \draw[arr] (0, 0.5) -- (0, 0.1);
+  \node[font=\footnotesize, gray!60!black] at (0, -0.2) {residual out};
+
+  \node[font=\footnotesize\itshape, gray!60!black, align=center] at (0, -0.85)
+    {coupling parameters: $\mathcal{O}(L\,d^2)$};
+\end{scope}
+
+% ==================== RIGHT: ORN ====================
+\begin{scope}[xshift=9cm, local bounding box=orn]
+  \node[font=\bfseries\small] at (0, 5.2) {Orbital Response Network layer};
+
+  % Shared M sits OUTSIDE the per-layer stack
+  \node[share, minimum width=4.5cm, minimum height=0.75cm] (sharedM) at (0, 4.55)
+        {Shared $\M = AB^{\top}$};
+  \node[font=\scriptsize, blue!60!black, anchor=east] at (-2.4, 4.55)
+        {\emph{one copy}};
+
+  \node[font=\footnotesize, gray!60!black] at (-3.0, 3.95) {residual in};
+  \draw[arr] (-3.0, 3.85) -- ++(0, -0.22) -- ++(2.6, 0);
+  \draw[arr] (sharedM.south) -- (0, 3.6);
+
+  % per-layer response stack
+  \node[frame, minimum width=4.3cm, minimum height=3.4cm] (ornframe) at (0, 1.95) {};
+
+  \node[per] (attn2) at (0, 3.20) {$W_V^{(l)}, W_O^{(l)}$, Attn};
+  \node[font=\scriptsize, orange!60!black, anchor=west] at (1.85, 3.20) {\emph{per-layer}};
+
+  \draw[arr] (0, 2.93) -- (0, 2.68);
+  \node[add] (b1) at (0, 2.44) {Add \& Norm};
+
+  \draw[arr] (0, 2.20) -- (0, 1.96);
+  \node[per] (ffn2) at (0, 1.66) {FFN$^{(l)}$};
+
+  \draw[arr] (0, 1.39) -- (0, 1.15);
+  \node[add] (b2) at (0, 0.92) {Add \& Norm};
+
+  \draw[arr] (0, 0.68) -- (0, 0.44);
+  \node[per] (corr) at (0, 0.14) {Correction$^{(l)}$ (gated)};
+
+  \node[xL] at (2.9, 2.1) {$\times\, L$};
+  \draw[red!60!black, line width=0.5pt] (2.5, 3.5) -- (2.5, -0.1);
+  \draw[red!60!black, line width=0.5pt] (2.4, 3.5) -- (2.6, 3.5);
+  \draw[red!60!black, line width=0.5pt] (2.4, -0.1) -- (2.6, -0.1);
+
+  \draw[arr] (0, -0.15) -- (0, -0.55);
+  \node[font=\footnotesize, gray!60!black] at (0, -0.85) {residual out};
+
+  \node[font=\footnotesize\itshape, gray!60!black, align=center] at (0, -1.25)
+    {coupling parameters: $\mathcal{O}(d^2)$, not $\mathcal{O}(L\,d^2)$};
+\end{scope}
+
+% Legend at the bottom
+\begin{scope}[yshift=-2.3cm]
+  \node[share, minimum width=0.6cm, minimum height=0.35cm] at (0.3, 0) {};
+  \node[anchor=west, font=\footnotesize] at (0.7, 0) {shared (stored once)};
+  \node[per, minimum width=0.6cm, minimum height=0.35cm] at (4.0, 0) {};
+  \node[anchor=west, font=\footnotesize] at (4.4, 0) {per-layer (stored $L$ times)};
+  \node[add, minimum width=0.6cm, minimum height=0.35cm] at (8.2, 0) {};
+  \node[anchor=west, font=\footnotesize] at (8.6, 0) {residual / normalisation (no learned weights)};
+\end{scope}
 \end{tikzpicture}
-\caption{One \orn{} layer. Blue: shared across all layers. Orange: per-layer. The coupling geometry ($A$, $B$) is applied identically at every depth; per-layer variation comes from the evolving residual stream.}
+\caption{Side-by-side layer structure of a standard transformer (left) and an Orbital Response Network (right).
+In the standard transformer, the coupling matrices $W_Q^{(l)}, W_K^{(l)}$ live inside the per-layer block and are stored $L$ times.
+In the ORN, the coupling $\M = A B^\top$ is lifted out of the per-layer stack into a single shared block above; the residual stream flows through it at every layer but no per-layer $W_Q, W_K$ exist.
+Everything below the shared coupling (value/output projections, FFN, gated perturbative correction, residual adds) is stored $L$ times.
+The gauge argument in the text shows the per-layer rotation previously carried by $W_Q^{(l)}, W_K^{(l)}$ is absorbed into $W_V^{(l)}, W_O^{(l)}$; no expressivity is lost.}
 \label{fig:arch}
-\end{figure}
+\end{figure*}
 
 The \orn{} has three components (Figure~\ref{fig:arch}):
 
@@ -285,7 +355,7 @@ Training uses AdamW with WSD (warmup-stable-decay) schedule.
 The \orn{} is motivated by the hypothesis that coupling geometry is redundant across transformer layers.
 We test this by extracting the effective coupling matrix $\M_{l,h} = {W_Q^{(l,h)}}^\top W_K^{(l,h)}$ from five pretrained models and measuring cross-layer similarity.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\small
 \begin{tabular}{@{}lcccc@{}}
 \toprule
@@ -307,7 +377,7 @@ The null model draws $W_Q, W_K \sim \mathcal{N}(0, 1/\sqrt{d})$ independently pe
 The coupling \emph{shape} is invariant; the \emph{orientation} is not.
 Analyses run in under 60 seconds on M4 CPU; scripts at \texttt{experiments/exp0*.py}.}
 \label{tab:spectral}
-\end{table}
+\end{table*}
 
 \paragraph{Existence proof.}
 A stronger check: can a single $\M$ reproduce the per-head attention logits of a trained transformer?
@@ -367,7 +437,7 @@ A task where the coupling rule is identical at every layer by construction: grou
 Does shared coupling track per-layer coupling on real language across scale?
 Column headers: \textbf{TF $d$} and \textbf{ORN $d$} are the $d_\text{model}$ widths chosen to match total parameter count at each scale.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\small
 \begin{tabular}{@{}rccccr@{}}
 \toprule
@@ -381,7 +451,7 @@ Column headers: \textbf{TF $d$} and \textbf{ORN $d$} are the $d_\text{model}$ wi
 \end{tabular}
 \caption{Scaling curves on OpenWebText at matched total parameter count. The gap is non-monotonic (ORN slightly below at 1M, slightly above at 5M and 10M, slightly below at 50M) and all four differences are within $\pm 3\%$. These are single runs per scale; error bars are missing. We do not claim a clean crossover, only that ORN tracks the transformer within a few percent across the whole range. Power-law fits $\beta_\text{ORN} = 0.256$, $\beta_\text{TF} = 0.259$.}
 \label{tab:scaling}
-\end{table}
+\end{table*}
 
 \paragraph{TinyStories at 10M.}
 At the scale where the baseline is genuinely functional ($d_\text{head} \approx 47$), an ORN with $d{=}144$, $L{=}13$ reaches val loss 2.911 vs the matched-parameter transformer's 2.930 ($d{=}176$, $L{=}3$), a 0.6\% difference.
@@ -403,7 +473,7 @@ Throughput: 52.5K tok/s throughout.
 Final val loss: \textbf{3.01 nats} (perplexity 19.5 on FineWeb-Edu), compared to GPT-2 Small's 3.38 nats (perplexity 29.4 on WikiText-103).
 The WSD decay phase (final 20\% of training) was responsible for a 0.23 nat improvement, dropping val loss from 3.19 to 2.97 while barely changing $\M$'s spectral structure (rank $71 \to 69$, asymmetry $1.413 \to 1.411$).
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\footnotesize
 \begin{tabular}{@{}lcccc@{}}
 \toprule
@@ -426,7 +496,7 @@ Training tokens   & 8B    & 600B  & 300B  & n/a \\
 \end{tabular}
 \caption{Zero-shot benchmark comparison. \orn{}-V2 (108M, 8B tokens) lands within a point of SmolLM-135M (600B tokens) and GPT-2 Small (300B tokens) on average across all eight tasks, using 48$\times$ fewer coupling parameters and 37--75$\times$ fewer training tokens. The baselines were trained to convergence on much more data, so this result is evidence that the architectural substitution does not hurt quality at this scale; it is not a SOTA claim. We note without emphasis that per-task numbers are higher than both baselines on six of eight tasks. Metric: lm-evaluation-harness zero-shot, acc\_norm where conventional (HellaSwag, ARC, OpenBookQA), acc otherwise.}
 \label{tab:benchmarks}
-\end{table}
+\end{table*}
 
 The benchmark profile is consistent with the ORN's design: tasks that reward structural inference (HellaSwag, ARC) track the 600B-token baseline closely, while LAMBADA (exact next-word prediction) is the clearest gap, which is what we would expect when competing against 37$\times$ more training data. Separating the two confounders here is hard: the ORN has 13\% fewer parameters \emph{and} saw 37--75$\times$ fewer tokens, and both could contribute to the LAMBADA shortfall. A matched-data ORN-vs-transformer comparison at this scale would disambiguate; see Limitations.
 
@@ -491,7 +561,7 @@ If coupling geometry is truly a domain-general relational structure, a single $\
 \paragraph{4-modality evaluation (d=256, L=8, 20K steps).}
 Transformer vs \orn{} vs \corn{} (composable \orn{} with semigroup-regularised $\M$) on images (CIFAR patches), music (MAESTRO spectrograms), environmental sounds (ESC-50), and text (TinyStories).
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\small
 \begin{tabular}{@{}lcccc@{}}
 \toprule
@@ -505,7 +575,7 @@ TF       & 0.045 & 0.017 & 6.39 & 0.485 \\
 \end{tabular}
 \caption{4-modality results (single run each). \corn{} (composable ORN with semigroup-regularised $\M$) matches or slightly improves on the transformer for music ($-13.8\%$), environmental sounds ($-15.3\%$) and text ($-0.9\%$), and is worse on images ($+13.4\%$). Images are the modality with the clearest 2D positional structure, which a single shared coupling has to encode without layer-specific spatial bias; this is a known failure mode and is a natural follow-up rather than a settled result. $\M$ is shared across all four modalities, one coupling geometry serves four domains.}
 \label{tab:multimodal}
-\end{table}
+\end{table*}
 
 \subsection{Mixture of Experts (preliminary)}
 
@@ -584,7 +654,7 @@ This is consistent with the ``structure before specificity'' hypothesis: early l
 
 A deliberate design choice: most diagnostics in this paper require only a laptop.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\small
 \begin{tabular}{@{}p{3.5cm}ccr@{}}
 \toprule
@@ -606,7 +676,7 @@ V2 training (108M, 8B tok) & 108M & RTX 4090 & 42.3 hr \\
 \end{tabular}
 \caption{Computational requirements. Every diagnostic and small-scale experiment runs on Apple M4 (24GB unified memory). Only the two scaled training runs require a GPU rental (\~{}\$4 each on vast.ai).}
 \label{tab:compute}
-\end{table}
+\end{table*}
 
 All experiment scripts are in \texttt{experiments/} in the repository.
 Most can be run with:
