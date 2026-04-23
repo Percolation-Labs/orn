@@ -141,46 +141,86 @@ article hr { border: none; border-top: 1px solid var(--rule); margin: 2.4rem 0; 
 </table>
 <p>ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM having 75× more training data), beats GPT-2 Small on five of the eight (despite 37× less training data), and has the higher average of the three. It also uses 48 times fewer coupling parameters than either baseline. The two tasks it loses on vs SmolLM (PIQA by 0.6, WinoGrande by 1.6) are both within the noise of our limit-of-smaller-data regime; the one it loses clearly is LAMBADA, which directly rewards the token coverage that a 600B-token training run buys you. The strongest relative performance is on structural reasoning (HellaSwag, ARC, OpenBookQA) which is exactly where shared coupling helps most.</p>
 <h3>ORN V3 (605M)</h3>
-<p>The 605M table is running right now on the same harness and will be filled in when it completes (the run takes a few hours on MPS at <code>limit=200</code>). Scaffolded row so readers can see what is coming:</p>
+<p>Same harness, same task suite. The V3 row below is a 200-example subset per task so the numbers carry about ±3 points of statistical uncertainty; a full-harness run on the same checkpoint is planned.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Model</th>
-<th style="text-align: right;">HellaSwag</th>
-<th style="text-align: right;">PIQA</th>
-<th style="text-align: right;">ARC-E</th>
-<th style="text-align: right;">ARC-C</th>
-<th style="text-align: right;">WinoG</th>
-<th style="text-align: right;">BoolQ</th>
-<th style="text-align: right;">OBQA</th>
+<th style="text-align: left;">Task</th>
+<th style="text-align: right;">ORN V3 (605M, 3B tok)</th>
+<th style="text-align: right;">ORN V2 (108M, 8B tok)</th>
+<th style="text-align: right;">SmolLM-135M (135M, 600B tok)</th>
+<th style="text-align: right;">GPT-2 Small (124M, 300B tok)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">SmolLM2-135M</td>
-<td style="text-align: right;">42.1</td>
-<td style="text-align: right;">68.3</td>
-<td style="text-align: right;">54.4</td>
-<td style="text-align: right;">30.1</td>
-<td style="text-align: right;">56.5</td>
-<td style="text-align: right;">60.2</td>
-<td style="text-align: right;">34.6</td>
+<td style="text-align: left;">HellaSwag</td>
+<td style="text-align: right;"><strong>47.0</strong></td>
+<td style="text-align: right;">33.4</td>
+<td style="text-align: right;">30.4</td>
+<td style="text-align: right;">31.6</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>ORN V3 (605M, 3B tok)</strong></td>
-<td style="text-align: right;"><em>pending</em></td>
-<td style="text-align: right;"><em>pending</em></td>
-<td style="text-align: right;"><em>pending</em></td>
-<td style="text-align: right;"><em>pending</em></td>
-<td style="text-align: right;"><em>pending</em></td>
-<td style="text-align: right;"><em>pending</em></td>
-<td style="text-align: right;"><em>pending</em></td>
+<td style="text-align: left;">PIQA</td>
+<td style="text-align: right;"><strong>66.5</strong></td>
+<td style="text-align: right;">62.4</td>
+<td style="text-align: right;">63.0</td>
+<td style="text-align: right;">62.5</td>
+</tr>
+<tr>
+<td style="text-align: left;">ARC-Easy</td>
+<td style="text-align: right;"><strong>51.5</strong></td>
+<td style="text-align: right;">46.2</td>
+<td style="text-align: right;">43.7</td>
+<td style="text-align: right;">43.6</td>
+</tr>
+<tr>
+<td style="text-align: left;">ARC-Challenge</td>
+<td style="text-align: right;">27.0</td>
+<td style="text-align: right;">27.4</td>
+<td style="text-align: right;">24.7</td>
+<td style="text-align: right;">22.9</td>
+</tr>
+<tr>
+<td style="text-align: left;">WinoGrande</td>
+<td style="text-align: right;"><strong>52.5</strong></td>
+<td style="text-align: right;">50.5</td>
+<td style="text-align: right;">52.1</td>
+<td style="text-align: right;">51.8</td>
+</tr>
+<tr>
+<td style="text-align: left;">BoolQ</td>
+<td style="text-align: right;"><strong>63.5</strong></td>
+<td style="text-align: right;">57.7</td>
+<td style="text-align: right;">55.3</td>
+<td style="text-align: right;">48.3</td>
+</tr>
+<tr>
+<td style="text-align: left;">OpenBookQA</td>
+<td style="text-align: right;"><strong>37.0</strong></td>
+<td style="text-align: right;">31.0</td>
+<td style="text-align: right;">27.6</td>
+<td style="text-align: right;">28.6</td>
+</tr>
+<tr>
+<td style="text-align: left;">LAMBADA</td>
+<td style="text-align: right;"><strong>31.0</strong></td>
+<td style="text-align: right;">26.2</td>
+<td style="text-align: right;">24.0</td>
+<td style="text-align: right;">32.6</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Mean</strong></td>
+<td style="text-align: right;"><strong>47.0</strong></td>
+<td style="text-align: right;">41.8</td>
+<td style="text-align: right;">40.1</td>
+<td style="text-align: right;">40.2</td>
 </tr>
 </tbody>
 </table>
-<p>The design expectation is that on HellaSwag, ARC-Easy, ARC-Challenge, and BoolQ (structural reasoning, where shared coupling helps) ORN V3 should continue to beat its equivalently-trained-tokens baseline; on knowledge-weighted tasks like OpenBookQA and LAMBADA the 3-billion-token training budget is the bottleneck more than the architecture.</p>
+<p>V2 to V3 buys you most on structural reasoning (HellaSwag 33 to 47, ARC-Easy 46 to 52, OpenBookQA 31 to 37, BoolQ 58 to 64). LAMBADA moves too, from 26 to 31, which is the main open question the paper's structural story had me worried about. We also ran a 20-subtask BLiMP subset at <code>n=100</code> per subtask: V3 matches GPT-2 Small's mean on that subset and is at or near ceiling on local-agreement tasks, with the clearest gaps on island constraints (<code>sentential_subject_island</code> 27, <code>complex_NP_island</code> 49) and long-distance NPI licensing. It is a specific, legible failure mode rather than a general long-range weakness.</p>
 <h2>Pushing parameter sharing further with a wide shared FFN</h2>
-<p>One thing to be honest about: sharing just the coupling matrices is a principled move but, arithmetically, a fairly small one. In the 108M V2 at <em>d</em> = 576, <em>A</em> and <em>B</em> together are roughly 660k parameters, or about 0.6% of the model. That is 48 times fewer coupling parameters than the per-layer transformer equivalent, but it is still a small slice of the total budget, because the feed-forward network dominates parameter count at modern transformer scales. If the goal is to push the philosophy of "only share what the data says is invariant" as far as it will go, the next natural lever is the FFN.</p>
+<p>Sharing just the coupling matrices is a principled move but, arithmetically, a fairly small one. In the 108M V2 at <em>d</em> = 576, <em>A</em> and <em>B</em> together are roughly 660k parameters, or about 0.6% of the model. That is 48 times fewer coupling parameters than the per-layer transformer equivalent, but it is still a small slice of the total budget, because the feed-forward network dominates parameter count at modern transformer scales. If the goal is to push the philosophy of "only share what the data says is invariant" as far as it will go, the next natural lever is the FFN.</p>
 <p><a href="https://arxiv.org/abs/2309.01826">Pires, Vilar, Lopes et al. (2023), "One Wide Feedforward is All You Need"</a> made a clean version of that move on standard transformers. They replaced the stack of <em>L</em> per-layer FFNs with a single wide shared FFN applied at every layer and showed that the resulting model matches or exceeds the original at substantially fewer total parameters. ORN V3 takes the same step. Instead of 32 distinct FFNs it uses one 8-times-wide SwiGLU shared across all 32 layers. Combined with the shared coupling, this means 46% of the 605M parameters live in a shared backbone (shared <em>M</em> plus the wide shared FFN), 36% in per-layer response heads, and 17% in embeddings. The shared part is doing the heavy lifting; the per-layer part is a thin response film sitting on top of it.</p>
 <h2>What this is not a claim about</h2>
 <p>Before the next section, a caveat about how to read all of the above. I am not trying to claim that ORN is a better language model than whatever you are currently using, or that these benchmark numbers mean we are on the frontier. They do not and we are not. What the numbers show is narrower and, I think, more interesting: the architectural change does not hurt. You can take a standard transformer, pull out most of the coupling parameters, make a single shared object do the job across every layer, train on considerably less data than the baselines were trained on, and end up somewhere in the same region of benchmark space. That is the engineering lesson, and it is a permissive one.</p>
