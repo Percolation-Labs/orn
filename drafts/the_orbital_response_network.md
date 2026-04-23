@@ -117,3 +117,23 @@ orn diagnose --checkpoint orn-v3-605m
 Every key result lives as a separate Python module that returns its headline numbers as a dict and, for most, emits the published figure as a PNG. A registry maps short codes (SPE-01, COU-02, COM-01) to modules. Pytest exercises every module as a smoke test. If a refactor breaks a claim, the test for that claim fails and the figure stops matching what the code produces.
 
 The technical report, the published checkpoints, and the experimental harness are at [github.com/Percolation-Labs/orn](https://github.com/Percolation-Labs/orn). Feedback welcome.
+
+## References
+
+**Cited prior work on parameter sharing in transformers.**
+
+1. Lan, Z., Chen, M., Goodman, S., Gimpel, K., Sharma, P., and Soricut, R. *ALBERT: A Lite BERT for Self-supervised Learning of Language Representations.* ICLR 2020. [arXiv:1909.11942](https://arxiv.org/abs/1909.11942).
+2. Shazeer, N. *Fast Transformer Decoding: One Write-Head is All You Need.* 2019. [arXiv:1911.02150](https://arxiv.org/abs/1911.02150). *(Multi-Query Attention.)*
+3. Ainslie, J., Lee-Thorp, J., de Jong, M., Zemlyanskiy, Y., Lebron, F., and Sanghai, S. *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints.* EMNLP 2023. [arXiv:2305.13245](https://arxiv.org/abs/2305.13245).
+4. Pires, T., Vilar, D., Lopes, A. V., et al. *One Wide Feedforward is All You Need.* EMNLP / WMT 2023. [arXiv:2309.01826](https://arxiv.org/abs/2309.01826). *(The prior work ORN V3 builds on for the wide shared FFN.)*
+5. Bae, S., et al. *Relaxing Recursive Transformers with Per-Layer Low-Rank Adaptation.* ICLR 2025. [arXiv:2410.20672](https://arxiv.org/abs/2410.20672).
+6. *Share Your Attention: Transformer Weight Sharing via Matrix-based Dictionary Learning (MASA).* 2025. [arXiv:2503.08040](https://arxiv.org/abs/2503.08040).
+
+**Published ORN checkpoints (HuggingFace).**
+
+7. ORN V2 108M on 8B tokens of FineWeb-Edu: [huggingface.co/mr-saoirse/orn-v2-108m](https://huggingface.co/mr-saoirse/orn-v2-108m).
+8. ORN V3 605M on 3B tokens of FineWeb-Edu: [huggingface.co/mr-saoirse/orn-v3-605m](https://huggingface.co/mr-saoirse/orn-v3-605m). Intermediate 1B and 2B snapshots alongside.
+
+**Repository and reproducible experiments.**
+
+9. ORN source, CLI, reproduce registry, and technical report: [github.com/Percolation-Labs/orn](https://github.com/Percolation-Labs/orn). The fast-tier reproductions in the article (COU-02 coupling invariance, SPE-01 spectral universality across seeds, COM-01 colour-matching compression) all finish in under fifteen seconds on a laptop via `orn reproduce`.
