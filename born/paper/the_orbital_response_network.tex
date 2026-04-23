@@ -35,7 +35,6 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\bigO}{\mathcal{O}}
 \newcommand{\orn}{\textsc{orn}}
-\newcommand{\corn}{\textsc{corn}}
 
 % ── Title ─────────────────────────────────────────────────────────────
 \title{%
@@ -557,52 +556,18 @@ Reporting these alongside standard benchmarks gives a different view of what the
 \item \textbf{Residual-stream syntactic separation.} Per-depth cosine between minimal pairs, directly measured on a shared-coupling model because syntax cannot hide in per-layer weight differences (Section~\ref{sec:discussion}). On GPT-2 the equivalent measurement is diluted by per-layer specialisation; we report a $60\times$ gap on a small minimal-pair probe, with BLiMP per layer as the standard follow-up.
 \item \textbf{Correction-gate magnitude as a depth diagnostic.} The per-layer sigmoid-gated correction is initialised near zero; its mean magnitude at trained state indicates where the mean-field coupling needs the most help. Gate magnitudes vary by modality (audio $0.163$, text $0.106$, images $0.058$) and by depth within a given run. The transformer has no analogue; there is no discrete knob you can read to tell which layers the shared coupling approximation is under-serving.
 \item \textbf{Frozen-backbone adaptation cost.} Table~\ref{tab:frozen} reports the validation-loss gap when only response heads are retrained on a new dataset ($1.4\%$). The transformer analogue (freezing all $W_Q, W_K$ layer-by-layer) is the baseline in Table~\ref{tab:transfer}: shared-$\M$ transfer is $12$--$19\%$ better, consistent with the shared backbone being a genuine data-general object.
-\item \textbf{Where shared coupling compresses} (for MoE / routing). In an ORN-MoE, routing choices and expert specialisation can be reported in isolation from coupling, since the coupling is one object serving all experts. The correct comparison for expert entropy on an ORN-MoE is against TF-MoE experts that include their own attention; Table~\ref{tab:moe} is one snapshot along this axis.
+\item \textbf{Where shared coupling compresses} (for MoE / routing). In an ORN-MoE, routing choices and expert specialisation can be reported in isolation from coupling, since the coupling is one object serving all experts. The correct comparison for expert entropy on an ORN-MoE is against a standard MoE whose experts include their own attention.
 \end{enumerate}
 
 These diagnostics are not benchmark wins; they are the measurements the architecture makes newly practical. Where an external benchmark is ambiguous (matched-compute comparisons pending), the internal diagnostics give an independent read on whether the model is behaving as the theory predicts.
 
-\subsection{Multimodal Experiments}
+\subsection{Extensions in progress}
 
-If coupling geometry is truly a domain-general relational structure, a single $\M$ should work across modalities.
+Two natural extensions of the shared-coupling architecture are under active development and are mentioned only briefly here because the current results are single-run and not rich enough to serve as evidence:
 
-\paragraph{4-modality evaluation (d=256, L=8, 20K steps).}
-Transformer vs \orn{} vs \corn{} (composable \orn{} with semigroup-regularised $\M$) on images (CIFAR patches), music (MAESTRO spectrograms), environmental sounds (ESC-50), and text (TinyStories).
+\emph{Multimodal ORN.} If the coupling geometry is a domain-general relational structure rather than a language-specific one, a single $\M$ should transfer across modalities. Early results on a joint 4-modality model (images, music, environmental sounds, text) using a composable variant of ORN are consistent with this, with the expected weakness on modalities that have strong layer-specific positional structure (images). A proper multimodal study is separate work.
 
-\begin{table*}[t]
-\centering\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-& \textbf{Image} & \textbf{Music} & \textbf{Env} & \textbf{Text} \\
-& (MSE$\downarrow$) & (MSE$\downarrow$) & (MSE$\downarrow$) & (CE$\downarrow$) \\
-\midrule
-TF       & 0.045 & 0.017 & 6.39 & 0.485 \\
-\orn{}   & 0.046 & 0.015 & 5.58 & 0.508 \\
-\corn{}  & 0.052 & 0.015 & 5.42 & 0.481 \\
-\bottomrule
-\end{tabular}
-\caption{4-modality results (single run each). \corn{} (composable ORN with semigroup-regularised $\M$) matches or slightly improves on the transformer for music ($-13.8\%$), environmental sounds ($-15.3\%$) and text ($-0.9\%$), and is worse on images ($+13.4\%$). Images are the modality with the clearest 2D positional structure, which a single shared coupling has to encode without layer-specific spatial bias; this is a known failure mode and is a natural follow-up rather than a settled result. $\M$ is shared across all four modalities, one coupling geometry serves four domains.}
-\label{tab:multimodal}
-\end{table*}
-
-\subsection{Mixture of Experts}
-
-SharedM composes naturally with MoE routing.
-At 65M total parameters (20M active per token) on a single seed:
-
-\begin{table}[h]
-\centering\small
-\begin{tabular}{@{}lccr@{}}
-\toprule
-& \textbf{Val loss} & \textbf{Coupling} & \textbf{vs TF-MoE} \\
-\midrule
-TF-MoE     & 2.423 & 1.6M & ref    \\
-\orn{}-MoE & 2.425 & 131K & $+0.1\%$ \\
-\bottomrule
-\end{tabular}
-\caption{\orn{}-MoE tracks TF-MoE at 12$\times$ fewer coupling parameters on a single-seed run at 65M total parameters. Seed variability and scaled runs are left to follow-up work. The shared $\M$ provides the routing geometry while experts specialise per domain; the property of interest is that MoE experts can share a backbone, not this single number (Section~\ref{sec:discussion}).}
-\label{tab:moe}
-\end{table}
+\emph{ORN-MoE.} Sharing the coupling $\M$ is compatible with mixture-of-experts routing because the coupling is one object that every expert reads, and experts specialise only on the response heads and FFN slice. The practical consequence we anticipate is that expert-heavy architectures can share backbone cost across experts instead of duplicating attention per expert; the scientific consequence is that expert specialisation becomes a statement about response, not about coupling. A single-seed pilot at 65M parameters tracks a matched TF-MoE at $12\times$ fewer coupling parameters; this is indicative at best, and a proper MoE study at larger scale is separate work.
 
 
 % ======================================================================
@@ -658,41 +623,6 @@ This is consistent with the ``structure before specificity'' hypothesis: early l
 
 
 % ======================================================================
-\section{Reproducibility on Consumer Hardware}
-
-A deliberate design choice: most diagnostics in this paper require only a laptop.
-
-\begin{table*}[t]
-\centering\small
-\begin{tabular}{@{}p{3.5cm}ccr@{}}
-\toprule
-\textbf{Experiment} & \textbf{Scale} & \textbf{Device} & \textbf{Time} \\
-\midrule
-Spectral invariance (5 models) & ,  & M4 CPU & 60s \\
-Existence proof (GPT-2) & ,  & M4 CPU & 8s \\
-Coupling manifold PCA & ,  & M4 CPU & 8s \\
-Colour matching & 70K & M4 MPS & 2 min \\
-Shakespeare B1 & 1M & M4 MPS & 5 min \\
-Scaling curves (5 scales) & 1--50M & M4 MPS & 45 min \\
-TinyStories ablation & 10M & M4 MPS & 20 min \\
-4-modality \corn{} & 7M & M4 MPS & 1 hr \\
-MoE comparison & 65M & M4 MPS & 2 hr \\
-\midrule
-V1 training (91M, 2.5B tok) & 91M & RTX 4090 & 18.6 hr \\
-V2 training (108M, 8B tok) & 108M & RTX 4090 & 42.3 hr \\
-\bottomrule
-\end{tabular}
-\caption{Computational requirements. Every diagnostic and small-scale experiment runs on Apple M4 (24GB unified memory). Only the two scaled training runs require a GPU rental (\~{}\$4 each on vast.ai).}
-\label{tab:compute}
-\end{table*}
-
-All experiment scripts are in \texttt{experiments/} in the repository.
-Most can be run with:
-\begin{verbatim}
-cd experiments && python3 exp_*.py
-\end{verbatim}
-Scaled training uses \texttt{training/train\_orn.py} with configs in \texttt{training/configs/}.
-
 % ======================================================================
 \section{Discussion}
 \label{sec:discussion}
@@ -747,12 +677,6 @@ The mechanism we posit is that GPT-2 can encode structural information in the \e
 
 The measurement uses a small minimal-pair set rather than a standard benchmark; a BLiMP~\cite{warstadt2020blimp} follow-up is the natural broader test. Additional consistent evidence: a fitted $20 \times 20$ transition matrix reproduces the \orn{} residual trajectory on unseen prompts with $>96.5\%$ cosine accuracy at all layers, consistent with a low-dimensional syntactic geometry in the residual stream.
 
-\paragraph{Toward composable coupling (\corn{}).}
-Standard \orn{} layers form a pipeline: each layer expects specific intermediate representations from the previous one.
-A composable variant, where $T(s) \circ T(t) \approx T(s+t)$ for the coupling operator, would enable variable-depth computation, native diffusion, and iterative refinement.
-Our 4-modality results (Table~\ref{tab:multimodal}) show \corn{} matching or exceeding the transformer on 3 of 4 modalities, and early results show that the semigroup coupling parameter $t$ and the diffusion noise level $\sigma$ are numerically the same parameter.
-This connection between coupling dynamics and generative modelling is explored in a companion paper.
-
 \paragraph{Where ORN's capacity lives, and how to test it.}
 
 The ORN is not a diminished transformer. Anything a per-layer transformer does with $L$ distinct $W_Q^{(l)}, W_K^{(l)}$ pairs, the ORN can, in principle, do through three other mechanisms:
@@ -760,7 +684,7 @@ The ORN is not a diminished transformer. Anything a per-layer transformer does w
 \begin{enumerate}[nosep,leftmargin=1.5em]
 \item \textbf{Rotation-absorbing response heads.} The gauge argument of Section~\ref{sec:arch} says the per-layer rotation $R_l$ that a transformer stores inside its per-layer $W_Q, W_K$ is absorbed into the per-layer $W_V^{(l)}, W_O^{(l)}$ in an ORN. The response heads already carry per-layer specialisation; they just carry a different parameterisation of it.
 \item \textbf{Residual-stream trajectory.} Information a transformer encodes in the \emph{differences} between its per-layer coupling matrices lives, in an ORN, in the per-depth state of the residual stream flowing through a fixed coupling. Per-layer specialisation becomes per-depth trajectory.
-\item \textbf{MoE expert specialisation.} When domain-specific routing is needed, an ORN-MoE can specialise its response heads and FFN slice per expert while keeping coupling shared (Section~\ref{sec:results}, Table~\ref{tab:moe}). The experts compete on ``what to do with the coupling rule'', not on ``what the rule is.''
+\item \textbf{MoE expert specialisation.} When domain-specific routing is needed, an ORN-MoE can specialise its response heads and FFN slice per expert while keeping coupling shared. The experts compete on ``what to do with the coupling rule'', not on ``what the rule is.''
 \end{enumerate}
 
 The empirical question this paper opens is whether these three mechanisms jointly absorb everything a per-layer transformer does with per-layer attention. Evidence from within the paper is consistent with this view and the concrete tests for closing the gap are named below.
@@ -784,9 +708,8 @@ In an ORN the analogous object is the per-layer response head plus an interventi
 
 \paragraph{(iv) Domain-specialised specialisation $\to$ MoE on the response heads.}
 Transformers typically specialise per domain through MoE experts that each carry their own attention \emph{and} FFN.
-ORN-MoE separates these: experts share the coupling geometry (one $\M$) and specialise on the response heads and FFN slice.
-\textit{Preliminary evidence:} Table~\ref{tab:moe} (ORN-MoE matches TF-MoE at 12$\times$ fewer coupling parameters, single seed).
-\textit{Experiments to run:} ORN-MoE with explicit domain routing (natural language / code / math) at 500M+; expert-ablation, do domain-specialised experts form?; routing-entropy comparison against TF-MoE. If experts form clean domain specialisations without a per-expert coupling, the ``shared coupling blocks specialisation'' objection is rebutted at the only scale where it matters.
+ORN-MoE separates these: experts share the coupling geometry (one $\M$) and specialise on the response heads and FFN slice (Section~\ref{sec:results}, ``Extensions in progress'').
+\textit{Experiments to run:} ORN-MoE with explicit domain routing (natural language / code / math) at 500M+; expert-ablation, do domain-specialised experts form?; routing-entropy comparison against a matched MoE. If experts form clean domain specialisations without a per-expert coupling, the ``shared coupling blocks specialisation'' objection is rebutted at the only scale where it matters.
 
 \paragraph{Summary.}
 The hypothesis is not that ORN can do everything a transformer can do the way the transformer does it. The hypothesis is that every capability conventionally attributed to per-layer coupling has a corresponding mechanism in the ORN, in the response heads, the residual-stream trajectory, or the MoE expert layout. The evidence above is consistent with this view; the experiments named are the concrete tests. None require a change to the architecture.
@@ -945,5 +868,37 @@ Z.~Wu, A.~Arora, A.~Geiger, Z.~Wang, J.~Huang, D.~Jurafsky, C.~D.~Manning, and C
 \newblock \emph{NeurIPS}, 2024.
 
 \end{thebibliography}
+
+
+% ======================================================================
+\appendix
+
+\section{Reproducibility on Consumer Hardware}
+\label{app:repro}
+
+Most diagnostics in this paper require only a laptop. The scaled training runs required a single rented GPU each.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}p{3.5cm}ccr@{}}
+\toprule
+\textbf{Experiment} & \textbf{Scale} & \textbf{Device} & \textbf{Time} \\
+\midrule
+Spectral invariance (5 models) & , & laptop CPU & 60s \\
+Existence proof (GPT-2) & , & laptop CPU & 8s \\
+Coupling manifold PCA & , & laptop CPU & 8s \\
+Colour matching & 70K & laptop & 2 min \\
+Shakespeare B1 & 1M & laptop & 5 min \\
+Scaling curves (5 scales) & 1--50M & laptop & 45 min \\
+TinyStories ablation & 10M & laptop & 20 min \\
+\midrule
+V1 training (91M, 2.5B tok) & 91M & RTX 4090 & 18.6 hr \\
+V2 training (108M, 8B tok) & 108M & RTX 4090 & 42.3 hr \\
+V3 training (605M, 3B tok) & 605M & A100 80GB & 40 hr \\
+\bottomrule
+\end{tabular}
+\caption{Computational footprint of the experiments in this paper. Every diagnostic and small-scale training run fits on a consumer laptop; the three scaled training runs each used a single rented GPU. All code and configurations are in the repository linked in the title footnote.}
+\label{tab:compute}
+\end{table}
 
 \end{document}
