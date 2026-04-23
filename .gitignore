@@ -33,3 +33,4 @@ drafts/.seed/
 
 # Publish helpers (local only)
 scripts/
+/bench/
