@@ -1,6 +1,12 @@
 # The Orbital Response Network
 
-I want to describe a small architectural change to transformer attention that I think is worth paying attention to. It is not a compression trick, even though it produces compression. The reason to care about it is what it tells us about what transformers already know.
+I had a question I wanted to answer: how much of what a transformer does really has to happen inside the attention block, and how much of it can live in the residual stream? The attention block is expensive. It has a lot of parameters. If some of that work is genuinely redundant across layers, you should be able to lift parts of it out, put them once in a shared place, and let the residual stream carry the state that actually changes with depth.
+
+People have tried versions of this before. ALBERT shares every parameter across every layer, recursive transformers share blocks and then patch the gaps with LoRA. That family of tricks saves a lot of parameters and loses some quality, and no one has a principled answer for which part should be shared. The sharing is a blunt instrument: "share everything, hope it works."
+
+The more interesting question is: if the data could tell you what is already invariant across layers, and you only shared that piece, what would you share? This article is about what you find when you actually ask that question. The answer is surprisingly clean, there is a real parameter saving, and the more important consequence is that the thing you end up sharing looks like a small object worth studying.
+
+![One layer of a standard transformer next to one layer of an Orbital Response Network; the only difference is that per-layer W_Q and W_K have been pulled out and replaced by a single shared A, B](https://raw.githubusercontent.com/Percolation-Labs/orn/article-drafts/drafts/figs/architecture.png)
 
 ## The observation
 
