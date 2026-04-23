@@ -76,7 +76,7 @@ The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 S
 | WinoGrande    | 50.5     | **52.1** | 51.8 | 50.0 |
 | LAMBADA       | 26.2     | 24.0 | **32.6** | 0.0 |
 | OpenBookQA    | **31.0** | 27.6 | 28.6 | 25.0 |
-| **Average**   | **41.8** | 40.1 | 40.2 | — |
+| **Average**   | **41.8** | 40.1 | 40.2 | n/a |
 
 ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM having 75× more training data), beats GPT-2 Small on five of the eight (despite 37× less training data), and has the higher average of the three. It also uses 48 times fewer coupling parameters than either baseline. The two tasks it loses on vs SmolLM (PIQA by 0.6, WinoGrande by 1.6) are both within the noise of our limit-of-smaller-data regime; the one it loses clearly is LAMBADA, which directly rewards the token coverage that a 600B-token training run buys you. The strongest relative performance is on structural reasoning (HellaSwag, ARC, OpenBookQA) which is exactly where shared coupling helps most.
 
