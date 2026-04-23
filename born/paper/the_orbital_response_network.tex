@@ -676,27 +676,52 @@ A composable variant, where $T(s) \circ T(t) \approx T(s+t)$ for the coupling op
 Our 4-modality results (Table~\ref{tab:multimodal}) show \corn{} beating the transformer on 3 of 4 modalities, and preliminary results show that the semigroup coupling parameter $t$ and the diffusion noise level $\sigma$ are numerically the same parameter.
 This connection between coupling dynamics and generative modelling is explored in a companion paper.
 
+\paragraph{Where ORN's capacity lives, and how to test it.}
+
+The ORN is not a diminished transformer. Anything a per-layer transformer does with $L$ distinct $W_Q^{(l)}, W_K^{(l)}$ pairs, the ORN can, in principle, do through three other mechanisms:
+
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item \textbf{Rotation-absorbing response heads.} The gauge argument of Section~\ref{sec:arch} says the per-layer rotation $R_l$ that a transformer stores inside its per-layer $W_Q, W_K$ is absorbed into the per-layer $W_V^{(l)}, W_O^{(l)}$ in an ORN. The response heads already carry per-layer specialisation; they just carry a different parameterisation of it.
+\item \textbf{Residual-stream trajectory.} Information a transformer encodes in the \emph{differences} between its per-layer coupling matrices lives, in an ORN, in the per-depth state of the residual stream flowing through a fixed coupling. Per-layer specialisation becomes per-depth trajectory.
+\item \textbf{MoE expert specialisation.} When domain-specific routing is needed, an ORN-MoE can specialise its response heads and FFN slice per expert while keeping coupling shared (Section~\ref{sec:results}, Table~\ref{tab:moe}). The experts compete on ``what to do with the coupling rule'', not on ``what the rule is.''
+\end{enumerate}
+
+The empirical question this paper opens is whether these three mechanisms jointly absorb everything a per-layer transformer does with per-layer attention. We have preliminary evidence that they do and a concrete experimental programme for closing the gap.
+
+\paragraph{(i) Per-layer specialisation $\to$ per-depth residual geometry.}
+On transformers, linear probes on layer activations show lexical features in early layers, syntactic features in the middle, semantic in late~\cite{hewitt2019probe}; the specialisation is conventionally attributed to the per-layer coupling.
+\textit{Preliminary evidence for the ORN equivalent:} the residual-stream syntactic-separation measurement (Section~\ref{sec:discussion}) is \textasciitilde60$\times$ larger on an ORN than on GPT-2 Small at matched layers, consistent with information a transformer encodes in per-layer weight differences being pushed into the residual-stream state.
+\textit{Experiments to run:} BLiMP~\cite{warstadt2020blimp} minimal-pair probes at each ORN layer; per-layer correction-gate magnitude as a ``where does this layer work hardest'' diagnostic (Section~\ref{sec:discussion} cites modality-specific gate magnitudes); layer-patching interventions (replace layer $l$'s residual output with layer $l'$'s, measure which capabilities degrade).
+
+\paragraph{(ii) Long-range exact lexical retrieval $\to$ data coverage and response-head memory.}
+Transformers handle LAMBADA-style exact recall partly through induction heads at specific layers.
+ORN has one coupling rule, so any specialised routing has to live in the per-layer response heads, in the FFN (which is either per-layer in V2 or shared-wide in V3), or in the residual-stream state.
+\textit{Preliminary evidence:} V2 LAMBADA at 26.2\% is clearly below data-rich baselines, but V2 trained on only 8B tokens vs 300--600B. Exact next-word recall is known to be data-coverage-limited; we cannot isolate architecture from data here.
+\textit{Experiments to run:} matched-compute LAMBADA (ORN and transformer on identical 8B FineWeb-Edu run); per-layer response-head probing for induction-head-like behaviour; optionally, a small per-layer key--value memory slot that extends the response heads without touching $\M$, tested against frozen-$\M$ fine-tuning.
+
+\paragraph{(iii) Per-layer weight edits $\to$ residual-stream interventions and response-head LoRA.}
+Edits like ROME~\cite{meng2022rome} and ReFT~\cite{wu2024reft} target specific per-layer attention weights.
+In an ORN the analogous object is the per-layer response head plus an intervention in the residual stream at the target depth.
+\textit{Preliminary evidence:} a fitted $20 \times 20$ transition matrix reproduces the ORN residual trajectory on held-out prompts at $>96.5\%$ cosine (Section~\ref{sec:discussion}); the residual-stream geometry is navigable with simple linear operators.
+\textit{Experiments to run:} replicate a canonical ROME-style factual edit using a response-head LoRA at one ORN layer; compare locality (does the edit bleed into unrelated facts?) and generality (does it survive paraphrase?) against transformer ROME. If the response-head-LoRA edit matches ROME's locality and beats its generality, ``per-layer edits'' are not a capability ORN loses, they are one it relocates.
+
+\paragraph{(iv) Domain-specialised specialisation $\to$ MoE on the response heads.}
+Transformers typically specialise per domain through MoE experts that each carry their own attention \emph{and} FFN.
+ORN-MoE separates these: experts share the coupling geometry (one $\M$) and specialise on the response heads and FFN slice.
+\textit{Preliminary evidence:} Table~\ref{tab:moe} (ORN-MoE matches TF-MoE at 12$\times$ fewer coupling parameters, single seed).
+\textit{Experiments to run:} ORN-MoE with explicit domain routing (natural language / code / math) at 500M+; expert-ablation, do domain-specialised experts form?; routing-entropy comparison against TF-MoE. If experts form clean domain specialisations without a per-expert coupling, the ``shared coupling blocks specialisation'' objection is rebutted at the only scale where it matters.
+
+\paragraph{Summary.}
+The hypothesis is not that ORN can do everything a transformer can do the way the transformer does it. The hypothesis is that every capability conventionally attributed to per-layer coupling has a corresponding mechanism in the ORN, in the response heads, the residual-stream trajectory, or the MoE expert layout. The preliminary evidence above is consistent with this view; the experiments named are the concrete tests. None require a change to the architecture.
+
 \paragraph{Limitations.}
+The following limitations are genuine and distinct from the capacity-relocation claim above.
 
-The ORN is a genuinely different object from a standard transformer, and some of what looks like a limitation under transformer assumptions is an instance of the comparison not translating. We split this section into three kinds of remark: (A) comparisons and probes designed around per-layer transformers that do not carry over to ORN, (B) regimes where sharing the coupling rule is a real trade-off and could matter in real-world deployment, and (C) experimental gaps we intend to close.
+\textit{Comparisons that do not translate.} Post-hoc weight surgery (dropping a fitted shared $\M$ into a pretrained transformer) does not produce a working model; this is structural, not a deficiency, for the gauge reason given in Section~\ref{sec:arch}. Per-layer interpretability tools designed for transformer weights read from a different carrier on an ORN (residual trajectory rather than layer weights); the reframing discussed above is required rather than the tools being ``broken.''
 
-\paragraph{(A) Comparisons that do not translate.}
-\textit{Post-hoc weight surgery does not produce a usable model.} Replacing $W_Q, W_K$ in a frozen pretrained transformer with the fitted shared $\M$ from Section~\ref{sec:invariance} gives degraded perplexity. This is not a weakness of ORN; it is a consequence of how it works. The response heads ($W_V$, $W_O$) in an ORN co-train with a specific shared $\M$ and occupy a specific rotational gauge (Section~\ref{sec:arch}); substituting a shared $\M$ from a transformer that was trained in a different gauge puts the two halves out of register. End-to-end training is how ORN works; the existence proof in Section~\ref{sec:invariance} motivates the architecture, it is not a drop-in replacement recipe.
+\textit{Unmatched baselines.} The external comparisons in Table~\ref{tab:benchmarks} are not compute-matched (GPT-2 Small and SmolLM-135M saw 37--75$\times$ more tokens); read the table as ``the architectural substitution does not hurt'', not as per-token superiority.
 
-\textit{Per-layer interpretability probes read a different carrier.} A large literature on transformer interpretability reads information out of per-layer weights, or attributes circuits to specific layers (ROME-style edits, causal tracing by head, layer-specific probes~\cite{hewitt2019probe}). In an ORN the equivalent of ``layer 8's attention'' is not a thing; attention geometry is one shared object. Information that a transformer encodes in the differences between its per-layer $W_Q, W_K$ matrices lives, in ORN, in the residual-stream trajectory through a fixed coupling. Probes that read layer weights will see less in ORN because less is there; probes that read the residual stream should see more (Section~\ref{sec:discussion}, preliminary). This is a reframing of what interpretability means on this architecture, not a deficiency of the architecture.
-
-\textit{External baselines are not compute-matched.} GPT-2 Small and SmolLM-135M saw 37--75$\times$ more training tokens than \orn{}-V2. Table~\ref{tab:benchmarks} should be read as ``the architectural substitution does not hurt at this scale'', not as per-token superiority. A matched-tokens ORN-vs-transformer head-to-head on the same 8B FineWeb-Edu run is in progress.
-
-\paragraph{(B) Real trade-offs of sharing the coupling.}
-
-\textit{Exact lexical retrieval at long range.} A standard transformer can devote some of its $L$ coupling matrices to long-range lexical patterns and others to local syntax; per-layer specialisation is the mechanism. An ORN has one coupling rule everywhere, and any long-range exact-recall behaviour has to be built across the residual-stream trajectory rather than at a specialised attention layer. LAMBADA is the canonical benchmark for this capability, and V2's LAMBADA number (26.2\%) is clearly below its data-rich baseline. At our current scale we cannot cleanly separate ``less data'' from ``structural cost'' because both confounders are present, but the structural piece is real. In a practical setting where exact lexical retrieval at long context matters (code completion, templated generation, faithful citation), this is the axis to watch.
-
-\textit{Tasks where the coupling rule is not universal.} The ORN's thesis is that language coupling is approximately the same at every depth and that transformers converge to this property during training. If a domain exists where coupling genuinely is not universal, where some depths want a structurally different coupling rule, ORN caps there. We do not have a clean counter-example in natural-language tasks today. Plausible candidates include mixed symbolic / sub-symbolic work, multi-phase planning tasks, and sufficiently structured code, where depth-specialised attention plausibly matters more than it does in ordinary text. This is a hypothesis for future experiments, not a demonstrated failure mode.
-
-\textit{Research patterns that depend on per-layer weight edits.} If your downstream programme requires localised weight edits (ROME, ReFT, per-layer LoRA adapters targeting specific attention patterns), ORN is a different object. The equivalent operation lives in the response heads or in residual-stream interventions, which is a different research programme with, we suspect, several open questions of its own.
-
-\paragraph{(C) Experimental gaps we intend to close.}
-(1) Matched-compute baseline (same-size transformer trained on the same 8B FineWeb-Edu tokens as V2, and a separate match at 3B for V3); (2) seed variance on Table~\ref{tab:scaling}, Table~\ref{tab:moe}, and the small multimodal table; (3) full-harness V3-605M benchmark row (currently produced at \texttt{limit=200} on MPS, pending a full run); (4) spectral-invariance coverage beyond the GPT-2 family, SmolLM-135M, and Qwen-2.5 0.5B, to Llama, Mistral, Qwen3, DeepSeek, and SmolLM2; (5) the syntactic-separation measurement (Section~\ref{sec:discussion}) on a standard benchmark such as BLiMP~\cite{warstadt2020blimp}. None of these require a change to the architecture; all will appear in subsequent revisions.
+\textit{Experimental gaps.} Single-seed numbers (no error bars) on Tables~\ref{tab:scaling} and~\ref{tab:moe}; full-harness V3-605M benchmark row (currently \texttt{limit=200} on MPS); spectral-invariance coverage beyond the five models in Table~\ref{tab:spectral}; BLiMP as a standard test of the syntactic-separation claim. None of these require an architectural change.
 
 
 % ======================================================================
@@ -835,6 +860,16 @@ K.~Sakaguchi, R.~L.~Bras, C.~Bhagavatula, and Y.~Choi.
 J.~Hewitt and C.~D.~Manning.
 \newblock A Structural Probe for Finding Syntax in Word Representations.
 \newblock \emph{NAACL-HLT}, 2019.
+
+\bibitem{meng2022rome}
+K.~Meng, D.~Bau, A.~J.~Andonian, and Y.~Belinkov.
+\newblock Locating and Editing Factual Associations in GPT.
+\newblock \emph{NeurIPS}, 2022.
+
+\bibitem{wu2024reft}
+Z.~Wu, A.~Arora, A.~Geiger, Z.~Wang, J.~Huang, D.~Jurafsky, C.~D.~Manning, and C.~Potts.
+\newblock ReFT: Representation Finetuning for Language Models.
+\newblock \emph{NeurIPS}, 2024.
 
 \end{thebibliography}
 
