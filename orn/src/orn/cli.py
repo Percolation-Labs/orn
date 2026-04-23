@@ -265,6 +265,19 @@ def cmd_bench(args):
     print(f"\nsaved: {fname}  ({dt/60:.1f} min)")
 
 
+def cmd_bench_summary(args):
+    from orn.eval.summarise import load_runs, format_text, format_markdown, format_latex
+    runs = load_runs(args.dir)
+    if not runs:
+        print(f"no benchmark JSON files found in {args.dir}"); return
+    if args.format in ("text", "all"):
+        print("\n=== plain text ===\n" + format_text(runs))
+    if args.format in ("md", "all"):
+        print("\n=== markdown ===\n" + format_markdown(runs))
+    if args.format in ("latex", "all"):
+        print("\n=== latex ===\n" + format_latex(runs))
+
+
 def cmd_push(args):
     from orn.utils.hf import push_checkpoint
     url = push_checkpoint(args.checkpoint, args.repo, private=not args.public)
@@ -408,6 +421,13 @@ def main():
     sp.add_argument("--tokenizer", default="tiktoken-gpt2")
     sp.add_argument("--out", default=None, help="output JSON path")
     sp.set_defaults(fn=cmd_bench)
+
+    sp = sub.add_parser("bench-summary",
+                        help="Collate bench/results/*.json into paper-ready tables")
+    sp.add_argument("--dir", default="bench/results")
+    sp.add_argument("--format", choices=["text", "md", "latex", "all"],
+                    default="all")
+    sp.set_defaults(fn=cmd_bench_summary)
 
     # ── push / pull ──
     sp = sub.add_parser("push", help="Upload checkpoint to HuggingFace")
