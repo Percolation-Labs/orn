@@ -84,7 +84,7 @@ ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM havin
 
 ### ORN V3 (605M)
 
-Same harness, same task suite. Seven of the eight tasks below are at `limit=1000` per task (±1.5pt stderr); LAMBADA is still at `limit=200` from the earlier sweep and is marked with †. Final cell will be tightened when LAMBADA finishes on the local MPS bench.
+Same harness, same task suite. All eight tasks below are at `limit=1000` per task (±1.5pt stderr).
 
 | Benchmark     | ORN V3<br>605M · 3B tok | ORN V2<br>108M · 8B tok | SmolLM-135M<br>135M · 600B tok | GPT-2 Small<br>124M · 300B tok |
 |:--------------|:-----------------------:|:-----------------------:|:------------------------------:|:------------------------------:|
@@ -95,10 +95,10 @@ Same harness, same task suite. Seven of the eight tasks below are at `limit=1000
 | WinoGrande    |          50.8           |          50.5           |            **52.1**            |              51.8              |
 | BoolQ         |        **62.1**         |          57.7           |              55.3              |              48.3              |
 | OpenBookQA    |        **32.4**         |          31.0           |              27.6              |              28.6              |
-| LAMBADA †     |          31.0           |          26.2           |              24.0              |            **32.6**            |
-| **Mean**      |        **46.0**         |          41.8           |              40.1              |              40.2              |
+| LAMBADA       |          29.1           |          26.2           |              24.0              |            **32.6**            |
+| **Mean**      |        **45.8**         |          41.8           |              40.1              |              40.2              |
 
-V2 to V3 buys you most on structural reasoning (HellaSwag 33 to 45, ARC-Easy 46 to 52, BoolQ 58 to 62). OpenBookQA moves only modestly (31 to 32) — the limit=200 measurement of 37 was an over-estimate. LAMBADA moves from 26 to 31, which is the main open question the paper's structural story had me worried about. The two tasks that don't move (WinoGrande and ARC-Challenge) sit at essentially the V2 level for both ORN-V3 and ORN-V2 (50.8 vs 50.5, 26.8 vs 27.4); both also sit close to chance, which suggests this is a data-quantity floor rather than an architectural ceiling. We also ran a 20-subtask BLiMP subset at `n=100` per subtask: V3 matches GPT-2 Small's mean on that subset and is at or near ceiling on local-agreement tasks, with the clearest gaps on island constraints (`sentential_subject_island` 27, `complex_NP_island` 49) and long-distance NPI licensing. It is a specific, legible failure mode rather than a general long-range weakness.
+V2 to V3 buys you most on structural reasoning (HellaSwag 33 to 45, ARC-Easy 46 to 52, BoolQ 58 to 62). OpenBookQA moves only modestly (31 to 32) and LAMBADA modestly too (26 to 29). The two tasks that don't move (WinoGrande and ARC-Challenge) sit at essentially the V2 level for both ORN-V3 and ORN-V2 (50.8 vs 50.5, 26.8 vs 27.4); both also sit close to chance, which suggests this is a data-quantity floor rather than an architectural ceiling. We also ran a 20-subtask BLiMP subset at `n=100` per subtask: V3 matches GPT-2 Small's mean on that subset and is at or near ceiling on local-agreement tasks, with the clearest gaps on island constraints (`sentential_subject_island` 27, `complex_NP_island` 49) and long-distance NPI licensing. It is a specific, legible failure mode rather than a general long-range weakness.
 
 ## Pushing parameter sharing further with a wide shared FFN
 
