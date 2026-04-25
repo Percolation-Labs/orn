@@ -505,6 +505,31 @@ Final val loss \textbf{2.82} at a training horizon of 3B tokens. Intermediate sn
 
 The 3B-token budget was a compute ceiling rather than a convergence point: the WSD decay was still reducing val loss when the schedule ended, by analogy with V2's +0.23 nat decay improvement from the same schedule shape. Further training beyond 3B tokens is the natural path to closer parity with similarly-sized models trained longer.
 
+\begin{table*}[t]
+\centering\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Benchmark} & \textbf{\orn{}-V3} & \textbf{\orn{}-V2} & \textbf{SmolLM-135M} & \textbf{GPT-2 Small} \\
+& \textbf{(605M, 3B tok)} & \textbf{(108M, 8B tok)} & \textbf{(135M, 600B tok)} & \textbf{(124M, 300B tok)} \\
+\midrule
+HellaSwag     & \textbf{45.5\%} & 33.4\% & 30.4\% & 31.6\% \\
+PIQA          & \textbf{67.1\%} & 62.4\% & 63.0\% & 62.5\% \\
+ARC-Easy      & \textbf{52.2\%} & 46.2\% & 43.7\% & 43.6\% \\
+ARC-Challenge & 26.8\%          & \textbf{27.4\%} & 24.7\% & 22.9\% \\
+WinoGrande    & 50.8\%          & 50.5\%          & \textbf{52.1\%} & 51.8\% \\
+BoolQ         & \textbf{62.1\%} & 57.7\%          & 55.3\% & 48.3\% \\
+OpenBookQA$^\dagger$ & \textbf{37.0\%} & 31.0\%   & 27.6\% & 28.6\% \\
+LAMBADA$^\dagger$    & 31.0\%          & 26.2\%   & 24.0\% & \textbf{32.6\%} \\
+\midrule
+\textbf{Mean}        & \textbf{46.6\%} & 41.8\% & 40.1\% & 40.2\% \\
+Coupling params      & 0.66M           & 0.66M  & 31.5M  & 31.5M \\
+Training tokens      & 3B              & 8B     & 600B   & 300B  \\
+\bottomrule
+\end{tabular}
+\caption{V3-605M zero-shot benchmarks. \orn{}-V3 averages within a point of the smaller-class data-rich baselines (SmolLM-135M, GPT-2 Small) on a 100$\times$ smaller training-token budget; structural-reasoning tasks (HellaSwag, ARC-Easy, OpenBookQA) carry the gain over V2, calibration tasks (WinoGrande, ARC-Challenge) sit at the V2 level. The first six tasks are reported at \texttt{limit=1000} per task; tasks marked $^\dagger$ are at \texttt{limit=200} pending completion of the larger sweep. Metric: lm-evaluation-harness zero-shot, acc\_norm where conventional, acc otherwise.}
+\label{tab:v3_benchmarks}
+\end{table*}
+
 \subsection{Frozen-M Transfer}
 
 A strong test of the memoisation hypothesis: can a coupling geometry learned on one dataset transfer to another?
@@ -745,7 +770,7 @@ The following limitations are genuine and distinct from the capacity-relocation 
 \textit{Experimental gaps.} Single-seed numbers (no error bars) on Table~\ref{tab:scaling} and on the extension pilots mentioned above; full-harness V3-605M benchmark row; spectral-invariance coverage beyond the five models in Table~\ref{tab:spectral}; BLiMP as a standard test of the syntactic-separation claim.
 
 \paragraph{V3-605M summary.}
-A 605M ORN-V3 trained on 3B FineWeb-Edu tokens for approximately \$400 averages 47\% across the 8-task zero-shot suite, within a point of GPT-2 Small (300B tokens) and SmolLM-135M (600B tokens) on the mean, with structural-reasoning tasks driving most of the V2$\to$V3 lift (HellaSwag 33$\to$47, ARC-Easy 46$\to$52, OpenBookQA 31$\to$37). BLiMP across 20 subtasks shows a diagnostically specific failure pattern: island constraints and long-distance NPI licensing (sentential\_subject\_island 27, complex\_NP\_island 49, matrix\_question\_npi\_licensor\_present 23) are where the model cracks; other subtasks land in the 70--100\% range. Scaling V2 $\to$ V3 did not close the island-constraint failures; whether this is a structural ceiling of shared coupling or a 3B-token shortfall cannot be distinguished from the current data.
+A 605M ORN-V3 trained on 3B FineWeb-Edu tokens for approximately \$400 averages \textbf{46.6\%} across the 8-task zero-shot suite (Table~\ref{tab:v3_benchmarks}), within a point of GPT-2 Small (300B tokens) and SmolLM-135M (600B tokens) on the mean, with structural-reasoning tasks driving most of the V2$\to$V3 lift (HellaSwag 33$\to$45, ARC-Easy 46$\to$52, OpenBookQA 31$\to$37). BLiMP across 20 subtasks shows a diagnostically specific failure pattern: island constraints and long-distance NPI licensing (sentential\_subject\_island 27, complex\_NP\_island 49, matrix\_question\_npi\_licensor\_present 23) are where the model cracks; other subtasks land in the 70--100\% range. Scaling V2 $\to$ V3 did not close the island-constraint failures; whether this is a structural ceiling of shared coupling or a 3B-token shortfall cannot be distinguished from the current data.
 
 \paragraph{Planned scale-up.}
 Two follow-on experiments are scoped to address the obvious open questions.
