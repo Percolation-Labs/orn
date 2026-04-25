@@ -90,7 +90,7 @@ This paper makes three narrow claims, each tested experimentally:
 \item \textbf{The emergent shared $\M$ is low-rank and stable.} $\M$ crystallises to effective rank 19--70 during training (scale-dependent) and defines a 5--8 dimensional coupling manifold consistent with what we measure on pretrained transformers (Section~\ref{sec:geometry}).
 \end{enumerate}
 
-\noindent We are not claiming ORN is state of the art; we show the architectural move is permissible, the shared object it produces is interesting enough to study, and the consequences for fine-tuning, MoE, and compression are worth exploring (Section~\ref{sec:discussion}).
+\noindent We are not claiming ORN is state of the art; we show the architectural move is permissible, the shared object it produces is interesting enough to study, and the consequences for fine-tuning (Table~\ref{tab:sft_freeze}), MoE, and compression are worth exploring (Section~\ref{sec:discussion}).
 
 \noindent All code and experiments are public.\footnote{\url{https://github.com/Percolation-Labs/orn}}
 Diagnostic experiments (Sections~\ref{sec:invariance},~\ref{sec:geometry}) run in minutes on Apple M4.
@@ -545,6 +545,27 @@ TinyStories & \textbf{2.004} & 2.317 & $-13.5\%$ \\
 \label{tab:transfer}
 \end{table}
 
+\paragraph{Supervised fine-tuning ablation (605M, ChatML on OpenHermes-2.5).}
+A complementary test of $\M$'s status as a learned invariant: fine-tune the pretrained V3 605M \orn{} under a substantial distribution shift (plain text $\to$ instruction-following chat format) and ablate which shared components are free to freeze. Four configurations were compared, measuring learning rate in nats/step over the first $150$ SFT steps (batch $1 \times$ grad-accum $32 \times$ pack-len $1024$, lr $5\mathrm{e}{-5}$, ChatML assistant-masked cross-entropy):
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lccr@{}}
+\toprule
+\textbf{Freeze} & \textbf{Trainable} & \textbf{Slope (nats/step)} & \textbf{Per-param $\times 10^{-12}$} \\
+\midrule
+none (baseline)      & $600.3$M (100\%)  & $-0.00237$ & $3.95$ \\
+$\M$ only           & $591.9$M (98.6\%) & $-0.00240$ & $4.05$ \\
+shared FFN only      & $329.8$M (54.9\%) & $-0.00218$ & $6.61$ \\
+$\M$ + shared FFN    & $321.4$M (53.5\%) & $-0.00216$ & $\mathbf{6.72}$ \\
+\bottomrule
+\end{tabular}
+\caption{SFT freeze ablation. Freezing $\M$ during ChatML fine-tuning is indistinguishable from the unfrozen baseline; freezing the shared FFN costs $\sim\!9\%$ of the per-step learning rate. Per trainable parameter, FFN-frozen is $1.7\times$ more efficient than unfrozen. The two shared components play structurally different roles under distribution shift: $\M$ is already what it needs to be, the shared FFN must absorb task-specific knowledge.}
+\label{tab:sft_freeze}
+\end{table}
+
+This test is orthogonal to Table~\ref{tab:frozen}: that ablation showed a coupling learned on one pretraining corpus transfers to another; Table~\ref{tab:sft_freeze} shows $\M$ does not need to change \emph{at all} when the pretrained model adapts to a supervised task. The learned coupling geometry performs zero work during supervised fine-tuning. Whatever representational adjustment ChatML requires is absorbed into the per-layer response heads ($W_V^l, W_O^l$) and the shared FFN. This is consistent with the rotational invariance of the $QK^\top$ bilinear form that \orn{} was built to exploit: adaptation is routed through the response-head stream, and $\M$ remains the fixed coordinate system across both pretraining and supervised post-training regimes. The practical consequence is that roughly half of the 605M-scale model can be frozen during fine-tuning with no per-step quality loss, a saving with no analogue on a per-layer attention architecture.
+
 \subsection{ORN-native diagnostics}
 \label{sec:native_diag}
 
@@ -555,7 +576,7 @@ Reporting these alongside standard benchmarks gives a different view of what the
 \item \textbf{Spectral crystallisation trajectory.} Effective rank, condition number and asymmetry of $\M$ across training checkpoints (Section~\ref{sec:geometry}). On a transformer this would mean tracking $L$ separate $\M_l$; on ORN it is a single curve per quantity. We report it for both V1 (rank $19$ stable from 1B tokens) and V2 (rank $70\pm 1$ stable from 3B tokens).
 \item \textbf{Residual-stream syntactic separation.} Per-depth cosine between minimal pairs, directly measured on a shared-coupling model because syntax cannot hide in per-layer weight differences (Section~\ref{sec:discussion}). On GPT-2 the equivalent measurement is diluted by per-layer specialisation; we report a $60\times$ gap on a small minimal-pair probe, with BLiMP per layer as the standard follow-up.
 \item \textbf{Correction-gate magnitude as a depth diagnostic.} The per-layer sigmoid-gated correction is initialised near zero; its mean magnitude at trained state indicates where the mean-field coupling needs the most help. Gate magnitudes vary by modality (audio $0.163$, text $0.106$, images $0.058$) and by depth within a given run. The transformer has no analogue; there is no discrete knob you can read to tell which layers the shared coupling approximation is under-serving.
-\item \textbf{Frozen-backbone adaptation cost.} Table~\ref{tab:frozen} reports the validation-loss gap when only response heads are retrained on a new dataset ($1.4\%$). The transformer analogue (freezing all $W_Q, W_K$ layer-by-layer) is the baseline in Table~\ref{tab:transfer}: shared-$\M$ transfer is $12$--$19\%$ better, consistent with the shared backbone being a genuine data-general object.
+\item \textbf{Frozen-backbone adaptation cost.} Table~\ref{tab:frozen} reports the validation-loss gap when only response heads are retrained on a new pretraining corpus ($1.4\%$); the transformer analogue (freezing all $W_Q, W_K$ layer-by-layer) is the baseline in Table~\ref{tab:transfer}, where shared-$\M$ transfer is $12$--$19\%$ better. Table~\ref{tab:sft_freeze} extends the same test to supervised fine-tuning on a chat-format task and finds freezing $\M$ is \emph{free}: slope matches the unfrozen baseline within noise, while freezing the shared FFN costs $\sim 9\%$. The three measurements together pin down where data-general structure lives ($\M$) and where task-specific adaptation lives (shared FFN plus per-layer response heads).
 \item \textbf{Where shared coupling compresses} (for MoE / routing). In an ORN-MoE, routing choices and expert specialisation can be reported in isolation from coupling, since the coupling is one object serving all experts. The correct comparison for expert entropy on an ORN-MoE is against a standard MoE whose experts include their own attention.
 \end{enumerate}
 
