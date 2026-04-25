@@ -68,17 +68,17 @@ Two zero-shot benchmark tables, one for each published checkpoint. The task suit
 
 The small-model table. ORN V2 trained on 8B tokens of FineWeb-Edu versus GPT-2 Small (124M, 300B tokens) and SmolLM-135M (135M, 600B tokens). Eight standard zero-shot benchmarks, full lm-evaluation-harness (not a truncated subset):
 
-| Task | ORN V2 (108M, 8B tok) | SmolLM-135M (135M, 600B tok) | GPT-2 Small (124M, 300B tok) | Random |
-|:---|---:|---:|---:|---:|
-| HellaSwag     | **33.4** | 30.4 | 31.6 | 25.0 |
-| PIQA          | 62.4     | **63.0** | 62.5 | 50.0 |
-| ARC-Easy      | **46.2** | 43.7 | 43.6 | 25.0 |
-| ARC-Challenge | **27.4** | 24.7 | 22.9 | 25.0 |
-| BoolQ         | **57.7** | 55.3 | 48.3 | 50.0 |
-| WinoGrande    | 50.5     | **52.1** | 51.8 | 50.0 |
-| LAMBADA       | 26.2     | 24.0 | **32.6** | 0.0 |
-| OpenBookQA    | **31.0** | 27.6 | 28.6 | 25.0 |
-| **Average**   | **41.8** | 40.1 | 40.2 | n/a |
+| Benchmark     | ORN V2<br>108M · 8B tok | SmolLM-135M<br>135M · 600B tok | GPT-2 Small<br>124M · 300B tok | Random |
+|:--------------|:-----------------------:|:------------------------------:|:------------------------------:|:------:|
+| HellaSwag     |        **33.4**         |              30.4              |              31.6              |  25.0  |
+| PIQA          |          62.4           |            **63.0**            |              62.5              |  50.0  |
+| ARC-Easy      |        **46.2**         |              43.7              |              43.6              |  25.0  |
+| ARC-Challenge |        **27.4**         |              24.7              |              22.9              |  25.0  |
+| WinoGrande    |          50.5           |            **52.1**            |              51.8              |  50.0  |
+| BoolQ         |        **57.7**         |              55.3              |              48.3              |  50.0  |
+| OpenBookQA    |        **31.0**         |              27.6              |              28.6              |  25.0  |
+| LAMBADA       |          26.2           |              24.0              |            **32.6**            |   0.0  |
+| **Average**   |        **41.8**         |              40.1              |              40.2              |   —    |
 
 ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM having 75× more training data), beats GPT-2 Small on five of the eight (despite 37× less training data), and has the higher average of the three. It also uses 48 times fewer coupling parameters than either baseline. The two tasks it loses on vs SmolLM (PIQA by 0.6, WinoGrande by 1.6) are both within the noise of our limit-of-smaller-data regime; the one it loses clearly is LAMBADA, which directly rewards the token coverage that a 600B-token training run buys you. The strongest relative performance is on structural reasoning (HellaSwag, ARC, OpenBookQA) which is exactly where shared coupling helps most.
 
@@ -86,17 +86,17 @@ ORN V2 at 108M beats SmolLM-135M on six of the eight tasks (despite SmolLM havin
 
 Same harness, same task suite. The V3 row below is a 200-example subset per task so the numbers carry about ±3 points of statistical uncertainty; a full-harness run on the same checkpoint is planned.
 
-| Task | ORN V3 (605M, 3B tok) | ORN V2 (108M, 8B tok) | SmolLM-135M (135M, 600B tok) | GPT-2 Small (124M, 300B tok) |
-|:---|---:|---:|---:|---:|
-| HellaSwag     | **47.0** | 33.4 | 30.4 | 31.6 |
-| PIQA          | **66.5** | 62.4 | 63.0 | 62.5 |
-| ARC-Easy      | **51.5** | 46.2 | 43.7 | 43.6 |
-| ARC-Challenge | 27.0 | 27.4 | 24.7 | 22.9 |
-| WinoGrande    | **52.5** | 50.5 | 52.1 | 51.8 |
-| BoolQ         | **63.5** | 57.7 | 55.3 | 48.3 |
-| OpenBookQA    | **37.0** | 31.0 | 27.6 | 28.6 |
-| LAMBADA       | **31.0** | 26.2 | 24.0 | 32.6 |
-| **Mean**      | **47.0** | 41.8 | 40.1 | 40.2 |
+| Benchmark     | ORN V3<br>605M · 3B tok | ORN V2<br>108M · 8B tok | SmolLM-135M<br>135M · 600B tok | GPT-2 Small<br>124M · 300B tok |
+|:--------------|:-----------------------:|:-----------------------:|:------------------------------:|:------------------------------:|
+| HellaSwag     |        **47.0**         |          33.4           |              30.4              |              31.6              |
+| PIQA          |        **66.5**         |          62.4           |              63.0              |              62.5              |
+| ARC-Easy      |        **51.5**         |          46.2           |              43.7              |              43.6              |
+| ARC-Challenge |          27.0           |        **27.4**         |              24.7              |              22.9              |
+| WinoGrande    |        **52.5**         |          50.5           |              52.1              |              51.8              |
+| BoolQ         |        **63.5**         |          57.7           |              55.3              |              48.3              |
+| OpenBookQA    |        **37.0**         |          31.0           |              27.6              |              28.6              |
+| LAMBADA       |          31.0           |          26.2           |              24.0              |            **32.6**            |
+| **Mean**      |        **47.0**         |          41.8           |              40.1              |              40.2              |
 
 V2 to V3 buys you most on structural reasoning (HellaSwag 33 to 47, ARC-Easy 46 to 52, OpenBookQA 31 to 37, BoolQ 58 to 64). LAMBADA moves too, from 26 to 31, which is the main open question the paper's structural story had me worried about. We also ran a 20-subtask BLiMP subset at `n=100` per subtask: V3 matches GPT-2 Small's mean on that subset and is at or near ceiling on local-agreement tasks, with the clearest gaps on island constraints (`sentential_subject_island` 27, `complex_NP_island` 49) and long-distance NPI licensing. It is a specific, legible failure mode rather than a general long-range weakness.
 
