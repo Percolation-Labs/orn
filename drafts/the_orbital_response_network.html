@@ -28,6 +28,9 @@ article hr { border: none; border-top: 1px solid var(--rule); margin: 2.4rem 0; 
 <body>
 <article>
 <h1>The Orbital Response Network</h1>
+<blockquote>
+<p>The full technical paper is available as a PDF: <a href="https://percolation-labs.github.io/orn/born/paper/the_orbital_response_network.pdf">The Orbital Response Network — A Surgical Decomposition of Transformer Attention into Shared Coupling and Per-Layer Response</a>. Source TeX and the experimental harness live at <a href="https://github.com/Percolation-Labs/orn">github.com/Percolation-Labs/orn</a>.</p>
+</blockquote>
 <p>There was a question I wanted to answer before I did anything else, and it has been quietly sitting behind most of the last two years of work on transformer efficiency. How much of what a transformer does really has to happen inside the attention block, and how much of it could live in the residual stream instead? The attention block is the expensive part of each layer, it has a lot of parameters, and if some of that work is genuinely redundant across layers then you should be able to lift parts of it out, put them once in a shared place, and let the residual stream carry whatever state actually changes with depth.</p>
 <p>People have tried versions of this for years. ALBERT shares every parameter across every layer, recursive transformers share whole blocks and then patch the gaps with small LoRA corrections. Both approaches save a lot of parameters, both lose a little quality, and neither has a principled answer to the obvious follow-up question: which part of a transformer layer is the right thing to share in the first place? The sharing is a blunt instrument, closer to "share everything and hope quality survives" than to a decomposition grounded in what the model is actually doing.</p>
 <p>The more interesting question is what would happen if the data itself could tell you which part is invariant across layers, and you only shared that piece. This article is about what you find when you actually ask that question on a real trained transformer. The answer turns out to be surprisingly clean, there is a real parameter saving as a side effect, and the more important consequence is that the thing you end up sharing is a small, stable object worth studying in its own right.</p>
@@ -258,7 +261,7 @@ orn predict --checkpoint orn-v3-605m --prompt &quot;The key insight is&quot;
 orn diagnose --checkpoint orn-v3-605m
 </code></pre>
 <p>Every key result lives as a separate Python module that returns its headline numbers as a dict and, for most, emits the published figure as a PNG. A registry maps short codes (SPE-01, COU-02, COM-01) to modules. Pytest exercises every module as a smoke test. If a refactor breaks a claim, the test for that claim fails and the figure stops matching what the code produces.</p>
-<p>The technical report, the published checkpoints, and the experimental harness are at <a href="https://github.com/Percolation-Labs/orn">github.com/Percolation-Labs/orn</a>. Feedback welcome.</p>
+<p>The technical paper as a PDF: <a href="https://percolation-labs.github.io/orn/born/paper/the_orbital_response_network.pdf">the_orbital_response_network.pdf</a>. The published checkpoints and the experimental harness are at <a href="https://github.com/Percolation-Labs/orn">github.com/Percolation-Labs/orn</a>. Feedback welcome.</p>
 <h2>References</h2>
 <p><strong>Cited prior work on parameter sharing in transformers.</strong></p>
 <ol>
