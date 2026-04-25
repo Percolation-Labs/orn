@@ -1,5 +1,7 @@
 # The Orbital Response Network
 
+> The full technical paper is available as a PDF: [The Orbital Response Network — A Surgical Decomposition of Transformer Attention into Shared Coupling and Per-Layer Response](https://percolation-labs.github.io/orn/born/paper/the_orbital_response_network.pdf). Source TeX and the experimental harness live at [github.com/Percolation-Labs/orn](https://github.com/Percolation-Labs/orn).
+
 There was a question I wanted to answer before I did anything else, and it has been quietly sitting behind most of the last two years of work on transformer efficiency. How much of what a transformer does really has to happen inside the attention block, and how much of it could live in the residual stream instead? The attention block is the expensive part of each layer, it has a lot of parameters, and if some of that work is genuinely redundant across layers then you should be able to lift parts of it out, put them once in a shared place, and let the residual stream carry whatever state actually changes with depth.
 
 People have tried versions of this for years. ALBERT shares every parameter across every layer, recursive transformers share whole blocks and then patch the gaps with small LoRA corrections. Both approaches save a lot of parameters, both lose a little quality, and neither has a principled answer to the obvious follow-up question: which part of a transformer layer is the right thing to share in the first place? The sharing is a blunt instrument, closer to "share everything and hope quality survives" than to a decomposition grounded in what the model is actually doing.
@@ -152,7 +154,7 @@ orn diagnose --checkpoint orn-v3-605m
 
 Every key result lives as a separate Python module that returns its headline numbers as a dict and, for most, emits the published figure as a PNG. A registry maps short codes (SPE-01, COU-02, COM-01) to modules. Pytest exercises every module as a smoke test. If a refactor breaks a claim, the test for that claim fails and the figure stops matching what the code produces.
 
-The technical report, the published checkpoints, and the experimental harness are at [github.com/Percolation-Labs/orn](https://github.com/Percolation-Labs/orn). Feedback welcome.
+The technical paper as a PDF: [the_orbital_response_network.pdf](https://percolation-labs.github.io/orn/born/paper/the_orbital_response_network.pdf). The published checkpoints and the experimental harness are at [github.com/Percolation-Labs/orn](https://github.com/Percolation-Labs/orn). Feedback welcome.
 
 ## References
 
