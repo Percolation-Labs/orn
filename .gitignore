@@ -34,3 +34,7 @@ drafts/.seed/
 # Publish helpers (local only)
 scripts/
 /bench/
+
+# arXiv submission helpers (local only)
+born/paper/SUBMISSION.md
+*.tar.gz
