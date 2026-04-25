@@ -414,7 +414,7 @@ The architectural decision that unlocks the \orn{}: $AB^\top$ (asymmetric) vs $L
 \textbf{Model} & \textbf{BPC} & \textbf{Coupling} & \textbf{vs TF} \\
 \midrule
 \orn{}-Asym ($AB^\top$) & \textbf{2.341} & 32K & $\mathbf{-2.6\%}$ \\
-Transformer & 2.402 & 196K & ,  \\
+Transformer & 2.402 & 196K & 0\%  \\
 \orn{}-Sym ($LL^\top$) & 2.489 & 16K & $+3.6\%$ \\
 \bottomrule
 \end{tabular}
@@ -628,7 +628,7 @@ We extracted 58 attention features (entropy, top-$k$ concentration, positional b
 \midrule
 90\% variance & 6D & \textbf{5D} \\
 95\% variance & 8D & \textbf{7D} \\
-99\% variance & 12D & ,  \\
+99\% variance & 12D & --  \\
 \midrule
 $\M$ spectral rank & 562 & 29 \\
 \bottomrule
@@ -905,9 +905,9 @@ Most diagnostics in this paper require only a laptop. The scaled training runs r
 \toprule
 \textbf{Experiment} & \textbf{Scale} & \textbf{Device} & \textbf{Time} \\
 \midrule
-Spectral invariance (5 models) & , & laptop CPU & 60s \\
-Existence proof (GPT-2) & , & laptop CPU & 8s \\
-Coupling manifold PCA & , & laptop CPU & 8s \\
+Spectral invariance (5 models) & -- & laptop CPU & 60s \\
+Existence proof (GPT-2) & -- & laptop CPU & 8s \\
+Coupling manifold PCA & -- & laptop CPU & 8s \\
 Colour matching & 70K & laptop & 2 min \\
 Shakespeare B1 & 1M & laptop & 5 min \\
 Scaling curves (5 scales) & 1--50M & laptop & 45 min \\
