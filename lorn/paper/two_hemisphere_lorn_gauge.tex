@@ -716,6 +716,89 @@ Each is a research programme. None is attempted on a Phase 1-failing R.
 
 
 % ======================================================================
+% ======================================================================
+\section{The Beauty of Rotations: Why R in R-ORN is Right and Rotational}
+\label{sec:rotations}
+
+We rename the structural hemisphere from L\textsubscript{eft}--R\textsubscript{ight} to L--R where \emph{R stands for right and rotational}. The renaming is not cosmetic. The deepest unification we have found in the programme, independent of LORN-as-pair-training, is that attention's bilinear coupling is rotation-invariant, and that \emph{exposing} this invariance, rather than paying the cost of re-learning it per layer, is where compression and cross-scale regularity come from. This section gathers the observations that convinced us the rotational view is foundational, not decorative.
+
+\subsection{The bilinear form is rotation-covariant}
+
+Attention's coupling is a bilinear form:
+\[
+\text{attn}(x_t, x_s) \;=\; x_t^\top\, \M\, x_s, \qquad \M = W_Q W_K^\top.
+\]
+If we rotate the whole residual stream by an orthogonal $R \in O(d)$, and correspondingly rotate the coupling, the output is unchanged:
+\[
+(R x_t)^\top\, (R \M R^\top)\, (R x_s) \;=\; x_t^\top\, \M\, x_s.
+\]
+A per-layer transformer learns $L$ separate $\M_l$ that happen to share a spectrum (Spearman $0.94$--$0.99$ across pretrained models; see the ORN paper, \S\,Spectral Invariance). ``Same spectrum, different directions'' is exactly what orthogonal conjugation produces. The transformer is paying $L \cdot d^2$ parameters to encode $L$ different rotated copies of a single invariant $\M$.
+
+ORN's move is to set the rotation to identity everywhere and absorb per-layer variation into $W_V, W_O$. But this is one choice; the general statement is that \emph{the per-layer degrees of freedom attention needs are rotational}, and anything that makes them explicit is a better factorisation than re-learning them as entangled $W_Q, W_K$ per layer.
+
+\subsection{RoPE: rotation along position}
+
+RoFormer~\cite{su2021roformer} made this explicit along the \emph{position} axis: multiply $Q$ and $K$ by position-indexed rotations $R(t), R(s)$ so that $Q_t^\top R(t)^\top R(s) K_s = Q_t^\top R(s-t) K_s$ becomes a function of $(s-t)$, the relative position. RoPE is how the transformer gave up its freedom to memorise absolute-position attention and gained relative-position generalisation instead.
+
+Barbero et al.~\cite{barbero2025round} report a labour split inside RoPE itself: Gemma uses the \emph{highest} RoPE frequencies for positional heads and the \emph{lowest} for semantic heads. Removing rotation on low-frequency dims \emph{improves} long-context semantic attention. This mirrors our FFN/M finding: within a transformer trained with RoPE, the model spontaneously partitions labour between structure (rotation-indexed) and semantics (rotation-agnostic).
+
+\subsection{ORN as implicit rotation factorisation}
+
+Our observation (diary, April 24) extends RoPE's move to the depth axis. If $\M_l \approx R_l^\top \M R_l$ for some per-layer rotation $R_l$, the shared $\M$ is the invariant; $R_l$ is what a transformer has been memorising as per-layer $W_Q, W_K$ differences. ORN-Rot makes $R_l$ explicit as a learned $SO(d_{\text{head}})$ matrix. ORN-Spiral makes $R_l$ parameter-free as a depth-indexed rotation at log-spaced frequencies, analogous to RoPE but along depth instead of position. Both preserve $\M$ as the gauge-invariant object.
+
+The full readout of a depth-$l$ attention from token $s$ to token $t$ under both rotations is
+\[
+\text{readout}(l, t, s) \;=\; x_t^\top A \cdot R_{\text{depth}}(l)^\top R_{\text{pos}}(t-s) R_{\text{depth}}(l) \cdot B^\top x_s,
+\]
+where $\M = A B^\top$ is our asymmetric factorisation. Two rotation axes (depth, position) compose around one invariant. We call this picture \emph{spiral causality}.
+
+\subsection{The commutativity frontier}
+
+Rotations do not commute in general, and this is where the literature's most recent gems sit.
+
+ComRoPE~\cite{yu2025comrope} proves that a function is ``a RoPE'' if and only if its angle matrices pairwise commute: commutativity is \emph{necessary} for the standard closed-form RoPE identity. LieRE~\cite{ostmeier2024liere} breaks commutativity: replaces block-diagonal 2D rotations with dense skew-symmetric generators whose matrix exponential gives a full $SO(d)$ rotation. They report $3.5\times$ training-efficiency gains in vision. Spherical RoPE~\cite{spherical2025} uses non-commuting generators explicitly across axes and also wins.
+
+ORN's asymmetric $\M = A B^\top$ is already non-commutative by construction: symmetric $\M = L L^\top$ loses $3.6\%$ on autoregressive quality in our own ablations. The literature's commutativity boundary explains why. Asymmetry is the minimal move that breaks commutativity in the bilinear $Q^\top \M K$; it buys expressivity that a symmetric coupling cannot deliver.
+
+\subsection{Softmax is implicitly rotation}
+
+Selective RoPE~\cite{selective2025} makes the sharpest reframe we have seen: softmax attention \emph{is} implicit rotation-plus-decay, and linear attention fails precisely because it omits the rotation. Reading our programme through this lens: shared $\M$ is the bilinear form that softmax implicitly rotates. The rotation the softmax does not carry an explicit position index; RoPE supplies one. Per-layer $W_Q, W_K$ supply a less-principled one. The ORN decomposition says: make the invariant shared, and make the rotation explicit (as RoPE for position, as $R_l$ for depth). Everything else is a special case of entangling the two into one set of weights.
+
+Mamba-3~\cite{goel2026mamba3} carries the same thought into state-space models: a discretised complex SSM is mathematically equivalent to a real-valued SSM with data-dependent RoPE on its projections. Rotations are not a transformer device; they are the real-valued shadow of any complex recurrence. If the ORN direction is correct, then the appropriate generalisation of $\M$ is a complex-valued coupling whose real shadow is exactly the kind of rotation RoPE supplies.
+
+\subsection{Rotations as a steering handle}
+
+RoPECraft~\cite{ropecraft2025} steers video diffusion transformers at inference by warping RoPE phases according to optical flow from a reference video ,  no retraining, no weight updates. They treat rotation phases as the lever for controlling generation.
+
+This is structurally close to the M-calculus experiments in the ORN programme: we steer 605M generations by arithmetic on $\M$ and on activation directions. RoPECraft confirms that phase-level intervention is tractable and useful. For R-ORN, the practical consequence is that if R emits a rotation (a gauge choice) rather than a bag of prefix tokens, we have a principled, continuous steering interface at inference, not a black box.
+
+\subsection{Biological parallel: grid cells and phase precession}
+
+Head-direction cells and grid cells encode 2D position as phase on a shared theta oscillator, through \emph{phase precession}: as an animal crosses a place field, the spiking phase relative to theta rhythm advances monotonically~\cite{phase-precession-2012}. This is structurally a 2D RoPE: position encoded as rotation on a shared carrier. The hippocampal--entorhinal circuit has been doing rotational position encoding for a very long time.
+
+We have not claimed a mapping, and we do not now. But the fact that RoPE recapitulates the representational geometry of a brain region specialised for relational/structural encoding is worth naming. It sits alongside the Master--and--Emissary hemispheric analogy as a second biological pointer toward the same computational move.
+
+\subsection{Rotations and compression: where R earns its signal}
+
+The long-context compressor R (the R-Compressor design, documented separately) forces R to emit $K$ tokens that L reads at specific positions. When L is an ORN, those positions are rotationally registered against the same $\M$ as every other position. R's freedom is the \emph{gauge}: which rotated basis R chooses to compress into. Many valid compressions exist; $\M$ is invariant to the choice. Cognitively this is the ``notes'' metaphor: the form of the notes doesn't matter, the semantic content does, because the reader (L) sees the content through a gauge-invariant reader ($\M$).
+
+This is why R-ORN's R is \emph{rotational}: its output is best understood as a choice of rotation (a gauge) that indexes a compressed representation in the invariant bilinear. And it is \emph{right} in McGilchrist's sense~\cite{mcgilchrist2021matter}: holistic, context-sensitive, relational, supplying to the left hemisphere a framing rather than a token-by-token articulation. R emits rotation; L reads under rotation.
+
+\subsection{Open programmatic questions}
+
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item \textbf{E1 (free, any pretrained model):} for each layer $l$, fit orthogonal $R_l$ minimising $\|R_l^\top \M R_l - \M_l\|_F$. Report per-layer residual across SmolLM2, Qwen2.5, GPT-2, Pythia. Pass if residual $<$ 10\% at every layer.
+\item \textbf{E2 (free, post-E1):} block-diagonalise fitted $R_l$. Do they factor into 2D rotations at log-spaced frequencies ,  the RoPE shape? If yes, ORN-Spiral has a zero-parameter justification. If not, $R_l$ is still compressible, just not RoPE-shaped.
+\item \textbf{E7 (free):} SVD $W_V^l W_O^l$ across a trained ORN. Recover the rotation that ORN implicitly absorbed into $V, O$. Use as initialisation for ORN-Rot.
+\item \textbf{Long-context compressor at 605M:} does ORN extrapolate smoother than a matched transformer under context extension, as the rotation-invariance argument predicts?
+\item \textbf{RoPE$\leftrightarrow$grid-cell note:} there is no paper yet writing the explicit isomorphism between RoPE's 2D rotation encoding and theta phase precession. The cross-pollination is a short note worth planting a flag on.
+\item \textbf{RoPE-phase routing for MoE:} nobody currently routes experts by phase band, despite CARoPE-style content-dependent frequencies being close. An ORN-MoE with phase routing would unify our MoE line with the rotational view.
+\end{enumerate}
+
+The broader claim this section makes is that the rotational view of attention is not a consequence of the ORN programme; the ORN programme is one consequence of the rotational view. Any future architecture that gets the invariant coupling right and exposes the rotations explicitly is in the same family. R-ORN is the name we will use when R is specifically an observer/compressor whose output is best understood as a learned rotation in L's d-dimensional basis.
+
+
+% ======================================================================
 \section{Commitments}
 
 \begin{enumerate}[nosep,leftmargin=*]
@@ -765,6 +848,16 @@ The paper has been written so that drift from these commitments is detectable ag
 \bibitem{elhage2021framework} Elhage, N., Nanda, N., Olsson, C., Henighan, T., Joseph, N., Mann, B., Askell, A., Bai, Y., Chen, A., Conerly, T., et al. (2021). A Mathematical Framework for Transformer Circuits. \emph{Transformer Circuits Thread}.
 \bibitem{residual2024} ResiDual Transformer Alignment with Spectral Decomposition (2024). arXiv:2411.00246.
 \bibitem{attn-residuals-2024} Attention Residuals: Rethinking Transformer Depth (2024). DataCamp blog.
+\bibitem{su2021roformer} Su, J., Lu, Y., Pan, S., Murtadha, A., Wen, B., Liu, Y. (2021). RoFormer: Enhanced Transformer with Rotary Position Embedding. arXiv:2104.09864.
+\bibitem{barbero2025round} Barbero, F., Arroyo, \'A., Gu, X., Perivolaropoulos, C., Bronstein, M., Vel\-i\-\v{c}\-ko\-vi\'c, P., Pascanu, R. (2025). Round and Round We Go! What Makes Rotary Positional Encodings Useful? ICLR 2025. arXiv:2410.06205.
+\bibitem{yu2025comrope} Yu, H., Liu, S., Lin, T., Zhou, Y., Luo, P. (2025). ComRoPE: Scalable and Robust Rotary Position Embedding Parameterized by Trainable Commuting Angle Matrices. CVPR 2025. arXiv:2506.03737.
+\bibitem{ostmeier2024liere} Ostmeier, S., Axelrod, B., Moseley, M., Chaudhari, A., Langlotz, C. (2024). LieRE: Lie Relative Encodings for Transformers. NeurIPS 2024. arXiv:2406.10322.
+\bibitem{spherical2025} A Circular Argument: Spherical Rotary Position Embeddings (2025). arXiv:2511.08368.
+\bibitem{selective2025} Selective Rotary Position Embedding for Gated Linear Attention (2025). arXiv:2511.17388.
+\bibitem{goel2026mamba3} Goel, K., et al. (2026). Mamba-3: Complex State Space Duality and Real-Valued Rotary Equivalence. arXiv:2603.15569.
+\bibitem{ropecraft2025} Gokmen, A., et al. (2025). RoPECraft: Training-Free Motion Transfer in Video Diffusion Transformers via Rotary Position Embedding Warping. arXiv:2505.13344.
+\bibitem{wavelet2025} Ruscio, M., et al. (2025). Beyond Position: Wavelet-Like Properties Emerge in RoPE-Trained Transformers. ACL 2025. arXiv:2410.18067.
+\bibitem{phase-precession-2012} Burgess, N., O'Keefe, J. (2011/2012). Models of place and grid cell firing and theta rhythmicity. \emph{Current Opinion in Neurobiology}, 21(5), 734--744. See also: Phase precession in hippocampal theta rhythm. \emph{PNAS}, PMC3912569.
 \end{thebibliography}
 
 \end{document}

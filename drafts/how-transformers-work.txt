@@ -1,0 +1,514 @@
+HOW TRANSFORMERS WORK
+=====================
+A living document tracking our understanding of what a transformer actually
+does, in the vocabulary that makes ORN / LORN make sense. Edit freely.
+
+Audience: us, future-us, and anyone we hand this to before reading the paper.
+Frame: we treat the residual stream as the protagonist; attention and FFN are
+the two things that edit it.
+
+
+1. TOKENS AND EMBEDDINGS: TURNING TEXT INTO A VECTOR FIELD
+----------------------------------------------------------
+A sequence of T tokens enters the model as integers. The embedding table
+E in R^{V x d} maps each integer to a d-dimensional vector, so you now have
+x^(0) in R^{T x d} -- one row per position, each row a point in model-space.
+
+Two things to notice here that matter later:
+
+- Every row lives in the same d-dimensional space. That space doesn't change
+  depth-to-depth; the transformer never projects to a different ambient
+  dimensionality, it just keeps editing vectors that already live in R^d.
+  This is why the residual-stream idea is even coherent.
+- There is no "sentence" yet. At layer 0, position 5 knows nothing about
+  position 4. The model has seen "cat" but not "a cat that was". All
+  structure above the token level is something the stack has to build.
+
+Positional embeddings (learned, RoPE, ALiBi) get added so each vector
+carries its index. This is the only time the model is told "you are at
+position t". From here on, position is an attribute of the vector, not a
+separate input.
+
+
+2. THE RESIDUAL STREAM: A LIVING DOCUMENT EDITED L TIMES
+--------------------------------------------------------
+Canonical form:  x^(l+1) = x^(l) + attn_l(x^(l)) + ffn_l(x^(l)).
+That plus sign is load-bearing.
+
+Think of x^(l)_t -- the vector at layer l, position t -- as the model's
+current working belief about token t. Each layer doesn't REPLACE that
+belief; it writes a correction on top. The delta
+   D^(l)_t = attn_l(x) + ffn_l(x)
+is what the layer contributes.
+
+What the layers tend to write:
+  - Low layers: syntactic / local features (POS, token disambiguation).
+  - Mid layers: relational features (coreference, subject-verb binding).
+  - Late layers: steer toward the output distribution; the stream near
+    the top is shaped like a logit-space forecast.
+
+The residual stream is the highway. Attention and FFN are on-ramps and
+off-ramps. Information a layer no longer needs can be "edited out" by a
+later layer writing its negation. Nothing is sealed.
+
+
+3. ATTENTION: THE ONLY PLACE TOKENS TALK TO EACH OTHER
+------------------------------------------------------
+Mechanically: four projections and a softmax.
+
+    Q = x W_Q        K = x W_K        V = x W_V
+    A = softmax( (Q K^T) / sqrt(d_head) + mask )
+    out = (A V) W_O
+
+Cleaner if you split the block into two questions:
+
+(a) WHO should I listen to?
+    Q K^T compares every query against every key. The resulting A is a
+    probability distribution over positions. This is the *routing
+    decision*. It is the only computation in the whole stack where
+    different positions interact.
+
+(b) WHAT should I copy from them?
+    (A V) W_O. Each selected position contributes its V, weighted by
+    A_{t,s}. W_O writes the result into the residual stream.
+
+Structural split:
+  - W_Q, W_K define the COUPLING RULE -- which pairs of positions are
+    "relevant" to each other at this layer. Syntactic heads, induction
+    heads, retrieval heads all live here.
+  - W_V, W_O define the RESPONSE -- once you've decided who to listen to,
+    what feature gets written back.
+
+Multi-head = do this k times in parallel with narrower Q/K/V, each head
+learning a different coupling rule, outputs concatenated and mixed by W_O.
+
+Causal masking (upper-triangular) means position t can look at positions
+<= t. This is what makes generation coherent: when emitting token t+1 you
+can only condition on what already exists.
+
+
+4. THE FFN: PER-POSITION NON-LINEAR COMPUTE
+-------------------------------------------
+After attention, each position goes through a two-layer MLP independently:
+    ffn(x_t) = W_2 sigma(W_1 x_t)
+plus norms and residual. No cross-position mixing.
+
+Where most parameters live. GPT-2-style: ~8 d^2 per layer for FFN vs ~4 d^2
+for attention. Read the FFN as a giant key-value memory: first layer
+matches against learned keys in feature space, second layer emits associated
+values back into the residual. A lot of factual knowledge ("Paris", "1968")
+lives in FFN weights -- ROME and REFT edit facts by patching FFN rows.
+
+Division of labour with attention: attention PROPOSES what feature to fetch
+from nearby positions; FFN TRANSFORMS that feature per-position. Stack L
+times.
+
+
+5. LAYER NORM: KEEPING THE STREAM CALIBRATED
+--------------------------------------------
+Applied on a branch (before attention, before FFN), not on the residual
+stream itself. The highway stays intact; the on-ramps are normalized.
+Technical necessity for training stability.
+
+
+6. GENERATION: WHAT A SINGLE FORWARD PASS PRODUCES
+--------------------------------------------------
+One forward pass answers one question: "given T context tokens, what's the
+distribution over the next token?"
+
+  1. Embed T tokens -> x^(0) in R^{T x d}.
+  2. Apply L residual layers -> x^(L) in R^{T x d}.
+  3. Take the last row x^(L)_T.
+  4. Project via LM head (often tied to E^T): logits in R^V.
+  5. Sample / argmax / temperature.
+  6. Append new token; re-run. With KV cache, only the new position is
+     recomputed.
+
+KV cache: K and V tensors at every layer for every processed position can
+be reused. Each new token appends one row to each cache; the attention
+computation for the new token still looks at all previous rows.
+
+
+7. THE KEY OBSERVATION ORN SITS ON TOP OF
+-----------------------------------------
+Look at M_l = W_Q_l^T W_K_l across all L layers of a pretrained transformer.
+The SPECTRA ARE ALMOST IDENTICAL. Mean pairwise Spearman 0.94-0.99 on
+every model measured (SmolLM2, Qwen2.5, GPT-2). A null model with random
+Gaussian W_Q / W_K gives 0.41. This is not an accident of initialisation.
+
+Translated back into the story: the COUPLING RULE -- question (a), "who
+should I listen to?" -- is roughly the same at every depth. Layers are not
+independently re-deriving what "syntactic dependency" or "coreference" or
+"retrieval" means from scratch. They all agree on the geometry of coupling;
+what differs is what response the layer writes when that coupling fires.
+
+ORN exploits this: keep ONE coupling M = A B^T (factorised, low-rank,
+shared across all L layers), and let each layer keep its own W_V, W_O, FFN.
+At 605M params / 3B FineWeb-Edu tokens this ties data-rich baselines to
+within a point on average.
+
+Parameter accounting:
+  - Standard transformer: O(L d^2) in coupling parameters.
+  - ORN: O(d^2), independent of L.
+
+
+8. WHERE LORN COMES IN -- LATERALISATION
+----------------------------------------
+The ORN result also surfaces a specific weakness. On BLiMP, ORN fails on:
+  - island constraints (sentential subject islands 27,
+    complex NP islands 49),
+  - long-distance NPI licensing (matrix question NPI licensor 23).
+
+These are phenomena that require the model to track hierarchical,
+discontinuous structure across many intervening tokens. Shared coupling
+smears this out: if the same M is used at depth 1 and depth 20, the model
+can't carve out a distinct "phrase-boundary" coupling rule for a deep layer
+that a shallow layer doesn't need.
+
+LORN (Lateralised ORN) keeps the sharing gains but unlocks depth-specific
+structural routing.
+
+  - Keep one shared coupling M for most of the attention channels
+    ("right hemisphere") -- broad-stroke semantic retrieval and
+    coreference, which ORN already does well.
+  - Carve out a small set of specialised-coupling heads
+    ("left hemisphere") with their own per-layer (or per-group)
+    W_Q, W_K. Free to learn the syntactic-boundary coupling rule
+    that pure ORN cannot express.
+
+Inside the attention block of each LORN layer:
+
+    Q_shared = x A           K_shared = x B        # shared across layers
+    Q_local  = x W_Q^l       K_local  = x W_K^l    # per-layer, few heads
+
+    A_shared = softmax(Q_shared K_shared^T / sqrt(d))   # retrieval / semantic
+    A_local  = softmax(Q_local  K_local^T  / sqrt(d))   # structural / syntactic
+
+    out = concat(A_shared V_shared, A_local V_local) W_O
+
+Structural claim: most of what each layer does is apply the same coupling
+rule and write a different response (ORN-shared); but a small band of
+attention channels at each depth needs a depth-specific coupling lens
+(LORN-local). Parameter budget for the local heads is small -- say, 1-2
+heads out of 16 -- so you keep ORN's sharing gains while recovering the
+failure modes pure sharing can't express.
+
+Downstream, V, O, FFN, norm, residual are unchanged. The residual stream
+still carries a single evolving belief; the only change is that at each
+layer, a small structural-attention head gets to edit that belief with its
+own independent view of "who should I listen to".
+
+
+9. FULL FORWARD PASS WITH LORN IN MIND
+--------------------------------------
+Streaming a token through a LORN forward pass, front to back:
+
+  1. Token id -> embedding + position -> vector in residual stream.
+  2. Stack of L layers, each of which:
+       - LayerNorm on a copy of the residual.
+       - Attention:
+           * SHARED-COUPLING routes via M = A B^T (one copy for the whole
+             network).
+           * LOCAL-COUPLING routes via this layer's W_Q, W_K (a few heads).
+           * Apply V / O projections; write the attention delta onto the
+             residual.
+       - LayerNorm on a copy.
+       - FFN: per-token non-linear transform; delta added to residual.
+  3. Final LayerNorm; LM head projects the last token's vector to logits;
+     sample.
+
+Across depth: the residual stream is a belief edited L times. The routing
+rule behind those edits is mostly shared (ORN's claim), with a thin
+lateralised channel letting each layer carve out depth-specific structural
+routing (LORN's addition). Token context flows through attention;
+per-position transformation happens in FFN; the residual highway carries
+everything and lets later layers override earlier ones.
+
+
+10. LONG CONTEXT: HUGE T IN FINITE MATRICES
+-------------------------------------------
+Weight matrices in a transformer -- W_Q, W_K, W_V, W_O, FFN, embedding --
+are all shape d x d (or d x 4d). NONE depend on T (context length). A
+2K-context and a 1M-context model can have identical weights; they're just
+applied to more rows. What scales with T is:
+  - Activation tensors: x, Q, K, V are T x d.
+  - Attention scores: Q K^T is T x T. This is the bottleneck.
+  - KV cache at inference: 2 * L * T * d floats to remember.
+
+Shipping "1M context" is not new weights; it's engineering how to keep the
+T x T score computation and T x d cache tractable.
+
+POSITIONAL ENCODING -- where most stretching happens.
+
+Absolute learned positions (original transformer, GPT-2) have a hard cap at
+T_max. Position T_max + 1 has no embedding. Modern long-context uses
+position encodings that are FUNCTIONS of the index:
+
+  - RoPE (rotary position embeddings). Rotate Q and K pair-wise in 2D
+    subspaces by angle theta = t * omega. Position-t query has its Q
+    rotated by R(t). The dot product Q_t K_s then depends on (t - s) via
+    the rotation difference -- position becomes a property of the dot
+    product, not an additive term. No cap.
+
+  - ALiBi. Add a bias -m * |t - s| to each attention score, per-head slope
+    m. Pure function of (t - s).
+
+Both extrapolate to lengths longer than training, with quality decay.
+
+Stretching further (32K -> 128K -> 1M):
+  - NTK-aware / YaRN: reinterpret RoPE base frequency so rotations cover
+    a longer range without wrapping.
+  - Position interpolation (PI): tell the model it's at position
+    t * (T_train / T_inference). Retrains briefly.
+  - Long-context fine-tune: short-ctx pretrain, then a few percent of
+    compute at long ctx with YaRN / PI. This is what production long-ctx
+    models actually do.
+
+None of these touch the shape of W_Q, W_K.
+
+T x T SCALING TRICKS.
+
+  - FlashAttention. Compute softmax(Q K^T) V WITHOUT materializing Q K^T.
+    Tile Q, K, V into SRAM-sized blocks; online softmax stitches them.
+    Exact output; memory drops O(T^2) -> O(T). Table stakes.
+  - KV cache at inference. Cache K, V per layer. Generating token t+1
+    recomputes Q for that one position; compute per new token drops to
+    O(T d). Cache itself is O(L * T * d) -- at 80 layers, d=8192, T=1M,
+    that's ~1 TB in fp16. So:
+  - MQA / GQA. Multi-query or grouped-query attention: all heads share
+    (MQA) or groups share (GQA) a single K, V. Shrinks cache by H (or
+    H/group).
+  - Quantized KV cache. Store K, V in int8 or int4.
+  - PagedAttention. KV cache in paged blocks like virtual memory; vLLM
+    does this.
+  - Sliding window / sparse / Longformer / BigBird. Restrict which pairs
+    interact. Reduces attention from O(T^2) to O(T w) for window w. The
+    weights are unchanged; the MASK is different.
+  - Ring attention / sequence parallelism. Shard T across devices; each
+    holds a slice of K, V. Attention computed in a ring, passing chunks.
+    Used for 1M+ contexts.
+
+DIFFERENT FAMILIES (if you give up exact attention).
+
+  - Linear attention (Performer, Linformer, RWKV) and state-space models
+    (Mamba, Jamba). Replace softmax with a kernel that factors through a
+    fixed-size state. O(T d^2) recurrent form; constant memory per token.
+    Less expressive on recall-heavy tasks at matched params.
+  - Retrieval-augmented (RAG). Chunk the document, embed, store in a
+    vector DB, retrieve k chunks per query. Context is external memory.
+
+TRAINING VS INFERENCE ASYMMETRY. Almost nobody trains on full 1M context
+from scratch. Typical recipe:
+  1. Pretrain at short context (4K-8K) for most tokens.
+  2. Long-context fine-tune (a few percent of compute) at 32K-128K with
+     RoPE rescaling + FlashAttention + sequence parallelism.
+  3. Inference extrapolates further via YaRN / PI, with quality decay.
+
+"1M context" usually means "trained up to some T_train, extrapolated at
+inference". The weights carry no new capacity; the positional encoding and
+KV management carry the load.
+
+
+11. THE ROTATION VIEW: ORN, RoPE, AND SPIRAL CAUSALITY
+------------------------------------------------------
+Two rotations appear at different axes of the transformer. They have the
+same structure and may be the same idea.
+
+ROTATION IN ORN (depth axis). The Q-K pair has a gauge symmetry: for any
+orthogonal R,
+    (Q R) (K R)^T = Q R R^T K^T = Q K^T.
+So M_l = W_Q_l^T W_K_l and M_l' = R_l^T M_l R_l implement identical
+attention. When all L layers of a pretrained transformer have the same
+spectrum for M_l (Spearman 0.94-0.99), we're saying more than "similar" --
+we're saying M_l are all orthogonally conjugate to one shared M:
+    M_l ~= R_l^T M R_l    for some per-layer rotation R_l.
+ORN sets R_l = I at every layer -- bakes one shared frame. Per-layer
+variation that used to live in W_Q, W_K is absorbed into W_V, W_O.
+
+ROTATION IN RoPE (position axis).
+    Q_t^RoPE = R(t) Q_t,   K_s^RoPE = R(s) K_s.
+    Q_t^T R(t)^T R(s) K_s = Q_t^T R(s - t) K_s.
+Position becomes a relative rotation of the shared bilinear form Q K^T.
+
+Same structure in both cases:
+  - A shared geometric object -- M for ORN, the Q K^T bilinear form for
+    RoPE.
+  - Variation along some axis (depth for ORN, position for RoPE)
+    implemented as an orthogonal rotation of the reading frame.
+  - The object does not change; only the angle does.
+
+SPIRAL CAUSALITY. Composing the two rotations, the forward pass reads M
+through R_depth(l) * R_pos(t - s). Two rotation axes, one invariant
+object. Token generation advances the position rotation; depth integration
+advances the depth rotation. Together they trace a helix around M. The
+causality (ordering of positions, ordering of depths) is the direction of
+winding. "Spiral causality" is the name for this picture: a trajectory
+through SO(d) x SO(d) acting on a single bilinear form.
+
+Key property: R_depth(l) and R_pos(t - s) do not commute in general. The
+composition's phase structure is what lets some angular combinations
+resolve hierarchical, long-range dependencies that others cannot.
+
+
+12. ORN-ROT / ORN-SPIRAL -- UNPICKING RoPE WITH ORN
+---------------------------------------------------
+A new ORN variant that exploits the rotation idea directly. Keep LORN as
+a separate track (lateralised heads); this variant stays in the ORN family
+and attacks the same shared-coupling story from a different angle.
+
+Standard ORN:
+    Q_l = x A,   K_l = x B,   M = A B^T (one copy).
+
+ORN-Rot (per-layer rotation gauge made explicit):
+    Q_l = x A R_l,   K_l = x B R_l.
+  - A, B shared across layers as in ORN.
+  - R_l in SO(d_head), per-layer learned orthogonal rotation.
+  - Params: O(d_head^2) per layer instead of O(d * d_head) for full W_Q^l
+    in a transformer. An order of magnitude smaller than a per-layer head.
+  - The gauge is usually absorbed into V, O. Making R_l explicit gives the
+    per-layer coupling a controllable degree of freedom distinct from the
+    response.
+
+ORN-Spiral (depth-as-RoPE, zero new params):
+    Q_l = R_depth(l) (x A),   K_l = R_depth(l) (x B),
+    then apply RoPE(t) on top.
+  - R_depth(l) is a fixed rotation at depth-frequency omega_depth,
+    analogous to RoPE but along the depth axis.
+  - Different dimension blocks rotate at log-spaced depth frequencies
+    (high-freq = fine-grained layer-to-layer distinctions, low-freq =
+    whole-stack phase).
+  - Zero learned parameters for the depth axis.
+  - Composed with RoPE, each (l, t) pair reads M at a unique angle:
+        Q_l(t) K_l(s)^T = x_t A R_depth(l)^T R_pos(t - s) R_depth(l) B^T x_s.
+    The non-commutativity of R_depth and R_pos is the source of
+    (depth, position) phase structure.
+
+Both variants leave V, O, FFN, norm, residual unchanged. Both preserve
+ORN's O(d^2) coupling-parameter compression (Rot adds O(L d_head^2), still
+asymptotically negligible next to FFN and embedding).
+
+HOW THIS IS DIFFERENT FROM LORN. LORN carves out per-layer W_Q^l, W_K^l
+for a few structural heads; keeps the response shape. ORN-Rot / Spiral
+keeps all heads on the shared A, B but varies the READING ANGLE with
+depth. Structurally cheaper; expressively less flexible. The two tracks
+can be combined later (LORN-Spiral: lateralised local heads with rotation
+gauges) but should be evaluated independently first.
+
+
+13. LONG-CONTEXT TRAINING WITH ORN
+----------------------------------
+ORN's shared M is dimensionless (d x d), applied identically at every
+depth. This is structurally favourable for long context:
+  - M does not need to "scale" with T in any sense -- it's a static
+    coupling rule.
+  - The RoPE rotation lives on Q, K which are (x A, x B) under ORN; there
+    is nothing special about applying RoPE to ORN's Q, K vs a standard
+    transformer's.
+  - If the spiral picture is right, a shared M forces every layer through
+    the same coupling at long range. This could be a FEATURE (long-range
+    extrapolation should be more consistent because the coupling rule is
+    stable across depth) or a BUG (island-constraint phenomena may need
+    depth-specific long-range coupling that shared M cannot express).
+
+The training recipe transfers directly from the standard playbook: short-
+context pretrain, then long-context fine-tune with YaRN / PI. Open
+question: does ORN extrapolate more or less smoothly than a matched
+transformer? The shared-coupling inductive bias predicts SMOOTHER
+extrapolation (same rule at all depths means the rule doesn't need to
+relearn itself for longer T). This is directly testable.
+
+
+14. FIRST-PRINCIPLES EXPERIMENTS ON ROTATION + ORN
+--------------------------------------------------
+All before any LORN conflation, all cheap to run.
+
+E1. Procrustes test on pretrained transformers (free, no training).
+    For each layer l, compute M_l = W_Q_l^T W_K_l. Pick a shared M
+    (Frobenius average, or Karcher mean on the Stiefel manifold). Solve
+    the orthogonal Procrustes for R_l: R_l = argmin_{R in O(d)} || R^T M R - M_l ||_F.
+    Report per-layer residual || R_l^T M R_l - M_l ||_F / || M_l ||_F
+    across SmolLM2, Qwen2.5, GPT-2, Pythia.
+    PASS if residuals are < 10% across all layers -- says M_l is
+    orthogonally conjugate to shared M, empirically, not just spectrally.
+
+E2. Structure of the fitted R_l (free, follows E1).
+    Block-diagonalise the fitted R_l. Do they factor into 2D rotations
+    at log-spaced frequencies (the RoPE shape)? If yes, the spiral is
+    literally RoPE-shaped along depth and ORN-Spiral has zero-parameter
+    justification. If not, it's still compressible but not RoPE-shaped.
+
+E3. ORN-Rot vs ORN at matched training (~$2 Vast run).
+    Train 30M ORN and 30M ORN-Rot (shared A, B + per-layer learned R_l)
+    on 500M FineWeb-edu tokens, same schedule. Compare val loss, BLiMP
+    island-constraint tasks, attention patterns. PASS if ORN-Rot matches
+    ORN mean loss AND closes any fraction of the BLiMP island gap.
+
+E4. ORN-Spiral (zero-param depth-RoPE) vs ORN (~$2 Vast run).
+    Train 30M ORN-Spiral on 500M tokens: apply R_depth(l) to Q, K before
+    RoPE. Compare to ORN baseline. PASS criteria as E3. Bonus: since
+    Spiral adds zero parameters, any quality gain is a pure architectural
+    win.
+
+E5. Long-context extrapolation (probe-only, free on trained checkpoints).
+    Take trained 605M ORN-V3 (T_train = 2K). Eval perplexity at T =
+    4K, 8K, 16K, 32K via PI and YaRN. Compare to matched-scale
+    transformer. If ORN extrapolates smoother (lower PPL growth with T),
+    the shared-coupling inductive bias is a long-context ASSET.
+
+E6. Long-context fine-tune of ORN (~$20 run).
+    Resume ORN 605M V3 with long-ctx fine-tune at T = 8K for a few
+    hundred steps. Check: does ORN-V3 benefit from long-ctx FT at the
+    same rate as a transformer, or does the shared M make the FT phase
+    cheaper (fewer steps to match) or harder (coupling rule needs to
+    adapt and can't)?
+
+E7. Rotation readout from trained ORN (free, analytic).
+    From a trained ORN, examine the per-layer deviation of effective
+    coupling from M = A B^T by inspecting W_V^l, W_O^l: any per-layer
+    rotation that would have been absorbed into V, O should be
+    recoverable by SVD'ing the W_V W_O^T product across layers. If a
+    consistent depth-rotation falls out, it confirms the spiral picture
+    and gives us a learned R_l to initialise ORN-Rot.
+
+Order of execution if we commit: E1 and E2 this week (free, pretrained-
+model analysis); E5 and E7 before any training (use V3 checkpoint we
+already have); E3 and E4 as small Vast runs; E6 last, needing the most
+compute and riding on results of the others.
+
+
+15. OPEN QUESTIONS / THINGS TO EVOLVE
+-------------------------------------
+LORN track:
+- What fraction of heads should be local vs shared in LORN? Is there a
+  sweet spot tied to island-constraint recovery without hurting mean acc?
+- Do local heads cluster at particular depths (e.g. layers 6-12 in a
+  24-layer model) or spread uniformly?
+- Is the shared M better seen as a low-rank approximation to the "average"
+  coupling across depth, or as a genuine shared semantic-retrieval operator
+  independent of depth?
+- Can we read local heads off an ORN-trained model post-hoc (SVD of the
+  deviation from the shared M at each depth) and use that as an init for
+  LORN's local W_Q, W_K?
+- Does LORN close the BLiMP island-constraint gap specifically, or does it
+  lift a broader set of discontinuous-structure phenomena?
+
+ORN-Rot / Spiral track:
+- Does E1's Procrustes residual come out small enough that the rotation-
+  only story is empirically clean?
+- If E2 finds R_l are RoPE-shaped, do we still need learnable R_l in
+  ORN-Rot, or does zero-param ORN-Spiral cover the same ground?
+- Can RoPE and depth-rotation be combined in a single unified "2D torus"
+  positional encoding, parametrised by (position, depth) jointly?
+- In long-context fine-tuning, does the shared M make the transition
+  smoother or stiffer than a transformer?
+- Does ORN pretrained short-context extrapolate better at inference (via
+  PI/YaRN) than a matched transformer? Inductive-bias prediction: yes.
+
+Cross-cutting:
+- FFN sharing: combining shared M with shared wide FFN (Pires et al. 2023)
+  is what ORN-V3 does. Does ORN-Rot / Spiral benefit from keeping FFN
+  per-layer again, or does shared FFN survive the rotation variant?
+- Rotation gauge vs rotation gauge: ORN absorbs per-layer rotation into
+  V, O by convention. ORN-Rot makes it explicit. Is there a measurable
+  quality gap between "rotation in the coupling" and "rotation absorbed
+  into the response" at matched parameter count?
