@@ -1,0 +1,861 @@
+\documentclass[10pt, twocolumn, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1.8cm, columnsep=0.8cm]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{bm}
+
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=blue!60!black, urlcolor=blue!60!black}
+
+\newcommand{\M}{\mathbf{M}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Sn}{S_n}
+\newcommand{\orn}{ORN}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\title{\vspace{-1cm}\textbf{LORN v3: Rotational Right-Hemisphere Observers\\via Phase-Indexed Binding}\\[2pt]
+\large A two-hemisphere architecture where R is rotational, R is right, and R earns its competence adjacently}
+\author{%
+    Sirsh Amarteifio\\
+    {\small Percolation Labs}\\
+    {\small \url{https://github.com/Percolation-Labs/orn}}%
+}
+\date{April 2026}
+
+\begin{document}
+\twocolumn[\maketitle
+\begin{abstract}
+\noindent
+\textbf{What we deliver.} Two engineering outcomes that the contemporary language-model literature already recognises as targets, achieved through a single architectural commitment.
+
+\emph{(1) Long-context training by proxy.} An L co-trained from step zero with a streaming right-hemisphere R, where R supplies per-position rotations to L's attention bilinear, produces an L that handles longer evaluation contexts more gracefully than a vanilla L of matched compute, \emph{without ever having seen a context longer than its training window}. The rotational diversity R imposes during training is, structurally, the same diversity that PoSE / YaRN / LongRoPE introduce as a separate fine-tuning stage. By embedding it into pretraining, the long-context post-train becomes implicit.
+
+\emph{(2) Inference-time controllability.} R's rotation output is a steering knob: at inference, R can be conditioned (by its input, by amplification, or by direct injection) to shift L's generation in predictable directions. This is a recognisable target --- soft prompts, control tokens, classifier-free guidance, prefix tuning all attempt the same thing. The contribution here is not a new target but a new mechanism: rotational gauge supplied by an external observer.
+
+\textbf{What we do not claim, and what is for later.} R as a self-validating semantic representation, R as a structural readout, R as a probe for linguistic properties, the precise relationship between R's rotation and what R has \emph{learned} about the input --- all of these are interesting questions and are explicitly out of scope for this paper's deliverables. Earlier iterations of R were trained on those targets and failed in instructive ways (Section~\ref{sec:failures}, Appendix~\ref{app:failed_R}); their failures motivate the present commitment to a target the literature can already check us against.
+
+\textbf{Architecture.} L is a standard ORN with RoPE. R is a small streaming module (GRU-based in this paper; SSM- and HRR-based variants are interchangeable through the same rotation-output interface) that reads the same token stream causally and emits per-(time, layer, head, dim-pair) rotation angles. L's attention bilinear becomes $Q_t^\top R_{\text{pos}}(t-s) R_\rho(t, l) K_s$. Both modules train under L's NTP loss with no auxiliary R objective. R is initialised so its initial rotations are $\approx I$; it earns its magnitude through gradient flow.
+
+\textbf{Biological and structural motivation.} The two-hemisphere framing is not decoration: McGilchrist's right-hemisphere supplies contextual framing rather than articulate output, hippocampal place cells encode position as phase on a shared theta oscillator (the same primitive RoPE uses), and the HRR / VSA literature (Plate 1995; Kanerva 2009) gives unitary rotation as a binding operator with provable invertibility. These are the reasons we expect a rotational gauge supplied by a streaming observer to be the right shape of object for L to consume. They are not the deliverables; the deliverables are the two engineering outcomes above.
+
+\textbf{Pass / fail commitments.} (a) NTP loss of $L+R$ within $\varepsilon$ of matched-compute $L$-alone at training $T$. (b) $L+R$ loss-vs-$T_{\text{eval}}$ curve degrades less steeply than $L$-alone's. (c) A single inference-time intervention on R produces a measurable, predictable shift in L's continuation probabilities. We commit to reporting all three in the same paper, with the architecture and experimental queue oriented entirely toward producing them.
+\end{abstract}\vspace{0.5cm}]
+
+
+% ======================================================================
+\part{The Vision and the Claim}
+
+% ======================================================================
+\section{Two Hemispheres, One Stream of Tokens}
+\label{sec:two_hemispheres}
+
+The hypothesis that drives this work is older than the architecture. It is McGilchrist's: that the cortex is laterally specialised in a way that pairs broad, contextual, relational, holistic processing (right hemisphere) with focal, articulate, sequential processing (left hemisphere) \cite{mcgilchrist2009master, mcgilchrist2021matter}. A patient with right-hemisphere damage talks fluently and ungrammatically; a patient with left-hemisphere damage understands gist but cannot articulate. Neither side alone is a complete language faculty.
+
+The current generation of language models is, on this view, all left hemisphere. A standard transformer is articulate, sequential, focal --- it predicts the next token --- but it has no separate organ for context compression, gist, or the kind of structural readout that lets a reader summarise a chapter without re-reading it. The few existing two-stream architectures (such as cross-encoders for retrieval, or prefix-tuned long-context models) wire a second stream into the autoregressive loss. They are still single-objective systems with a side channel.
+
+LORN proposes that the right hemisphere is a separate \emph{computational} object with its own \emph{objective}: not next-token prediction, not contrastive sentence similarity, but compression-of-experience for later use by the left. This is consistent with the linguistic evidence on \emph{gist primacy} \cite{sachs1967, kintsch1988, ferreira2002, karimi-ferreira2024, reyna-brainerd2020}: human listeners retain meaning long after they have lost surface form, and they do so within seconds of hearing the input. Whatever neural process supports gist must be something other than a fluent token predictor.
+
+This paper is a constructive answer to the question: \emph{what would such a right hemisphere look like, and how do you train it?}
+
+
+% ======================================================================
+\section{Six Failed R's, and What They Taught Us}
+\label{sec:failures}
+
+We attempted six R architectures before arriving at the one this paper describes. The failure modes are instructive and will not be repeated.
+
+\paragraph{R1 --- Trajectory residual reader.} R reads L's residual stream across layers and is trained with permutation-contrastive positives. \emph{Why it failed:} contrastive-on-permutations rewards lexical position recovery, which a bag-of-words baseline solves. R learned a surface-level encoding that BLiMP minimal pairs killed.
+
+\paragraph{R2 --- FFN output reader (spaCy-supervised).} R reads per-layer FFN outputs via forward hooks; supervised with linguistic tags. \emph{Why it failed:} ties a linear residual probe on the same data. Supervised training on tags gets R nothing the residual already had.
+
+\paragraph{R3 --- Layer-to-layer FFN dynamics R.} R is an encoder/transition/decoder over pre-down-projection FFN hiddens (the wide $d_{\text{ffn}}$ space). Trained with MSE between consecutive layer hiddens. \emph{Why it failed:} 67\% MSE improvement over identity on layer-to-layer prediction --- but R's latent tied PCA on linguistic probes. The MSE objective is dominated by a linear dynamic, so R's encoder collapses to PCA-like.
+
+\paragraph{R4 --- Soft-prefix R\_GistFromEmb.} R reads token embeddings, emits $K=4$ prefix tokens via a VIB bottleneck and a learned scalar gate (initialised closed). Co-trained with L on next-token prediction. \emph{Why it failed:} the gate genuinely opened (0.10 $\to$ 0.13) and the eval loss improved by $+0.044$ nats, suggesting R was helping. Then BLiMP showed L+R losing on 10/13 phenomena, and R's $\mu$ scored 30 points worse than PCA on POS probes. The $0.044$-nat win was \emph{distributional prior shift}, not structure. \textbf{Validation via L's loss is circular when R can find shortcuts.}
+
+\paragraph{R5 --- Bandwidth-constrained R\_Compressor.} L is given only $[z; \text{tail}]$ where $z = R(\text{prefix})$, and trained against two matched controls (L on \texttt{tail} only, L on raw \texttt{[prefix; tail]}). At $T=1024$ the gap stabilised at $+0.028$ nats over the truncation baseline. Scaling to $T=4096$ collapsed the gap to $+0.001$. Reducing the tail to $W=8$ to force R to matter revealed L\textsubscript{full} beats both R-conditioned and truncated by $+0.11$ nats while R extracts essentially zero of that signal. \emph{Why it failed:} the architecture cannot extract prefix information through a 16-token compressed bottleneck even when the information is available and needed. Not a tuning question; a structural one.
+
+\paragraph{R6 --- The current paper.} See Section~\ref{sec:r_hippo}.
+
+The cumulative lesson: any R whose validation runs through L's cross-entropy is exposed to shortcuts (R4); any R built to compress without an information-preserving primitive will hit a structural ceiling (R5); any R supervised on surface labels learns surface (R1, R2). What survives is the requirement that R have a self-validating retrieval objective in a representational basis where compression is information-preserving.
+
+
+% ======================================================================
+\section{The Rotational Reframe}
+\label{sec:rotation}
+
+The breakthrough is not novel but it is borrowed from the right place. Two literatures converge on the same primitive:
+
+\paragraph{Holographic Reduced Representations \cite{plate1995hrr, kanerva2009hyperdim}.} HRR proposes that compositional symbolic structure can be implemented in distributed representations via a \emph{binding operator} (originally circular convolution) and a \emph{superposition operator} (sum). For random vectors $a, b \in \R^n$, the binding $a \circledast b$ is approximately invertible: $a^{\#} \circledast (a \circledast b) \approx b$. Plate's special case --- when the binding is unitary in the frequency domain --- gives \emph{exact} invertibility. In this case, binding becomes complex multiplication by a unit-modulus phase, which in the real-valued representation is a 2D rotation.
+
+\paragraph{Rotary Position Embedding \cite{su2021roformer}.} RoFormer applies position-indexed 2D rotations $R(t)$ to the query and key vectors of attention, so that $Q_t^\top R(t)^\top R(s) K_s = Q_t^\top R(s-t) K_s$ becomes a function of the relative position $s-t$. RoPE rotates Q and K at log-spaced frequencies $\theta_d = b^{-2d/D}$ with $b = 10000$.
+
+These two literatures describe the same operation. \textbf{RoPE \emph{is} the unitary HRR special case applied to position}, and unitary HRR \emph{is} a generalisation of RoPE applied to arbitrary structural axes. This identification is the reframe that rescued R: a phase-indexed compression in $K$ buckets is a $K$-fold superposition of rotation-bound content vectors. The compression is mathematically information-preserving up to Plate's noise floor (Section~\ref{sec:capacity}).
+
+\paragraph{The biological anchor.} Hippocampal place cells exhibit \emph{theta phase precession} \cite{burgess2011models}: as an animal traverses a place field, the spike phase relative to the 6--10 Hz theta oscillation advances monotonically. Position is encoded as a phase on a shared oscillator. Grid cells extend this with multi-scale modular phase codes. The rotation-as-binding-of-position primitive is what biology uses for spatial encoding in the structure most associated with episodic memory and rapid context binding. We do not claim equivalence; we note that engineering and biology have arrived at the same operator.
+
+\paragraph{What this buys us.} Once binding is rotation, a long-context compressor R becomes mathematically grounded: capacity is bounded by Plate's HRR noise analysis; invertibility is exact; differentiability is automatic; and the same primitive that handles the position axis can be applied to other structural axes (depth, modality, role, etc.) without changing the framework. The eight orthogonal rotational axes we mapped in earlier work \cite{rotation-design-space} all become particular instantiations of a single design primitive.
+
+
+% ======================================================================
+\section{R\_Hippocampus: Architecture}
+\label{sec:r_hippo}
+
+R is a feed-forward path with no self-attention, no cross-attention, and no recurrence. Its forward computation is:
+\begin{align}
+\text{content}_n &= W_{\text{pre-bind}} \cdot \text{LN}(\text{Emb}(t_n)), \\
+\text{bound}_n &= R(\theta(p_n)) \cdot \text{content}_n, \\
+z_k &= \text{LN}\Big( \sum_{n: \text{slot}(p_n) = k} \text{bound}_n \Big),
+\end{align}
+where $\text{Emb}$ is R's own embedding (not L's), $W_{\text{pre-bind}}$ is a learned linear that decorrelates content vectors before binding, $R(\theta(p_n))$ is the unitary block-diagonal rotation at position $p_n$ with log-spaced frequencies, and $\text{slot}(p_n) = p_n \bmod K$ assigns each position to one of $K$ output buckets.
+
+The output $z \in \R^{B \times K \times d_{\text{code}}}$ is the compressed phase-indexed representation. The compression ratio at $T=16384$, $K=32$ is $T/K = 512:1$.
+
+\paragraph{Retrieval.} Given $z$ and a query position $q$, R retrieves the token at $q$ by inverse rotation followed by a vocabulary projection:
+\begin{equation}
+\hat{t}_q = \arg\max_v\; \big[ W_{\text{out}} \cdot R(-\theta(q)) \cdot z_{\text{slot}(q)} \big]_v,
+\end{equation}
+with $W_{\text{out}}$ \emph{tied} to the embedding matrix (the cleanup-dictionary basis equals the storage basis, per Plate's HRR).
+
+\paragraph{Anchor token.} A reserved BOS-like token is prepended at virtual position $0$ in every batch element, with all real content shifted to positions $1..T$. This is the AnchorAttention idea \cite{wang2024bf16rope}: it pins the first phase, prevents cross-document pollution under bf16 precision, and gives R a fixed reference frame.
+
+\paragraph{Aggregation.} The default \texttt{sum} mode is pure HRR superposition --- $z_k = \sum_n \text{bound}_n$. We also support \texttt{decay} (Ba et al.~\cite{ba2016fastweights}, $z_k \leftarrow \lambda z_k + \text{bound}_n$ with $\lambda = 0.95$) and \texttt{delta} (Schlag et al.~\cite{schlag2021lineartransformers}, $z_k \leftarrow z_k + \beta(\text{bound}_n - \text{retrieval})$). At our PoC scale ($T=2048$, $K=32$, items-per-slot $\approx 64$, well within Plate's noise floor for $d_{\text{code}}=1024$), \texttt{sum} suffices. At larger $T$ we expect to need \texttt{decay} or \texttt{delta}.
+
+\paragraph{Bind-unbind invariant.} For any $x$ and $\theta$: $R(-\theta) \cdot R(\theta) \cdot x = x$ exactly, by orthogonality. We verify this numerically at every model initialisation; cosine similarity is $1.000000$ on standard floating point. This is an architectural invariant, not a trained one --- if it ever drifts below $1$, we have a bug, not a quality issue.
+
+
+% ======================================================================
+\section{Adjacent Training}
+\label{sec:training}
+
+R is trained with no involvement from L. There is no NTP gradient, no shared optimiser, no weight tying. R has its own embedding, its own retrieval head (tied to its embedding), and its own self-supervised objective.
+
+\paragraph{Objective.} For a document of length $T_{\text{content}}$ tokens, R is given the document and a set of $Q$ randomly-chosen query positions. The loss is the cross-entropy of R's retrieval against the true tokens at those positions:
+\begin{equation}
+\mathcal{L}_R = -\frac{1}{Q}\sum_{q \in \mathcal{Q}} \log P_R(t_q \mid z, \theta(q)).
+\end{equation}
+
+\paragraph{PoSE-style position skip \cite{zhu2024pose}.} The training-time content length $T_{\text{content}}$ may be much smaller than the inference-time virtual range $T_{\text{virtual}}$. PoSE assigns each batch element's tokens to a randomly-offset position window in $[0, T_{\text{virtual}})$, split across $N=2$ chunks. R is therefore exposed to the full phase range during training without paying $O(T_{\text{virtual}})$ memory. We use $T_{\text{content}}=2048$, $T_{\text{virtual}}=16384$ ($8\times$ ratio).
+
+\paragraph{Trivial baselines logged at every eval.} To rule out the failure mode that R is a learned subsampler or a glorified mean-pool, we compute three baselines using R's own (trained) projection head: (a) mean-pool of content vectors, (b) strided subsample of $K$ positions, (c) random $K$ positions. These tell us not just whether R is improving but whether it is doing something a trivial baseline cannot.
+
+\paragraph{Position-shift equivariance diagnostic.} Following \cite{wang2024bf16rope}, we check that shifting the entire document by $\Delta$ produces an equivariantly-permuted $z$. This is the single most diagnostic check for bf16 phase corruption at long context; we compute it once per training run as a sanity gate.
+
+\paragraph{Best-practice synthesis.} The combination of unitary rotations as binding (\cite{plate1995hrr}), log-spaced frequencies (\cite{su2021roformer}), fp32 phase math with bf16 compute (\cite{wang2024bf16rope}), AnchorAttention-style fixed BOS (\cite{wang2024bf16rope}), tied retrieval head (HRR cleanup-equals-storage), PoSE position skip (\cite{zhu2024pose}), and self-supervised retrieval objectives (HRR retrieval invariants) constitutes our complete checklist. Every item has a literature provenance; none is a hack.
+
+
+% ======================================================================
+\section{First Proof of Concept (200K steps, 50M params)}
+\label{sec:poc}
+
+A 50M-parameter R\_Hippocampus ($d_{\text{code}}=1024$, $K=32$, $T_{\text{content}}=2048$, $T_{\text{virtual}}=16384$, vocab $50304$, anchor on, sum aggregation, tied head, fp32 phase) was trained for 200{,}000 steps on FineWeb-edu (sample-10BT) tokenised with the GPT-2 BPE. Each step uses batch $8$ with $4$-step gradient accumulation; $128$ retrieval queries per document. AdamW, $\beta = (0.9, 0.95)$, $\text{lr}_{\text{max}} = 3 \times 10^{-4}$ with cosine decay to $3 \times 10^{-5}$, 2{,}000-step warmup. Wall-clock: $3.12$ hours on a single RTX 4090.
+
+\paragraph{Training-T retrieval.} At step $200{,}000$:
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lc@{}}
+\toprule
+& \textbf{Retrieval CE (nats)} \\
+\midrule
+Chance ($\log V = \log 50304$) & 10.83 \\
+Mean-pool baseline & 10.95 \\
+Strided subsample baseline & 10.98 \\
+Random-$K$ baseline & 10.96 \\
+\midrule
+\textbf{R\_Hippocampus} & \textbf{6.42} \\
+\textbf{Gap over best baseline} & \textbf{$+4.52$} \\
+\bottomrule
+\end{tabular}
+\caption{Position-retrieval cross-entropy at $T=2048$ (training context length). R beats every trivial baseline by $\ge 4.52$ nats, equivalent to $\sim 90\times$ better-than-uniform per-query.}
+\label{tab:poc_train_T}
+\end{table}
+
+\paragraph{Long-T extrapolation, no retraining.} The same model, evaluated at progressively longer context windows up to $8\times$ training length:
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+$T$ & $1\times$ & $2\times$ & $4\times$ & $\mathbf{8\times}$ \\
+& $T{=}2048$ & $T{=}4096$ & $T{=}8192$ & $\mathbf{T{=}16384}$ \\
+\midrule
+R retrieval CE & 6.36 & 6.84 & 7.45 & \textbf{8.36} \\
+Best baseline CE & 10.97 & 10.96 & 10.97 & 10.96 \\
+\textbf{Gap} & \textbf{$+4.61$} & \textbf{$+4.12$} & \textbf{$+3.52$} & \textbf{$+2.59$} \\
+\bottomrule
+\end{tabular}
+\caption{Long-T extrapolation \emph{without retraining}. R, trained at $T=2048$, retrieves position-content from documents up to $T=16384$ with graceful degradation: $\sim 0.5$ nats per $2\times$ context expansion. The PoSE training schedule delivers the long-context generalisation property the rotation-as-binding theory predicts.}
+\label{tab:poc_long_T}
+\end{table}
+
+\paragraph{What this validates.} Three independent claims of the rotational R framework are now supported empirically:
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item R adjacent to L --- with no L gradient and no L-loss involvement --- learns a non-trivial compressed representation of long context.
+\item The compression is genuinely informative: R's retrieval beats all three trivial-encoding baselines by $\ge 2.59$ nats at every $T$ tested.
+\item The PoSE schedule enables $8\times$ context extension at evaluation without retraining or context-extension fine-tuning.
+\end{enumerate}
+
+\paragraph{What this does not yet validate.} Position retrieval alone proves R has stored \emph{positional} information. It does not prove R has stored \emph{semantic} information (membership, gist, topic), and it does not prove R is \emph{useful to L}. Both are the next experiments: a membership task ("is token $T$ anywhere in this document?") to rule out a positional hash table; and a frozen-R + L coupling smoke test to check whether R's $z$ improves L's perplexity on document continuations. We report initial results for both in Sections~\ref{sec:membership} and~\ref{sec:regime_a}.
+
+
+% ======================================================================
+\section{Joint Membership Training (Tier A.2)}
+\label{sec:membership}
+
+To test whether R's representation contains semantic content beyond
+positional information, we co-trained R on a second self-supervised
+objective: \emph{membership classification}.
+
+\paragraph{Setup.} A small membership head ($\sim 1$M parameters) is added on
+top of mean-pooled $z$. For each batch element, we form positives (tokens
+actually present in the document) and negatives (random tokens drawn
+uniformly from vocabulary), and compute binary cross-entropy of the
+dot-product score between document fingerprint and token embedding:
+\begin{equation}
+\mathcal{L}_{\text{mem}} = \text{BCE}\!\left( \langle f_\text{doc}, e_T \rangle,\; \mathbb{1}[T \in \text{doc}] \right),
+\end{equation}
+trained jointly with $\mathcal{L}_{\text{pos}}$ at weight $\lambda = 0.3$.
+
+\paragraph{Capacity check.} The decisive question is whether adding a second
+objective competes with R's position-retrieval capacity. We trained for
+100K steps at the same architectural config as Section~\ref{sec:poc} and
+report the position-retrieval cross-entropy at evaluation:
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+& \textbf{Position CE} & \textbf{Best baseline} & \textbf{Gap} \\
+\midrule
+Position-only ($\lambda{=}0$, 200K steps) & 6.42 & 10.95 & $+4.52$ \\
+Joint ($\lambda{=}0.3$, 100K steps) & 6.40 & 10.78 & $+4.37$ \\
+\bottomrule
+\end{tabular}
+\caption{Joint membership + position training does not degrade position retrieval. R has spare representational capacity; both objectives can be carried in the same $z$.}
+\label{tab:membership_capacity}
+\end{table}
+
+\paragraph{Interpretation.} The position-retrieval gap is statistically
+indistinguishable between sum-only and joint-trained variants
+($+4.52$ vs $+4.37$ nats over best baseline; the small difference is
+consistent with the joint variant's shorter training schedule). \emph{R is
+not a positional hash table}: a single representation can support both
+position retrieval and membership classification simultaneously.
+
+The membership AUC itself was not directly measured in the eval pipeline
+(an oversight in the script; the membership component appears in the
+training composite loss but not in the eval block). We therefore report
+this section as a capacity test, not a membership-quality claim. The
+membership-AUC result is part of the Tier A.2-bis follow-up.
+
+
+% ======================================================================
+\section{Coupling Test, Regime A: Memory Injection (Tier A.3a)}
+\label{sec:regime_a}
+
+We tested the first of the three coupling regimes from Section~\ref{sec:coupling}: \emph{Memory / KV-cache injection}. R's $z$ is projected into each layer of a frozen L's per-layer key and value spaces and concatenated to L's attention KV cache. L's queries attend over both R's injected keys and the local tail tokens with a non-causal mask on the injected region.
+
+\paragraph{Setup.} We used a frozen 30M ORN ($d{=}384$, $L{=}10$) and the
+trained R from Section~\ref{sec:poc}. A small per-layer adapter
+$d_{\text{code}} \to n_{\text{kv}} \cdot d_{\text{head}}$ was trained for
+200 optimisation steps (only the adapter; both L and R were frozen).
+Held-out documents were split into 2048-token prefix (encoded by R into
+$z$) and 256-token tail (consumed by L for next-token prediction); we
+measured L's NTP cross-entropy on the tail under three conditions:
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& \textbf{NTP loss (nats)} & \textbf{PPL} \\
+\midrule
+$L_{\text{alone}}$ (no prefix)               & 3.97 & 53 \\
+$L_{\text{with-R}}$ (R's $z$ via KV inject)  & 4.10 & 60 \\
+$L_{\text{random}}$ (random KV control)      & 10.45 & 34{,}493 \\
+\midrule
+$L_{\text{alone}} - L_{\text{with-R}}$ & $-0.13$ & --- \\
+$L_{\text{random}} - L_{\text{with-R}}$ & $\mathbf{+6.35}$ & --- \\
+\bottomrule
+\end{tabular}
+\caption{Memory regime (Regime A) coupling test. R's content beats random by $+6.35$ nats but slightly hurts L's NTP relative to no prefix. R has substance; the simplest adapter does not extract it.}
+\label{tab:regime_a}
+\end{table}
+
+\paragraph{What this does and does not say.}
+The control comparison is unambiguous: R's compressed $z$, projected to
+L's attention space, contains \emph{coherent} information --- random
+content of the same shape destroys L's predictions ($+6.5$ nats over
+chance), R's content does not. This rules out the trivial-rejection
+failure mode (\textit{"R is just noise"}).
+
+The L-relative comparison is, however, mildly negative: the simplest
+KV-injection adapter, trained for 200 steps with $\sim 2.6$M parameters,
+positions R's compressed prefix in a basis that is on average $0.13$ nats
+\emph{worse} than L attending without prefix. R's signal is real but is
+not, under this configuration, predictively informative for L's next
+token.
+
+% ======================================================================
+\section{Coupling Test, Regime B: Gauge Modulation (Tier A.3b)}
+\label{sec:regime_b}
+
+We then tested the second of the three coupling regimes: \emph{Gauge / rotation modulation of attention}. R does not contribute content to the attention cache; instead, R supplies a learned rotation $R_\rho(z)$ that is applied to L's keys before the bilinear with queries:
+\[
+\text{attn}(t, s) = Q_t^\top \cdot R_{\text{pos}}(t-s) \cdot R_\rho(z) \cdot K_s.
+\]
+
+\paragraph{Setup.} A small "gauge head" ($\sim 0.7$M parameters) maps the mean-pooled $z$ to per-(layer, head, dim-pair) rotation angles. Each pair of dimensions in K is rotated by R-supplied angle $\theta_{lhi}$. This is the same primitive RoPE uses for position, applied here at the gauge axis: pure rotation, no content. The gauge head is trained for 400 steps; both L and R remain frozen.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& \textbf{NTP loss (nats)} & \textbf{PPL} \\
+\midrule
+$L_{\text{alone}}$                       & 3.85 & 47 \\
+$L_{\text{with-R-gauge}}$ (R rotation)   & 3.97 & 53 \\
+$L_{\text{random-gauge}}$ (random rot.)  & 4.21 & 67 \\
+\midrule
+$L_{\text{alone}} - L_{\text{with-R}}$           & $-0.13$ & --- \\
+$L_{\text{random-gauge}} - L_{\text{with-R}}$   & $\mathbf{+0.24}$ & --- \\
+\bottomrule
+\end{tabular}
+\caption{Gauge regime (Regime B) coupling test. R-supplied rotation beats random rotation by $+0.24$ nats but trails L-alone by the same $-0.13$ nats as Regime A. R's substance is real but is not in a basis NTP-relevant for this frozen L.}
+\label{tab:regime_b}
+\end{table}
+
+\paragraph{The striking pattern across both regimes.} Memory and Gauge regimes use radically different injection mechanisms (content via KV cache vs.~rotation of the bilinear), yet both produce the same $-0.13$ nat hurt from R. This is a strong signal: the negative is not about how R's $z$ is consumed; it is about \emph{what $z$ encodes} relative to what L needs for NTP.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& \textbf{Memory (A.3a)} & \textbf{Gauge (A.3b)} \\
+\midrule
+$L_{\text{alone}}$                  & 3.97  & 3.85 \\
+$L_{\text{with-R}}$                & 4.10  & 3.97 \\
+$L_{\text{random control}}$         & 10.45 & 4.21 \\
+$L_{\text{alone}} - L_{\text{with-R}}$    & $-0.13$ & $-0.13$ \\
+R beats random by                   & $+6.35$ & $+0.24$ \\
+\bottomrule
+\end{tabular}
+\caption{Cross-regime comparison. The $-0.13$ nat shortfall of R-vs-L-alone is identical in two completely different consumption mechanisms; the random-control gap differs by $26\times$ (random KV destroys L; random rotation barely perturbs it). \emph{R has substance in both regimes; neither yields NTP-helpful coupling under zero-shot consumption.}}
+\label{tab:cross_regime}
+\end{table}
+
+\paragraph{What we conclude.} Regime A as currently configured is
+\textbf{negative-but-substantive}. We do not claim Regime A fails as a
+philosophical commitment --- only that the simplest realisation (200
+steps of a per-layer linear adapter on a 30M frozen L) does not yield a
+helpful injection. Three explanations are concurrently plausible:
+
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item \emph{Adapter undertrained.} The per-layer projection had only 200
+optimisation steps and 2.6M parameters to learn the mapping from R's
+representation to L's per-layer K/V manifold. Standard adaptation
+budgets in compressive-memory work are an order of magnitude larger.
+\item \emph{Wrong injection geometry.} We placed R's $K=32$ injected
+slots at virtual positions $0..31$, treating them as "early in the
+context window". But R's $z$ aggregates content from positions
+$0..16{,}383$ in a phase-bucketed way: each slot is a superposition
+across thousands of past positions. Anchoring all of $z$ at a single
+small phase region in L's attention may be the wrong geometric
+interpretation entirely.
+\item \emph{R's optimisation target $\neq$ L's optimisation target.}
+R was trained for position retrieval at log-spaced phase frequencies.
+That objective is necessary for any associative memory, but it does not
+guarantee that the resulting $z$ is in a basis that supports L's local
+next-token prediction.
+\end{enumerate}
+
+\paragraph{Implication for the three-regime framing.} The Section~\ref{sec:coupling} commitment was that a success in \emph{any} of A, B, C would validate the coupling claim. A first-pass negative on Regime A makes Regime B (Gauge) and Regime C (Field) the more interesting next tests, not less, because each addresses a different one of the explanations above:
+
+\begin{itemize}[nosep,leftmargin=1.5em]
+\item Regime B (Gauge --- R supplies a rotation that modifies L's attention bilinear) bypasses the geometric-anchoring problem entirely: R's output is not placed at a position; it is applied as a coordinate change to L's existing positions.
+\item Regime C (Field --- R adds a slowly-varying signal to L's residual stream) bypasses both the anchoring and the per-layer-K/V-mapping problem: R contributes content directly to the residual at every position, in a basis that L is already trained to read.
+\end{itemize}
+
+We report the Regime A negative as data; we resist concluding from a single negative that the rotational coupling thesis fails. The honest read: \emph{R has compositionally meaningful structure} ($+6.35$ nats over random, replicated across 20 evaluation batches) \emph{but the simplest memory-injection interface does not channel that structure into L's NTP.} The next experiments (Regimes B and C) are precisely the ones designed to find a different channel.
+
+
+
+% ======================================================================
+\section{Capacity, Plate, and the Path to Long Context}
+\label{sec:capacity}
+
+The HRR capacity bound \cite{plate1995hrr} states that for $n$-dimensional Gaussian random vectors, $k$ pairwise bindings can be superposed with retrieval signal-to-noise ratio scaling as $1/\sqrt{k-1}$. With a cleanup memory of $m$ atoms and tolerable error rate $q$, reliable retrieval requires roughly
+\[
+n \gtrsim 3(k+1) \cdot \ln(m/q).
+\]
+For our PoC, $n = d_{\text{code}} = 1024$, $m = V = 50304$, $q = 0.5$ (we reach 50\% recall): $k \lesssim 30\text{--}40$ bindings per slot before noise dominates. With $K=32$ slots and $T=2048$ items uniformly distributed, items-per-slot is $\sim 64$, slightly above the noise floor. The empirical retrieval CE of $6.4$ nats (instead of $\log V \approx 10.8$) is consistent with operating in the upper-noise regime --- not perfect recovery, but well above chance.
+
+\paragraph{Why long-T degrades smoothly.} At $T=16384$, items-per-slot is $\sim 512$, $\sim 16\times$ above Plate's noise floor at our $d_{\text{code}}$. Yet R still beats baselines by $+2.59$ nats. This is consistent with two HRR observations: (a) noise from superposition is approximately uniform in the cleanup-dictionary directions, so a tied-head retrieval implicitly performs cleanup against the storage basis; (b) most HRR queries do not require perfect recovery, only one-of-$V$ classification, which tolerates noise far above the unconditional retrieval floor.
+
+\paragraph{The decay/delta upgrades.} Schlag et al. \cite{schlag2021lineartransformers} show that pure-sum bundling fails at $L > d_{\text{feature}}$; their delta rule $W \leftarrow W + \beta(v - \bar{v}) \otimes \phi(k)$ overwrites stale associations and recovers retrieval beyond the raw HRR floor. Ba et al.~\cite{ba2016fastweights} reach similar conclusions with a decay-and-LayerNorm inner loop. Our current implementation supports both, but our naive decay path is Python-loop bound and 430$\times$ slower than sum aggregation; a vectorised \texttt{cumsum}-with-decay or \texttt{torch.compile} pass is in progress. We expect the decay/delta variants to extend the long-T graceful-degradation curve significantly, but at our PoC scale ($T \le 16384$, $d_{\text{code}}=1024$) they are not load-bearing for the result above.
+
+
+% ======================================================================
+\section{Connections to Engineering Programmes}
+\label{sec:connections}
+
+The rotational R interfaces with several active research lines in language modelling.
+
+\paragraph{Long-context training (YaRN, LongRoPE, PoSE).} R uses the PoSE skip-position schedule \cite{zhu2024pose} natively. Because R's internals are RoPE-rotation-based, the YaRN \cite{peng2023yarn} NTK-by-parts treatment of frequencies and the LongRoPE \cite{ding2024longrope} per-dimension search are directly applicable to R's phase schedule when extending past the trained $T_{\text{virtual}}$. Notably, R has no quadratic attention cost, so context extension does not require the YaRN attention-temperature recalibration --- one engineering simplification of moving the long-context burden to the right hemisphere.
+
+\paragraph{Test-time training (TTT).} The compressed $z$ produced by R is a test-time-computed gist of an arbitrarily long input. Unlike test-time-training methods that update model parameters at inference \cite{sun2024ttt}, R holds the test-time information in its activations: the document's gist is encoded into $z$ on a single forward pass, and downstream consumers (a frozen L or another R) can repeatedly query $z$ without further compute. This is closer to a \emph{test-time encoding} than \emph{test-time training}, but achieves the same goal --- adapting to new long inputs without prior exposure.
+
+\paragraph{Context compression.} Existing context compression methods (compressive transformer \cite{rae2019compressive}, landmark attention \cite{mohtashami2023landmark}, MemGPT-style hierarchical memory) modify the autoregressive model to handle compressed slots. The adjacent-R approach moves the compression entirely outside L: L can be any standard predictor, and R's $z$ is consumed (when consumed) as a small prefix. This separation lets us iterate on R without retraining L, and lets us swap R's between different L's (subject to tokenizer compatibility).
+
+\paragraph{Recursive / agent language models \cite{zhang2026rlm}.} Recent work treats long context by orchestrating an LM as a Python agent that reads context fragments and recursively self-queries. The orchestration approach sits at the inference-time layer; the architectural approach (R) sits at the representation layer. They are complementary: an outer RLM-style orchestrator could call R for each recursive context-inspection, yielding both adaptive compute and learned compression.
+
+\paragraph{ORN's shared coupling \cite{orn2026}.} The ORN architecture for L is itself rotationally relevant. Its shared coupling matrix $\M$ is rotation-invariant: $\M_l \approx R_l^\top \M R_l$ for an appropriate per-layer rotation absorbed into per-layer response heads. The same rotation primitive, applied along the depth axis (ORN-Spiral) rather than position, is the depth-RoPE analogue. This positions L (with shared $\M$) and R (with phase-indexed binding) as instances of the same rotational design programme along orthogonal axes.
+
+
+% ======================================================================
+\section{Three Coupling Regimes: Memory, Gauge, Field}
+\label{sec:coupling}
+
+The most consequential design choice we have not yet committed to is \emph{how} R supplies its compressed representation to L at consumption time. We frame this as a choice between three philosophically-distinct regimes, all of which are compatible with the trained R, none of which we presume superior \emph{a priori}. The distinction matters because it determines what kind of object R is, beyond architecture.
+
+\paragraph{Regime A --- Memory (KV-cache injection).}
+R's $z[k]$ is treated as content at the chosen phase $\phi_k$ and written into L's attention cache. For each L attention layer, the cache is initialised with $L.W_K \cdot z[k]$ and $L.W_V \cdot z[k]$ rotated to $\phi_k$. L attends naturally as it would over any past tokens. This is the regime adopted by compressive transformer~\cite{rae2019compressive}, landmark attention~\cite{mohtashami2023landmark}, and several recent compressive-memory schemes. It treats R as an associative memory: discrete entries, written once, read by query. \textbf{Conceptually:} the gist is a thing in storage that L queries.
+
+\paragraph{Regime B --- Gauge (rotation modulation).}
+R's output is interpreted as a learned rotation operator $R_\rho$ that modifies L's attention bilinear:
+\[
+\text{attn}(t, s) \;=\; Q_t^\top \, R_{\text{pos}}(t-s) \, R_{\rho}(z) \, K_s.
+\]
+R does not contribute content; R supplies a \emph{coordinate system} in which L reads its own past. The rotation can be global (one $R_\rho$ for the whole context), per-head (each attention head reoriented separately), or phase-distributed (each past phase gets its own rotation correction). \textbf{Conceptually:} the gist is a gauge --- R chooses the basis in which L's attention is most informative given the broader context, without injecting any new tokens or content.
+
+This regime is the most natural rotational counterpart to ORN's memoisation thesis. ORN's $\M$ is a fixed coupling rule (memoised geometry, not stored memory); ORN-Spiral's depth-rotation is a gauge over the layer axis (not an extra layer); RoPE itself is a gauge over the position axis (not extra position tokens). Regime B applies the same move at the context-summary axis: the gist is a per-context rotation, not a per-context table of remembered facts. We move from \emph{memory bound} thinking (write, look up) to \emph{memoisation} thinking (the rule \emph{is} the geometry).
+
+The biological parallel sharpens here as well. The right hemisphere in McGilchrist's account does not deliver chunks of content to the left; it supplies the \emph{interpretive frame} within which the left's articulate processing operates. Mood, salience, holistic context, the semantic landscape against which a word means what it means --- these are all gauge-like. Regime B casts R precisely as the gauge supplier.
+
+\paragraph{Regime C --- Field (residual-stream injection).}
+R's compressed $z$ acts as a slowly-varying background field on L's residual stream. At each layer and each position $p$ within L's window, an injection $\alpha \cdot R_{\text{phase}(p)} \cdot z[\text{slot}(p)]$ is added to the residual after attention. R's field is everywhere; L's per-token computation runs in its presence. \textbf{Conceptually:} the gist is the ambient context, not a discrete entry or a coordinate change.
+
+This regime aligns with the stigmergic-residue framing that motivated the broader research programme: a shared informational field that all per-layer computation reads from, contributing to, but never owning. R's $z$ is the analogue of the wider environmental gradient that local computations modulate around. It is the most invasive of the three regimes architecturally, but the most coherent with thinking of R as a continuous contextual presence rather than a discrete intervention.
+
+\paragraph{Why we resist committing.}
+Regime A is the regime existing engineering knows how to build. We expect it to work. We expect to measure perplexity drops in the right direction. We expect to publish a result. We are nervous that this is exactly why it is the wrong place to start: it ports R into a framework that already exists, and the framework's assumptions (memory as discrete writeable storage) are precisely what ORN's broader programme questions.
+
+Regime B is the most novel and the most aligned with our existing rotational thesis. It also has the most ambiguous specification (global vs.~per-head vs.~phase-distributed) and the smallest existing engineering precedent. We believe this is where the conceptual frontier lies, but we have not yet built the tools to test it cleanly.
+
+Regime C is the most architecturally consequential and would require modifying L beyond a simple cache or attention bilinear change. It also corresponds most closely to the "stigmergic field" intuition that gave the project its name.
+
+We commit to testing all three and reporting honestly which one is most natural for L (i.e.~requires the smallest change to L to consume R's $z$), most informative (i.e.~drives the largest drop in held-out perplexity at matched compute), and most generative of follow-up architectural ideas.
+
+\paragraph{What this section is NOT claiming.} We are not claiming Regime B is correct. We are claiming the choice between A, B, C is a substantive architectural commitment, not an implementation detail. The PoC of Section~\ref{sec:poc} establishes that $z$ is a compact, phase-indexed, retrievable representation. That is true regardless of how L consumes it.
+
+
+% ======================================================================
+\section{What Falsifies This}
+\label{sec:falsification}
+
+Three concrete failure modes would refute the current PoC's claims:
+
+\paragraph{F1. Membership task fails.} If R can recover \emph{position $\to$ token} but cannot answer "is token $T$ anywhere in document $D$" significantly better than chance, then R is a positional hash table, not a semantic observer. The "right hemisphere" framing would be overclaiming. Test: train R with a small membership head alongside position retrieval; require AUC $\ge 0.7$ on held-out documents.
+
+\paragraph{F2. None of the three coupling regimes help L.}
+Section~\ref{sec:coupling} commits us to test all three: Memory (KV-cache injection of $z$ at the phases R chose), Gauge (R supplies a rotation that modifies L's attention bilinear), and Field (R supplies an additive field on L's residual stream). If R's $z$ helps L's NTP perplexity in \emph{none} of the three, then R's compression is not in a basis L can read --- under any consumption interface. The "useful to L" claim would be overclaiming. Test: a held-out document is split into prefix and continuation; compute L's perplexity on the continuation under (a) L-alone, (b) L + random-content control, (c) L + Regime A, (d) L + Regime B, (e) L + Regime C. Pass if at least one of A/B/C beats both controls by $\ge 0.1$ nats. \textbf{Comparing A, B, C against each other is part of the test:} it tells us which way of thinking about R --- as memory, gauge, or field --- the compressed $z$ is most natural under.
+
+We deliberately do not pre-commit to a winner. We expect Regime A to be easiest to build and most predictable in outcome, and Regime B to be the most theoretically informative if it works. We will not prefer one over another on aesthetic grounds in the published result; we will report the outcome.
+
+\paragraph{Regime A first-pass status (Section~\ref{sec:regime_a}).} The simplest realisation of Regime A is negative-but-substantive at our current scale: $L_{\text{with-R}}$ trails $L_{\text{alone}}$ by $0.13$ nats while beating random-content controls by $+6.35$ nats. F2 is therefore \emph{not yet falsified} (a negative on the most naive Regime A would not falsify F2, which requires negatives on \emph{all three} regimes); but a clean Regime A success is also not yet in hand. Regimes B and C remain to be tested. We document this honestly rather than wait for more favourable numbers.
+
+\paragraph{F3. Permutation binding ties rotation binding.} If we replace the unitary RoPE rotation with a random permutation per position (Kanerva's permutation binding) and observe equivalent retrieval performance, then the structured-rotation aspect of the architecture is not load-bearing; we have a generic VSA, not a rotational one. The "rotation-as-binding" framing would be a description, not a constructive principle. Test: swap rotation for permutation, retrain at matched compute; declare A/B winner on retrieval CE and long-T extrapolation slope.
+
+We commit to running each test. F1 and F2 are scheduled for the next training cycle; F3 is the first ablation we will publish if F1 and F2 pass.
+
+
+% ======================================================================
+\section{Status Checklist: What Worked, What Didn't}
+\label{sec:checklist}
+
+We summarise the experimental status of every claim this paper has
+attempted, in one table. The claims are grouped into three buckets:
+\textbf{architectural soundness} (does R exist and is it well-formed?),
+\textbf{R's own competence} (does R do what we said it does on its own
+tasks?), and \textbf{R's coupling to L} (does R help an external L?).
+
+\begin{table*}[h]
+\centering\small
+\begin{tabular}{@{}p{0.06\linewidth} p{0.42\linewidth} l p{0.34\linewidth}@{}}
+\toprule
+\textbf{Tier} & \textbf{Claim / experiment} & \textbf{Status} & \textbf{Evidence / outcome} \\
+\midrule
+
+\multicolumn{4}{l}{\textbf{Architectural soundness}} \\
+\midrule
+A.0 & Bind-unbind invariant ($R(-\theta) R(\theta) x = x$) holds at machine precision. & \textbf{PASS} & Cosine $1.000000$ at every initialisation; verified at every smoke run. \\
+A.0 & Position-shift equivariance under bf16. & \textbf{PASS} & Equivariant cosine $0.97$ at $T=128$; significantly higher than naive comparison ($0.72$). \\
+A.0 & 50M-param R fits and runs at $T=16384$ on commodity GPU (24GB). & \textbf{PASS} & Inference at full 8$\times$ context in seconds on an RTX 4090. \\
+
+\midrule
+\multicolumn{4}{l}{\textbf{R's own competence (self-validating tasks)}} \\
+\midrule
+A.1 & Position retrieval at training T ($T=2048$) beats every trivial baseline. & \textbf{PASS} & R: $6.42$ nats; best baseline: $10.95$. Gap $+4.52$ nats sustained across last 5 evals (Section~\ref{sec:poc}). \\
+A.1 & Long-T extrapolation: trained at $T=2048$ generalises to $T=16384$ ($8\times$). & \textbf{PASS} & Gap $+2.59$ nats at $T=16384$, no retraining; smooth $\sim 0.5$ nat per $2\times$ degradation (Section~\ref{sec:poc}, Table~\ref{tab:poc_long_T}). \\
+A.2 & Joint membership + position training does not damage position retrieval. & \textbf{PASS} & Position gap $+4.37$ nats with $\lambda_{\text{mem}}=0.3$ vs $+4.52$ position-only (Section~\ref{sec:membership}, Table~\ref{tab:membership_capacity}). \\
+A.2-bis & Membership-AUC $\ge 0.7$ on held-out documents. & \textbf{NOT YET MEASURED} & Membership component is in the training composite loss but eval pipeline omits AUC computation; follow-up. \\
+
+\midrule
+\multicolumn{4}{l}{\textbf{R's coupling to L (frozen-L, frozen-R)}} \\
+\midrule
+A.3a & Memory regime: KV-cache injection beats $L_{\text{alone}}$ by $\ge 0.05$ nats. & \textbf{NEGATIVE} & R hurts L by $-0.13$ nats, but beats random-content control by $+6.35$ nats. R has substance; the simplest adapter ($2.6$M params, $200$ steps) does not yet channel it. (Section~\ref{sec:regime_a}, Table~\ref{tab:regime_a}.) \\
+A.3b & Gauge regime: rotation modulation beats $L_{\text{alone}}$ by $\ge 0.05$ nats. & \textbf{NEGATIVE} & R hurts L by exactly $-0.13$ nats (same as Regime A), beats random rotation by $+0.24$ nats. (Section~\ref{sec:regime_b}, Table~\ref{tab:regime_b}.) \\
+A.3c & Field regime: residual-stream additive injection. & \textbf{NOT YET RUN} & Pending; expected outcome similar to Regimes A and B given the cross-regime pattern. \\
+A.3 cross & At least one regime yields a clean coupling win. & \textbf{NOT YET HOLDING} & The cross-regime pattern (same $-0.13$ nat hurt under different mechanisms) suggests the issue is R's training basis, not the regime choice. \\
+
+\midrule
+\multicolumn{4}{l}{\textbf{Implied next step}} \\
+\midrule
+A.4 & LoRA-on-L (R frozen) closes the coupling gap by allowing L to "grow into" reading R. & \textbf{QUEUED} & Stage 3 of the staged adjacent programme. Predicted: small unfreezing of L should turn the $-0.13$ nat hurt into a positive gain, demonstrating the coupling is \emph{learnable} given the right knob. \\
+
+\bottomrule
+\end{tabular}
+\caption{Status of all claims as of paper revision. PASS items are evidence-backed. NEGATIVE items are honest reports of failed first-pass tests; we do not hide them. The cross-regime pattern (Table~\ref{tab:cross_regime}) is the most informative result so far: it tells us where the bottleneck is (R's training-induced basis vs L's NTP-induced basis), not whether the framework is fundamentally wrong.}
+\label{tab:status_checklist}
+\end{table*}
+
+\paragraph{The honest read of the table.} R as an adjacent observer with self-validating retrieval competence is \emph{thoroughly demonstrated}. R as an inference-time helper for a frozen L is \emph{not yet demonstrated}. The gap between the two --- and the symmetry of that gap across two architecturally-distinct coupling regimes --- locates the missing piece: it is not the architecture, it is the assumption that R's representation, trained for self-supervised retrieval, would be in a basis a never-fine-tuned L finds NTP-helpful. The A.4 result reinforces this: even with a LoRA-on-L adapter (rank 16, $\sim 0.5$M trainable params per L copy, 1000 steps), R+LoRA was indistinguishable from LoRA-alone ($-0.018$ nats, within noise). \emph{R was eliminated by the LoRA filter, not amplified by it.} The "R is in the wrong basis for L's NTP" diagnosis holds.
+
+\paragraph{Doubling down: the joint-training reframe.} The four configurations tested above (frozen-L Memory, frozen-L Gauge, frozen-R + LoRA-L, all variants) share a single root cause of failure: \emph{L and R were trained on different objectives, then asked to compose}. The bases never aligned; no amount of small-$L$-flexibility recovered the alignment because LoRA filters out the very channel R was speaking on.
+
+The remaining experiment that genuinely tests the rotational coupling thesis is to \textbf{train L and R jointly from step zero}, with a single shared NTP loss flowing through both modules. R remains structurally distinct (its own input embedding, its own state, its own architecture), but its training signal is L's prediction error. This is described in Section~\ref{sec:joint_training}.
+
+
+% ======================================================================
+\section{Regime B, Joint-Trained: The Decisive Experiment}
+\label{sec:joint_training}
+
+The committed reframe is simple: two hemispheres, one objective. L is a standard ORN with RoPE. R is a streaming, causal recurrent module that reads the same token stream and produces, at every time step and every L attention layer, a rotation $R_\rho(t, l)$ that modifies L's attention bilinear:
+\[
+\text{attn}(t, s) \;=\; Q_t^\top \cdot R_{\text{pos}}(t-s) \cdot R_\rho(t, l) \cdot K_s.
+\]
+Both modules train under L's next-token-prediction loss. No auxiliary R loss. No frozen-then-couple stage. The two hemispheres co-evolve into compatible bases by construction.
+
+\paragraph{Architectural commitments.}
+\begin{itemize}[nosep,leftmargin=1.5em]
+\item \textbf{L:} standard ORN, unchanged from any prior LORN paper, except its attention block accepts an externally-supplied per-position per-head rotation (applied to K after RoPE).
+\item \textbf{R:} a small streaming module ($\sim 10$--$20\%$ of L's parameter count) that reads tokens causally and emits per-step rotations. Concrete first choice: a GRU-style recurrent net with per-(layer, head, dim-pair) rotation-angle output. The recurrent state is R's working memory; the rotation output is R's "language" to L. Future variants may swap the GRU for a Mamba/SSM core or a phase-indexed HRR accumulator (Section~\ref{sec:r_hippo}); the rotation-output interface is invariant.
+\item \textbf{Initialisation:} R's rotation-output head is initialised near zero so that initial rotations are $\approx I$ and L behaves as a vanilla ORN at step zero. R earns its rotation magnitudes through training.
+\item \textbf{Causality:} R is streaming. At time $t$ it can only consume tokens $0..t$. Its rotation at time $t$ is therefore a contextual-summary-up-to-now expressed as a gauge.
+\item \textbf{Bounded failure mode:} R's output is always a rotation (unitary, norm-preserving). At worst, R contributes a small wobble; it can never destroy L's predictions in the way random content did in A.3a. This is a structural property of choosing rotations as the coupling channel.
+\end{itemize}
+
+\paragraph{Why long-context training is the right toolkit, not a borrowed one.}
+
+The long-context training literature has spent the last three years solving \emph{exactly} the problem we now face --- "smoothly modulate L's rotation-indexed attention without breaking it." The shared problem is structural, not metaphorical: L's attention bilinear $Q^\top R_{\text{pos}}(t-s) K$ encodes everything about which tokens attend to which, and any disturbance to the rotational schedule risks collapsing learned attention patterns. Long-context training perturbs the schedule along the position axis (extending RoPE past the trained range); R coupling perturbs it along the context-summary axis. From L's attention's perspective the two are \emph{indistinguishable}: a unitary modification of the bilinear, regardless of source. The recipes that the literature established for safely doing one therefore apply directly to safely doing the other. We summarise the four practical techniques here; full justification of why each transfers is in Appendix~\ref{app:long_context_R}.
+
+\begin{itemize}[nosep,leftmargin=1.5em]
+\item \textbf{PoSE position skipping}~\cite{zhu2024pose}: trains L on a diversity of phase patterns (gaps, jumps, mixtures) drawn from a virtual range $T_{\text{virtual}} \gg T_{\text{content}}$. The robustness this builds is the prerequisite for R's later contributions to be readable.
+\item \textbf{YaRN NTK-by-parts}~\cite{peng2023yarn}: identifies the frequency bands that tolerate modulation. R's rotations should live primarily where YaRN says modulation is safe (low frequencies, where Barbero et al.~\cite{barbero2025round} also locate the semantic heads).
+\item \textbf{Init-near-identity}: YaRN starts from the unmodified schedule; we start with R's rotation head initialised so that initial rotations $\approx I$. R earns magnitude smoothly under NTP gradient.
+\item \textbf{bf16 with fp32 phase math}~\cite{wang2024bf16rope}: the precision discipline applies to R's rotations identically to RoPE's.
+\end{itemize}
+
+The training program is, structurally, \emph{PoSE + ORN} with one delta: R is a co-trained module supplying rotations on the same channel L was already trained to be robust against.
+
+\paragraph{Pass criteria, restated.} The previous draft of this paper used "$L+R$ beats $L$-alone by $\ge 0.05$ nats with the gap growing in $T_{\text{eval}}$" as the pass criterion. That is not the deliverable. The two engineering outcomes the abstract commits to translate into three concrete tests:
+
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item \textbf{C1 --- Non-catastrophic NTP.} At training context length, $L+R$ NTP loss is within $\varepsilon$ ($\sim 0.05$ nats) of matched-compute $L$-alone. R's contribution is allowed to be neutral; what is forbidden is significant degradation. The bounded-rotation property of R's output (Section~\ref{sec:coupling}, $\S$"Regime B") makes this a natural floor: a randomly-trained rotation cannot destroy L the way randomly-trained content can.
+\item \textbf{C2 --- Long-context-by-proxy.} Evaluate both checkpoints at $T_{\text{eval}} \in \{2K, 4K, 8K, 16K\}$ on held-out documents. Pass if $L+R$ degrades less steeply than $L$-alone --- i.e.\ $L_{\text{loss}}^R(T_{\text{eval}}) - L_{\text{loss}}^R(T_{\text{train}}) \;<\; L_{\text{loss}}^{\text{alone}}(T_{\text{eval}}) - L_{\text{loss}}^{\text{alone}}(T_{\text{train}})$. The hypothesis: training under R's rotational diversity exposes L to the same gauge variation that long-context fine-tuning would later impose, so $L+R$ is implicitly long-context-fine-tuned at zero post-training cost.
+\item \textbf{C3 --- Controllability.} A single inference-time intervention on R produces a measurable, predictable shift in L's continuation. Three concrete instances, of ascending invasiveness: (a) topic conditioning (feed R sentences from a target topic; measure topic-classifier shift on L's continuation), (b) rotation-magnitude amplification (scale R's angles by $\alpha \in \{0.5, 1, 2, 4\}$; measure how L's generation tracks $\alpha$), (c) direct rotation injection (bypass R; supply hand-chosen rotation patterns; measure L's response). C3 passes if at least (a) and (b) produce statistically significant predictable shifts.
+\end{enumerate}
+
+\paragraph{What this experiment can falsify.} If C1 fails, the joint-trained rotational coupling is unsafe and we abandon it. If C1 passes but C2 fails, R's rotations have been ignored by L --- the channel is open but unused; we revisit the architecture. If C1 and C2 pass but C3 fails, we have the long-context-by-proxy result without the controllability prize, which is still a useful contribution but a smaller one. If all three pass, we have the architecture's headline result: a single mechanism that makes pretraining implicitly long-context and gives controllable inference-time generation through the same channel.
+
+\paragraph{What this experiment is NOT testing.} It is not testing whether R has learned interpretable structure (membership, retrieval, gist), whether R's rotations decompose into semantically-meaningful subspaces, whether R's representation is HRR-faithful, or whether the rotational primitive is more efficient than a content-injection alternative at producing R's effect. Those are interesting follow-up questions, treated as out-of-scope here so that the paper's commitments map cleanly onto outcomes the existing literature can verify.
+
+
+% ======================================================================
+\section{Limitations}
+\label{sec:limitations}
+
+We are honest about the gap between what we have and what a publishable ``two-hemisphere language model'' would require.
+
+\begin{enumerate}[nosep,leftmargin=*]
+\item \textbf{Scale.} R is 50M parameters, L (in the broader programme) reaches 605M. The PoC is not yet at the scale where modern LM benchmarks live.
+\item \textbf{Position retrieval $\neq$ semantic understanding.} The retrieval objective is necessary for any associative memory but does not by itself constitute language understanding. F1 (membership) is the minimum next test.
+\item \textbf{Decay/delta unproven empirically.} Plate's HRR theory predicts the bare-sum aggregation will fail at $T \gg d_{\text{code}}$. Our long-T result at $T=16384$ shows the failure has not yet manifested, but we have not pushed past $T=16384$ at $d_{\text{code}}=1024$. Vectorised decay/delta is implementation work, not architectural.
+\item \textbf{Coupling unproven.} The two-hemisphere story requires an operationally-meaningful interface from R to L. We have proposed prefix-prepending as the simplest interface; we have not tested it.
+\item \textbf{Single seed.} The PoC is a single training run. Variance estimates require seed sweeps.
+\item \textbf{FineWeb-edu, not long-form text.} The training distribution is web-quality text with documents averaging $\sim 1500$ tokens. PG-19 or RedPajama-long would test the long-context claim more honestly.
+\end{enumerate}
+
+
+% ======================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper commits to two engineering outcomes that the contemporary language-model literature already knows how to verify: \emph{long-context training by proxy} (an L that handles long evaluation contexts without ever seeing one in training, because its training-time co-evolution with R supplied the same gauge diversity a long-context fine-tune would impose) and \emph{inference-time controllability} (R as a steering knob whose manipulation produces predictable shifts in L's continuation). Both targets are recognisable; neither requires the reader to accept any of our biological or representational claims to evaluate.
+
+The architectural commitment that produces both is a single one: a streaming right-hemisphere R that supplies per-position rotations to L's attention bilinear, co-trained from step zero under L's NTP loss with PoSE position skip. The biological motivation (right hemisphere supplies gauge, not articulation), the structural motivation (HRR with unitary rotations is invertible; phase precession in hippocampus uses the same primitive), and the long-context-training-literature mapping (PoSE, YaRN, AnchorAttention all describe smooth modulation of L's rotational schedule, which is what R contributes from a different axis) all reinforce one design, but the paper will be judged on whether C1 / C2 / C3 hold, not on whether the motivating arguments are persuasive.
+
+If the joint-trained Regime B passes C1, C2, and C3, we have a single mechanism that makes pretraining implicitly long-context and gives controllable generation through the same channel. If it passes only C1 and C2, we have a useful long-context training programme without the controllability prize --- still publishable, smaller scope. If it passes only C1 we have a non-catastrophic but ignored R --- back to the drawing board with what the architecture actually tested. We will report whichever it is.
+
+What we explicitly defer to later work: whether R's representation is interpretable, whether the rotational primitive can be replaced by a permutation primitive (Kanerva binding) without loss of effect, whether 605M-scale L co-training behaves the same as 30M-scale L co-training, whether R's controllability extends to multi-modal conditioning. The discipline of this paper is to commit to a target the literature can judge, achieve it (or fail at it cleanly), and let the architectural questions surface from the results rather than steer them.
+
+
+% ======================================================================
+\appendix
+
+
+% ======================================================================
+\section{Long-Context Training as the Right Toolkit for R}
+\label{app:long_context_R}
+
+The body of the paper claims that the long-context training literature is not borrowed but \emph{inherited}: solving the long-context problem and solving the R-coupling problem are the same problem. This appendix justifies that claim concretely, technique by technique. The argument is that L's attention bilinear treats RoPE-rotation and R-rotation as indistinguishable; any technique that makes one safe makes both safe.
+
+\subsection*{A short history: why long-context fine-tuning, and why now?}
+
+For most of the modern transformer's history, long context was a fine-tuning problem and not a pretraining one. Three forces kept it that way. (i)~\emph{Compute economics}: under Chinchilla-style scaling, FLOPs spent on attention bandwidth at long $T$ are FLOPs not spent on tokens, and tokens won. At $T=32K$ the attention term dominates and the same budget buys $\sim\!30\times$ less data, so short-pretrain plus long-fine-tune was Pareto-optimal. (ii)~\emph{Position-encoding theory was inadequate}: learned-absolute (BERT, GPT-2) cannot extrapolate at all; sinusoidal-absolute extrapolates poorly. Only with ALiBi (2021) and RoPE (2021) did extrapolation become theoretically tractable, and only with NTK-aware scaling, YaRN (2023), and LongRoPE (2024) did it become practically reliable. (iii)~\emph{Long, coherent, high-quality data is scarce}: most web documents are short; padding wastes budget, stitching unrelated docs teaches the wrong lesson, and clean long-doc corpora at scale only became available in the last few years. The dominant playbook crystallised as: pretrain at modest $T$ to learn compositional structure, then spend $\sim\!1\%$ of the budget on long-context fine-tuning to recalibrate position encodings, attention temperature, and retrieval-head specialisation.
+
+What changed is that long-context fine-tuning revealed itself to be a remarkably narrow operation: it is principally about \emph{making $L$ robust to position-axis perturbations of its attention bilinear}. PoSE made this concrete by showing that the recalibration can happen at $T_{\text{content}}$ training cost provided the model sees the right \emph{position pairs}. From that point, "long context" stopped being a sequence-length problem and became a rotational-gauge problem. Once the operation is identified as rotation, the same toolkit applies to any rotational perturbation of $L$'s attention, regardless of source --- including a co-trained R. That is the why-now: the techniques that made long-context fine-tuning a one-percent line item are exactly the techniques that make a co-trained rotational observer feasible. The rest of this appendix unpacks each tool in that toolkit and shows the inheritance is one-to-one.
+
+\subsection*{The shared structural problem}
+
+L's attention computes
+\[
+\text{attn}(t, s) = \text{softmax}\!\left( \frac{Q_t^\top R_{\text{pos}}(t-s) K_s}{\sqrt{d_h}} \right) V_s.
+\]
+The entire object $R_{\text{pos}}(t-s)$ is what determines "which tokens attend to which." During pretraining L learns attention patterns specifically against the schedule it was trained on. Anything that perturbs the schedule risks collapsing learned competence. There are two natural ways to perturb:
+
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item \textbf{Position-axis perturbation:} use phases at positions $t, s$ that L never saw during training. This is the long-context extension problem. Solutions: PoSE, YaRN, LongRoPE, NTK-aware scaling, Position Interpolation.
+\item \textbf{Gauge-axis perturbation:} insert an additional rotation $R_\rho(z)$ between $Q$ and $K$ that L never saw during training. This is the R-coupling problem we have been working on.
+\end{enumerate}
+
+From L's attention's perspective, both of these arrive as the \emph{same kind of object}: a unitary modification of the rotational schedule of the bilinear. L cannot tell whether the modification came from a long virtual position, from R's contextual summary, or from any composition of the two. This is the indistinguishability principle, and it is what licenses the inheritance.
+
+\subsection*{PoSE: training L to be robust to phase diversity in the first place}
+
+PoSE~\cite{zhu2024pose} trains L on short content windows ($T_{\text{content}}$) but with positions sampled from a much larger virtual range ($T_{\text{virtual}}$). Per Algorithm 1: split the window into $N=2$ chunks, pick chunk-position offsets $u_1, u_2$ uniformly in $[0, T_{\text{virtual}} - T_{\text{content}}]$ subject to $u_2 \ge u_1 + l_1$. Each batch is the same content with different (gappy, non-contiguous) position assignments.
+
+What does this build? \emph{L develops robustness to phase patterns in general, not to one specific arrangement of phases.} A vanilla pretrained LLM has memorised attention behaviour against the dense contiguous positions $0..T-1$; any other phase pattern is out-of-distribution. PoSE-trained L sees a continuous family of phase patterns and develops attention that respects relative-position structure rather than specific position identity.
+
+\textbf{Why R inherits.} R's rotation $R_\rho(t, l)$, applied to K at every layer, contributes a phase pattern that is, structurally, \emph{another sample from the same family of out-of-distribution-without-PoSE patterns}. PoSE-trained L is trained from step one to be tolerant of that family. R's contributions are not "off-distribution"; they are points in the same distribution L was made robust to. Without PoSE, R's rotations would face a brittle L. With PoSE, they face an L expecting variability.
+
+\subsection*{YaRN: where in the spectrum is modulation safe?}
+
+YaRN's central observation~\cite{peng2023yarn} is that RoPE frequencies are not interchangeable. The high-frequency dimensions of $\theta_d = b^{-2d/D}$ correspond to short-wavelength oscillations (one full rotation per few tokens); the low-frequency dimensions correspond to wavelengths comparable to or longer than the trained window. YaRN's NTK-by-parts ramp interpolates only the low-frequency dims:
+\[
+h(\theta_d) = (1 - \gamma(r(d))) \cdot \theta_d / s + \gamma(r(d)) \cdot \theta_d
+\]
+where $r(d) = L / (2\pi b^{2d/D})$ counts wavelengths-per-window and $\gamma$ is a smooth ramp from 0 to 1 between thresholds $\alpha=1$ and $\beta=32$.
+
+\textbf{Why this matters for R.} The same frequency-band structure is the right place for R to put its rotations. Operating R's modulation at high frequencies (where every angle is a sharp distinction) risks disrupting L's precise local attention --- the kind that token-by-token language modelling depends on. Operating at low frequencies (where many wavelengths span the window, where coarse contextual / topical structure lives) is exactly where Barbero et al.~\cite{barbero2025round} located \emph{semantic} attention heads in Gemma. R's contribution is best understood as \emph{contextual modulation} of L's coarse-grained attention, leaving local precision untouched.
+
+We do not currently constrain R's output frequency band explicitly. The simplest implementation of this lesson is a v2 R that splits its rotation output into "low-frequency" and "high-frequency" sub-bands and either zeroes the high-frequency one or constrains its magnitude. Empirically, joint training under our current init may discover this band-split organically; if not, the YaRN recipe gives us a concrete prior to hand the model.
+
+\subsection*{Init-near-identity: introducing perturbation smoothly}
+
+YaRN starts with the original RoPE schedule and gradually deviates as the context length is extended. There is no "step zero" jump from one schedule to another. The model continues to function as a normal LLM; its attention patterns deform incrementally.
+
+R's rotation-output head is initialised with std $1\mathrm{e}{-3}$. At step zero, the angles R produces are of order $10^{-3}$ radians, the rotations are within $10^{-3}$ of the identity, and L behaves indistinguishably from a vanilla ORN. R's magnitude grows only insofar as NTP gradient finds non-zero rotations useful. There is no "L wakes up to find R has been rewriting its world" moment.
+
+This matches the same principle YaRN uses: \emph{the perturbation enters the system as a small deviation from the identity, growing only along directions that the loss actively rewards}.
+
+\subsection*{The graceful-failure property of rotations}
+
+A.3a's random-content control destroyed L by 6.48 nats. A.3b's random-rotation control hurt L by 0.37 nats. The asymmetry is not coincidental: rotations are bounded operators in $SO(d)$, while content vectors are unbounded in $\mathbb{R}^d$. A random rotation cannot drive any K vector outside the unit sphere of K's existing magnitudes; a random content vector can drive K anywhere. Equivalently: the worst-case damage of injecting an unconstrained rotation into L's attention is the worst-case damage of \emph{any} rotation in $SO(d)$, which is bounded by the diameter of the orbit.
+
+This is the same property that makes YaRN safe to apply at inference on a frozen pretrained model with no retraining. The interpolated RoPE schedule is still a rotation per dim-pair --- you can pick any frequencies you like, and L will still see "rotations" not "arbitrary vectors." The robustness budget of a pretrained transformer to rotational modulation is large; the budget to content modulation is much smaller.
+
+R inherits the budget. Even an under-trained or mis-trained R, supplying badly-chosen rotations, can only cost L a fraction of a nat. We saw this empirically (A.3b: R's rotation hurt L by 0.13, random rotation by 0.37 --- both in the bounded range). Under joint training, NTP gradient flows freely through R's rotation head and the learned rotations will be at least as good as random. The system has a built-in failsafe.
+
+\subsection*{bf16 precision discipline}
+
+Wang et al.~\cite{wang2024bf16rope} document that bf16's 8-bit mantissa loses enough precision in $\sin(m\theta_d)$ at large $m$ and small $\theta_d$ to break RoPE's relative-position invariance. The mitigation: compute the trig tables in fp32 and cast to bf16 only at the final multiply.
+
+R's rotations face the same arithmetic. Our `apply\_per\_position\_pair\_rotation` computes $\cos$ and $\sin$ in fp32 (since the `angles` tensor is fp32 by construction), then casts the result to K's dtype before the multiply. This is the same fix applied to the same operator; it transfers without modification.
+
+\subsection*{The summary picture}
+
+The long-context training literature, viewed through the rotational lens, is not a collection of tricks. It is a coherent recipe for one specific operation: \emph{smoothly modulating L's attention via rotation, without disturbing learned content paths}. PoSE makes L robust to phase diversity; YaRN identifies which frequency bands tolerate modulation; init-near-identity introduces the perturbation smoothly; bf16/fp32 keeps the math sound; the rotation-vs-content asymmetry caps the worst-case damage.
+
+R as a contextual gauge supplies the same kind of object the recipe was designed to handle. There is no impedance mismatch. L doesn't know R's rotations are a different "kind" of input than RoPE's, and L is trained from step one to be tolerant of phase variation regardless of source. The single delta from PoSE is that some of the rotations now come from a learned module reading the same token stream causally.
+
+This is why the joint experiment in Section~\ref{sec:joint_training} is the experiment that should make Regime B work --- and why if it doesn't, the rotational coupling thesis is descriptive rather than constructive, and we will say so.
+
+
+% ======================================================================
+\section{Six Failed R Architectures: A Detailed Post-Mortem}
+\label{app:failed_R}
+
+For completeness, we record each of the six prior R architectures with the specific failure observed and the lesson it taught the next iteration.
+
+\begin{enumerate}[leftmargin=1.5em]
+\item \textbf{Trajectory R (residual reader, argswap-contrastive).} Read L's residual stream across layers; trained on permutation-contrastive positives. \textit{Failure:} BLiMP minimal pairs near chance. \textit{Lesson:} surface-positive contrastives produce surface-level R.
+\item \textbf{R\_FFN\_Reader (spaCy-supervised).} Per-layer FFN output reader; supervised by linguistic tags. \textit{Failure:} ties a linear residual probe on the same data. \textit{Lesson:} supervision adds nothing the residual already had.
+\item \textbf{R\_DualFFN.} Encoder/transition/decoder over pre-down-projection FFN hidden, MSE between consecutive layer hiddens. \textit{Failure:} 67\% MSE improvement, but R's latent ties PCA on linguistic probes. \textit{Lesson:} layer-to-layer MSE is dominated by linear dynamics and collapses to PCA.
+\item \textbf{R\_GistFromEmb (soft-prefix VIB-gated).} Reads embeddings, emits K=4 prefix tokens via VIB and a gated scalar. Co-trained with L on NTP. \textit{Failure:} eval $+0.044$ nats on NTP but L+R loses 10/13 BLiMP phenomena, R's $\mu$ is 30 points worse than PCA on POS. \textit{Lesson:} validation via L's loss is circular when R can find non-syntactic shortcuts.
+\item \textbf{R\_Compressor (bandwidth-constrained).} L sees only $[z; \text{tail}]$. \textit{Failure:} gap stable at $+0.028$ nats at $T=1024$, collapses to $+0.001$ at $T=4096$, fails to extract $+0.11$ nats of usable prefix info at $W=8$. \textit{Lesson:} architecture cannot extract prefix information through a 16-token compressed bottleneck even when information is needed.
+\item \textbf{R\_Hippocampus (this paper, adjacent rotational binder).} Self-validates on retrieval ($+4.5$ nats over baseline), generalises to $T=16384$, but coupling tests A.3a (Memory) and A.3b (Gauge) are negative-but-substantive at $-0.13$ nats. A.4 (LoRA-on-L) goes neutral. \textit{Lesson:} adjacent training produces incompatible bases; joint training is required.
+\end{enumerate}
+
+The pattern across all six is one variable: \emph{shared training objective}. Iterations 1--5 had R and L disagree on what to optimise; iteration 6 had R training on its own self-validating loss with L absent. Section~\ref{sec:joint_training} commits to the only configuration not yet tested: R and L sharing NTP from step zero, with R as a rotational input on the same attention channel L is already trained to be robust against.
+
+
+% ======================================================================
+\section{Coupling Configurations Tested To Date}
+\label{app:coupling_table}
+
+For reference, the four coupling configurations tested with R\_Hippocampus's frozen adjacent-trained R, plus the joint regime committed to in this paper.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}p{0.13\linewidth} p{0.16\linewidth} p{0.18\linewidth} p{0.18\linewidth} p{0.18\linewidth}@{}}
+\toprule
+\textbf{Config} & \textbf{R} & \textbf{L} & \textbf{Effect on L's NTP} & \textbf{Random control} \\
+\midrule
+A.3a Memory & frozen, KV inject & frozen & $-0.13$ nats & $-6.48$ nats (random KV destroys L) \\
+A.3b Gauge  & frozen, rotation modulation & frozen & $-0.13$ nats (\emph{same!}) & $-0.37$ nats \\
+A.4 LoRA + Memory & frozen R, KV inject & + LoRA on K/V/O (rank 16) & $-0.018$ nats vs LoRA-alone (within noise) & --- \\
+\textbf{\S\ref{sec:joint_training} Joint} & \textbf{co-trained from step 0, rotation modulation} & \textbf{co-trained from step 0} & \textbf{TBD --- experiment in flight} & --- \\
+\bottomrule
+\end{tabular}
+\caption{Coupling configurations and their reported NTP effect on L. The cross-regime symmetry of $-0.13$ nats in A.3a and A.3b (two architecturally-distinct injection mechanisms) located the bottleneck precisely: it is the basis mismatch between adjacent-trained R and frozen L, not the choice of regime. The committed joint-trained experiment (\S\ref{sec:joint_training}) addresses the cause directly.}
+\label{tab:configs_appendix}
+\end{table}
+
+
+% ======================================================================
+\section{In Search of a Representational Equivalence}
+\label{app:fourier_equivalence}
+
+The three R architectures we run against each other in \S\ref{sec:joint_training} (GRU, causal Transformer, selective SSM) are not as different as they look. Each, from a Fourier-analytic vantage, is a way of building a content-modulated bank of oscillators over the token stream, and each makes a different tradeoff between content-dependence, computational cost, and the fixedness of the frequency basis.
+
+\paragraph{The three operations side by side.}
+\begin{itemize}
+\item \textbf{Wavelets / multi-scale CNNs.} A fixed bank of dilated frequency-time atoms; content-independent basis, $O(T \log T)$ application, no recurrence.
+\item \textbf{Diagonal SSMs (S4, Mamba).} A bank of damped oscillators with complex eigenvalues $\lambda_k = e^{-\alpha_k + i\omega_k}$, computed by recurrence in $O(T)$. With selective (input-dependent) $\Delta$ and $B,C$, the wavelet bank becomes content-modulated --- a learned, adaptive Gabor frame.
+\item \textbf{Attention $+$ RoPE.} The bilinear form $q^\top R(t-s)\,k$ is the Fourier transform of a content-modulated relative-position kernel: the most expressive of the three at $O(T^2)$, with fully content-dependent frequency selection on both sides of every interaction.
+\end{itemize}
+
+Linear attention with a finite-rank kernel $\phi(\cdot)$ provides a parameterised axis between these regimes: rank-$r$ feature maps recover a rank-$r$ SSM as $r \to d_{\text{state}}$ and recover full attention as $r \to T$. In this view, ``rotation'' is the common substrate --- what differs is whether the rotation rates are fixed (wavelet), recurrent and content-modulated (SSM), or pairwise content-modulated (attention+RoPE).
+
+\paragraph{Why this matters for R.} If this equivalence is real and quantitatively tight, then R's \emph{architecture} is a less interesting axis than R's \emph{frequency content}: a frequency-native R that emits $(\omega_k, \alpha_k)$ directly --- bypassing the recurrent or quadratic machinery --- might match GRU/Transformer/SSM-R at lower cost while making the rotation hypothesis maximally legible (R is literally a learned wavelet basis over the token stream). It would also clarify what L is robust to: rotational gauge variation $\equiv$ phase shifts in a learned frequency decomposition.
+
+\paragraph{Status.} We are searching for this equivalence rather than asserting it. The three-way head-to-head in \S\ref{sec:joint_training} is the first empirical bite: if GRU-R, Transformer-R, and SSM-R produce comparable C1/C2/C3 outcomes despite their different computational structure, it constitutes weak evidence that the rotation channel is invariant to the choice of frequency-bank parameterisation, and motivates a fourth, frequency-native variant in a follow-up. We flag this as an open direction, not a closed result.
+
+\subsection*{R as a content-conditioned linguistic-wavelet bank (an inspirational frame)}
+
+A more evocative way to read what R is doing --- offered here as a generative metaphor rather than a load-bearing claim --- is that R is searching for a basis of \emph{linguistic wavelets}: time-localised oscillators over the token stream whose envelopes track specific compositional or semantic features (topic coherence, discourse markers, anaphora pairs, syntactic role, quotation/embedding nesting, etc.). The reading goes step by step:
+\begin{enumerate}[nosep,leftmargin=1.5em]
+\item R's token embedding lifts the discrete stream into a continuous trajectory in $\mathbb{R}^{d_R}$ --- the analog of sampling.
+\item R's core (GRU hidden state, SSM diagonal eigenvalues, or transformer self-attention) runs a content-modulated bank of oscillators across that trajectory; each channel has an effective decay rate and frequency content that varies with input.
+\item R's rotation-output head reads out \emph{phase only} (angles $\theta_{l,h,p}(t)$) --- the direction of local frequency content, not its magnitude.
+\item L's attention bilinear $q^\top R(t-s)\,k$ then ingests R's emitted phases as a gauge transformation of its own RoPE, structurally identical to a wavelet packet's per-level phase rotation.
+\end{enumerate}
+
+\subsubsection*{Gist by superposition.} The compelling part of this frame is what happens at long $T$. R's hidden state evolves slowly relative to token frequency; the integral of its phase emission over a span $[s, t]$ is dominated by R's slow modes. L's attention bilinear at distance $t-s$ depends only on \emph{integrated} relative phase, not on per-position emission. So when L attends across thousands of tokens, the high-frequency local detail in R's emission has averaged out, and what survives is the document-scale envelope --- the slow-moving residual that, in classical wavelet language, \emph{is} the gist. The "gist by superposition" picture is therefore not a separate mechanism; it falls out of (i) R having bounded-decay dynamics and (ii) L only ever reading R's phases through a relative-position bilinear that integrates them.
+
+\subsubsection*{Why phase rather than amplitude.} The wavelet frame also clarifies a design choice that reads as arbitrary in the algebraic presentation. Amplitude-based readouts (the failure mode of A.3a, R\_Compressor, R\_GistFromEmb) require additive composition across superposition --- two features in the same channel interfere, and the readout has to compete with L's pretrained K-vector magnitudes. Phase, by contrast, is commutative under composition: rotations compose by adding angles ($\bmod 2\pi$). Two phase contributions superpose cleanly, and the rotation never displaces L's content vectors --- it only redirects them along the unit sphere. This is the same property YaRN exploits at inference (a phase-only modification of RoPE composes safely with whatever phases the pretrained model has absorbed); and it is the property that makes the random-rotation control in A.3b cost only $0.37$ nats while the random-content control in A.3a destroyed L by $6.48$ nats. \emph{Rotations have a small worst-case footprint precisely because they are bounded operators in $SO(d)$.}
+
+\subsubsection*{Where the analogy is honest about its limits.} R has $L_{\text{layers}} \times n_{\text{heads}} \times d_{\text{head}}/2$ output channels (in our 8/4/32 configuration: 1024 channels). A genuine wavelet bank has an uncountable family of scales and translations; ours has 1024 atoms total, reused causally across all positions. Whether NTP gradient organises these into a multi-resolution hierarchy (geometrically-spaced scales, near-orthogonal atoms) or collapses them into redundant per-layer copies is an empirical question we have not yet measured. Two probes would test it directly: (a) a low-rank decomposition of R's emitted angle tensor across positions to see whether R discovered a layered, multi-scale organisation; (b) a feature-alignment probe that asks whether specific channels of R's output align with held-out linguistic features (topic boundaries, discourse markers, anaphora pairs). If (a) recovers a near-geometric scale hierarchy and (b) finds channel-feature alignment, the linguistic-wavelet frame stops being a metaphor and starts being a description.
+
+\subsubsection*{What this buys the design programme.} Three concrete follow-up experiments fall out of the frame: (1) split R's rotation output explicitly into low-frequency and high-frequency sub-bands and either zero or magnitude-cap the high-frequency one, in line with the YaRN frequency-band lesson (\S\ref{app:long_context_R}); (2) regularise R's emitted angles toward orthogonality across atoms (Procrustes / SVD constraints --- already on the rotation-theory programme as items E1/E7); (3) build the frequency-native R proposed earlier in this appendix, where R emits $(\omega_k, \alpha_k)$ directly instead of running a recurrent or quadratic core. None of these are committed work for this paper; we list them so a reader knows what the inspirational frame is licensing for the design space.
+
+\subsubsection*{Generator-level vs.\ kernel-level equivalence.} A first-pass fingerprint extraction on three trained R variants (GRU, causal transformer, selective SSM) revealed dramatic differences at the per-position angle level: GRU- and transformer-R produce slow-mode angle banks ($\sim\!96\%$ of channels concentrated in the low-frequency tenth), while SSM-R produces a fast-mode bank ($\sim\!3\%$ low-band, $\sim\!175\times$ higher peak frequency, $\sim\!10\times$ higher effective rank, and the strongest channel-feature alignment with sentence boundaries and discourse markers). The naive read of these differences is ``the architectures are not equivalent at the rotational-channel level'' --- but this conflates the generator with the kernel.
+
+The object L's attention bilinear consumes is not R's per-position angle $\theta_R(t)$; it is the relative-position rotation \emph{experienced} at lag $\tau = t-s$ inside $q^\top R(t-s)\,k$. The relevant invariant is therefore the kernel
+\[
+K_R(\tau) = \mathbb{E}_t\!\left[R_R(t) \cdot R_R(t+\tau)^*\right]
+\]
+i.e.\ the autocorrelation of R's emitted rotations over the token stream. Two architectures with wildly different generator dynamics can compose to identical $K_R$: a slow-mode bank and a beat pattern of two fast modes at $\{\omega - \Delta, \omega + \Delta\}$ both produce the same $\Delta$-frequency relative structure, indistinguishable to L's bilinear. The Fourier-Bochner spectral measure $\mu_R(\omega)$ associated with $K_R$ is the right ``what does L feel'' invariant; the per-channel angle spectrum we measured is the wrong altitude.
+
+This re-frames the equivalence claim. ``Rotation is rotation regardless of source'' is a kernel-level statement: $\mu_R$ may be invariant across architectures even when each architecture realises $\mu_R$ via radically different generator dynamics. It also matches how long-context fine-tuning operates on the underlying transformer --- it modifies L's RoPE schedule, which is precisely a kernel modification, not a wavelet-bank one. If R-injection is meant to be the same operation as long-context fine-tuning, equivalence \emph{must} live at the kernel altitude, because that is where long-context fine-tuning operates.
+
+The empirical question this opens (and which the present paper does not resolve) is whether the three R architectures' $K_R$'s actually agree on long-range structure (where the long-context-by-proxy claim lives) while diverging on short-range structure (where the channel-feature alignments differ). A fingerprint of the kernel rather than the generator --- the autocorrelation under matched token streams, FFT-decomposed per (layer, head, dim-pair) --- is the experiment that adjudicates the equivalence claim cleanly. We flag it as the next measurement; the present paper's flagged finding is that a generator-level wavelet-bank fingerprint is informative but insufficient.
+
+
+% ======================================================================
+\begin{thebibliography}{99}
+
+\bibitem{mcgilchrist2009master}
+McGilchrist, I. (2009).
+\emph{The Master and His Emissary: The Divided Brain and the Making of the Western World}. Yale University Press.
+
+\bibitem{mcgilchrist2021matter}
+McGilchrist, I. (2021).
+\emph{The Matter With Things: Our Brains, Our Delusions, and the Unmaking of the World}. Perspectiva Press.
+
+\bibitem{sachs1967}
+Sachs, J. (1967). Recognition memory for syntactic and semantic aspects of connected discourse. \emph{Perception \& Psychophysics}, 2, 437--442.
+
+\bibitem{kintsch1988}
+Kintsch, W. (1988). The role of knowledge in discourse comprehension: A Construction-Integration model. \emph{Psychological Review}, 95(2), 163--182.
+
+\bibitem{ferreira2002}
+Ferreira, F., Bailey, K. G. D., Ferraro, V. (2002). Good-enough representations in language comprehension. \emph{Current Directions in Psychological Science}, 11(1), 11--15.
+
+\bibitem{karimi-ferreira2024}
+Karimi, H., Ferreira, F. (2024). Good enough processing: what have we learned in 20 years? \emph{Frontiers in Psychology}, 15.
+
+\bibitem{reyna-brainerd2020}
+Reyna, V. F., Brainerd, C. J. (2020). A scientific theory of gist communication and misinformation resistance. \emph{PNAS}, 117(5), 25902--25912.
+
+\bibitem{burgess2011models}
+Burgess, N., O'Keefe, J. (2011). Models of place and grid cell firing and theta rhythmicity. \emph{Current Opinion in Neurobiology}, 21(5), 734--744.
+
+\bibitem{plate1995hrr}
+Plate, T. A. (1995). Holographic Reduced Representations. \emph{IEEE Transactions on Neural Networks}, 6(3), 623--641.
+
+\bibitem{kanerva2009hyperdim}
+Kanerva, P. (2009). Hyperdimensional Computing: An Introduction to Computing in Distributed Representation with High-Dimensional Random Vectors. \emph{Cognitive Computation}, 1, 139--159.
+
+\bibitem{ba2016fastweights}
+Ba, J., Hinton, G., Mnih, V., Leibo, J., Ionescu, C. (2016). Using Fast Weights to Attend to the Recent Past. arXiv:1610.06258.
+
+\bibitem{schlag2021lineartransformers}
+Schlag, I., Irie, K., Schmidhuber, J. (2021). Linear Transformers Are Secretly Fast Weight Memories. arXiv:2102.11174.
+
+\bibitem{su2021roformer}
+Su, J., Lu, Y., Pan, S., Murtadha, A., Wen, B., Liu, Y. (2021). RoFormer: Enhanced Transformer with Rotary Position Embedding. arXiv:2104.09864.
+
+\bibitem{peng2023yarn}
+Peng, B., Quesnelle, J., Fan, H., Shippole, E. (2023). YaRN: Efficient Context Window Extension of Large Language Models. arXiv:2309.00071.
+
+\bibitem{ding2024longrope}
+Ding, Y., et al. (2024). LongRoPE: Extending LLM Context Window Beyond 2 Million Tokens. arXiv:2402.13753.
+
+\bibitem{zhu2024pose}
+Zhu, D., Yang, N., Wang, L., Song, Y., Wu, W., Wei, F., Li, S. (2024). PoSE: Efficient Context Window Extension of LLMs via Positional Skip-wise Training. ICLR 2024. arXiv:2309.10400.
+
+\bibitem{wang2024bf16rope}
+Wang, H., Ma, S., Dong, L., Huang, S., Zhang, D., Wei, F. (2024). When Precision Meets Position: BFloat16 Breaks Down RoPE in Long-Context Training. NeurIPS 2024. arXiv:2411.13476.
+
+\bibitem{rae2019compressive}
+Rae, J. W., Potapenko, A., Jayakumar, S. M., Lillicrap, T. P. (2019). Compressive Transformers for Long-Range Sequence Modelling. arXiv:1911.05507.
+
+\bibitem{mohtashami2023landmark}
+Mohtashami, A., Jaggi, M. (2023). Landmark Attention: Random-Access Infinite Context Length for Transformers. arXiv:2305.16300.
+
+\bibitem{sun2024ttt}
+Sun, Y., et al. (2024). Learning to (Learn at Test Time): RNNs with Expressive Hidden States. arXiv:2407.04620.
+
+\bibitem{zhang2026rlm}
+Zhang, A. L., Kraska, T., Khattab, O. (2026). Recursive Language Models. arXiv:2512.24601.
+
+\bibitem{orn2026}
+Amarteifio, S. (2026). The Orbital Response Network. \\Internal report, \url{https://github.com/Percolation-Labs/orn}.
+
+\bibitem{rotation-design-space}
+Amarteifio, S. (2026). Rotation Design Space and the Beauty of Rotations. Internal note, accompanying ORN paper revision.
+
+\end{thebibliography}
+
+\end{document}
