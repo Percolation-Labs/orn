@@ -75,25 +75,43 @@ def precompute_rope_freqs(d_head: int, max_seq_len: int, theta: float = 10000.0)
     return torch.polar(torch.ones_like(freqs), freqs)  # complex64
 
 
-def apply_rope(x: torch.Tensor, freqs: torch.Tensor) -> torch.Tensor:
+def apply_rope(x: torch.Tensor, freqs: torch.Tensor, start_pos: int = 0) -> torch.Tensor:
     """
     Apply rotary position embeddings to Q or K tensor.
 
-    Interprets pairs of dimensions as complex numbers, multiplies by the
-    precomputed rotation factors, then converts back to real.
+    Real-arithmetic implementation (cos/sin) rather than torch.view_as_complex
+    so it runs on every backend including MPS, which doesn't support complex64.
+    Numerically identical to a complex-multiplication implementation.
 
-    Args:
-        x: (batch, n_heads, seq_len, d_head) — Q or K tensor
-        freqs: (max_seq_len, d_head // 2) — precomputed rotation factors
+    `start_pos` is the absolute position of x[:, :, 0, :]. For prefill that's 0;
+    for KV-cache decode it's the number of tokens already cached, so the new
+    token gets the right RoPE rotation rather than position 0.
 
-    Returns:
-        Rotated tensor with same shape as x.
+    `freqs` may be a complex tensor (legacy shape `(seq, d_head/2)` complex64)
+    or a stacked real tensor (`(2, seq, d_head/2)`, [cos, sin]).
     """
     B, H, S, D = x.shape
-    x_complex = torch.view_as_complex(x.float().reshape(B, H, S, D // 2, 2))
-    freqs = freqs[:S].unsqueeze(0).unsqueeze(0)  # (1, 1, S, d_head/2)
-    x_rotated = torch.view_as_real(x_complex * freqs).reshape(B, H, S, D)
-    return x_rotated.type_as(x)
+    end = start_pos + S
+    if torch.is_complex(freqs):
+        if x.device.type == "mps":
+            f = freqs[start_pos:end].cpu()
+            cos_src = f.real.to(x.device)
+            sin_src = f.imag.to(x.device)
+        else:
+            cos_src = freqs[start_pos:end].real
+            sin_src = freqs[start_pos:end].imag
+    else:
+        cos_src = freqs[0][start_pos:end]
+        sin_src = freqs[1][start_pos:end]
+    cos = cos_src.to(x.dtype).unsqueeze(0).unsqueeze(0)
+    sin = sin_src.to(x.dtype).unsqueeze(0).unsqueeze(0)
+    x_f = x.reshape(B, H, S, D // 2, 2)
+    x_re = x_f[..., 0]
+    x_im = x_f[..., 1]
+    out_re = x_re * cos - x_im * sin
+    out_im = x_re * sin + x_im * cos
+    out = torch.stack([out_re, out_im], dim=-1).reshape(B, H, S, D)
+    return out.type_as(x)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

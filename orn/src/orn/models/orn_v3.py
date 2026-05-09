@@ -110,25 +110,83 @@ class ORNV3Block(nn.Module):
         nn.init.constant_(self.gate.bias, -3.0)
         nn.init.zeros_(self.corr[-1].weight)
 
-    def forward(self, x, is_causal: bool = True, attn_mask=None, delta=None):
+    @torch.no_grad()
+    def fuse_for_inference(self):
+        """Pre-fuse the K-projection chain `B @ Wk_proj^T` into one (d, n_kv*d_head)
+        matrix. Saves one matmul per token per layer at inference. Stored as a
+        non-persistent buffer so checkpoints stay portable; cleared automatically
+        when blocks are quantized (the fused tensor would be dead code under
+        post-training quantization, since Wk_proj's quantized representation is
+        what we want to use)."""
+        if hasattr(self, "_BWk"):
+            return
+        bwk = (self.B @ self.Wk_proj.weight.t()).contiguous()
+        self.register_buffer("_BWk", bwk, persistent=False)
+
+    def forward(self, x, is_causal: bool = True, attn_mask=None, delta=None,
+                kv_cache=None, return_cache: bool = False):
+        """Forward through one ORN block with optional KV cache.
+
+        Cache contract:
+        - `kv_cache=None, return_cache=False` (default): plain forward, returns `x`.
+        - `kv_cache=None, return_cache=True`: prefill — runs the full forward and
+          returns `(x, (K, V))` for subsequent decode steps to reuse.
+        - `kv_cache=(K_past, V_past)`: decode — `x` should be the new tokens (S=1
+          for one-at-a-time decode); we compute K, V for them, RoPE-rotate at
+          position `T_past`, append to the cache, attend the new query against
+          the full past+new K/V. Returns `(x, (K_new, V_new))` with the updated
+          cache.
+
+        The K and V cached are *pre-GQA-repeat* — the per-head broadcast for
+        grouped-query attention is done at SDPA time via `enable_gqa=True`,
+        keeping the cache O(n_kv_heads) rather than O(n_q_heads)."""
         B, S, D = x.shape
         h = self.ln_attn(x)
 
+        # SharedM coupling. If fused (B @ Wk_proj^T) is precomputed, use one
+        # matmul instead of two for the K projection.
         q = (h @ self.A).view(B, S, self.n_q_heads, self.d_head).transpose(1, 2)
-        k_raw = h @ self.B
-        k = self.Wk_proj(k_raw).view(B, S, self.n_kv_heads, self.d_head).transpose(1, 2)
+        if hasattr(self, "_BWk"):
+            k = (h @ self._BWk).view(B, S, self.n_kv_heads, self.d_head).transpose(1, 2)
+        else:
+            k_raw = h @ self.B
+            k = self.Wk_proj(k_raw).view(B, S, self.n_kv_heads, self.d_head).transpose(1, 2)
         v = self.Wv(h).view(B, S, self.n_kv_heads, self.d_head).transpose(1, 2)
 
-        q = apply_rope(q, self.rope_freqs.to(q.device))
-        k = apply_rope(k, self.rope_freqs.to(k.device))
+        # RoPE — start_pos shifts when we're appending to a cache so the new
+        # token gets its absolute-position rotation, not position 0.
+        cache_pos = kv_cache[0].shape[2] if kv_cache is not None else 0
+        rope = self.rope_freqs.to(q.device)
+        q = apply_rope(q, rope, start_pos=cache_pos)
+        k = apply_rope(k, rope, start_pos=cache_pos)
 
-        k = k.repeat_interleave(self.n_rep, dim=1)
-        v = v.repeat_interleave(self.n_rep, dim=1)
+        # Append to KV cache pre-GQA-repeat (memory-efficient: cache stays at
+        # n_kv_heads, broadcast happens inside SDPA via enable_gqa).
+        if kv_cache is not None:
+            k = torch.cat([kv_cache[0], k], dim=2)
+            v = torch.cat([kv_cache[1], v], dim=2)
 
-        if attn_mask is not None:
-            attn_out = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask)
-        else:
-            attn_out = F.scaled_dot_product_attention(q, k, v, is_causal=is_causal)
+        new_cache = (k, v) if (return_cache or kv_cache is not None) else None
+
+        # SDPA — causal mask only on prefill (S queries, S keys). In decode
+        # mode the new query attends to all of past+new (S queries against
+        # T_past+S keys), so no causal mask is needed.
+        use_causal = is_causal and (kv_cache is None)
+        try:
+            if attn_mask is not None:
+                attn_out = F.scaled_dot_product_attention(
+                    q, k, v, attn_mask=attn_mask, enable_gqa=True)
+            else:
+                attn_out = F.scaled_dot_product_attention(
+                    q, k, v, is_causal=use_causal, enable_gqa=True)
+        except TypeError:
+            # PyTorch < 2.5: no enable_gqa flag, materialize the broadcast.
+            k_rep = k.repeat_interleave(self.n_rep, dim=1)
+            v_rep = v.repeat_interleave(self.n_rep, dim=1)
+            if attn_mask is not None:
+                attn_out = F.scaled_dot_product_attention(q, k_rep, v_rep, attn_mask=attn_mask)
+            else:
+                attn_out = F.scaled_dot_product_attention(q, k_rep, v_rep, is_causal=use_causal)
 
         attn_out = attn_out.transpose(1, 2).contiguous().view(B, S, -1)
         attn_out = self.Wo(attn_out)
@@ -139,6 +197,9 @@ class ORNV3Block(nn.Module):
         x = x + self.shared_ffn(self.ln_ffn(x))
         h_c = self.ln_corr(x)
         x = x + torch.sigmoid(self.gate(h_c)) * self.corr(h_c)
+
+        if new_cache is not None:
+            return x, new_cache
         return x
 
 
@@ -200,8 +261,26 @@ class ORNV3(nn.Module):
             nn.init.normal_(m.weight, std=0.02)
 
     def forward(self, tokens, targets=None, is_causal: bool = True,
-                attn_mask=None, deltas=None):
-        """deltas: optional list of per-layer (U, V) tuples for LORN bridge."""
+                attn_mask=None, deltas=None, kv_caches=None,
+                return_cache: bool = False):
+        """Forward through the model.
+
+        Args:
+            tokens: (B, S) input token ids.
+            targets: optional (B, S) — if given, returns (logits, loss).
+            is_causal: causal masking on attention (prefill only; decode mode
+                automatically disables it because the new query already sees
+                the full past via the cache).
+            attn_mask: explicit attention mask, takes precedence over is_causal.
+            deltas: optional list of per-layer (U, V) tuples for LORN bridge.
+            kv_caches: optional list of `(K, V)` tuples per layer for
+                incremental decoding. First call: pass `kv_caches=None,
+                return_cache=True` and the model returns `(logits, new_caches)`.
+                Subsequent calls: pass the returned list and only the new
+                token(s); the model returns `(logits, updated_caches)`.
+            return_cache: explicitly request a cache list be returned even on
+                the first call. Implied if `kv_caches` is non-None.
+        """
         B, S = tokens.shape
         h = self.tok_emb(tokens)
 
@@ -210,14 +289,26 @@ class ORNV3(nn.Module):
         assert len(deltas) == len(self.blocks), \
             f"deltas length {len(deltas)} != n_layers {len(self.blocks)}"
 
-        for block, d in zip(self.blocks, deltas):
-            h = block(h, is_causal=is_causal, attn_mask=attn_mask, delta=d)
+        use_cache = return_cache or (kv_caches is not None)
+        if kv_caches is None:
+            kv_caches = [None] * len(self.blocks)
+        new_caches: list = []
+
+        for block, d, cache in zip(self.blocks, deltas, kv_caches):
+            if use_cache:
+                h, new_c = block(h, is_causal=is_causal, attn_mask=attn_mask,
+                                 delta=d, kv_cache=cache, return_cache=True)
+                new_caches.append(new_c)
+            else:
+                h = block(h, is_causal=is_causal, attn_mask=attn_mask, delta=d)
 
         logits = self.head(self.ln_f(h))
 
         if targets is not None:
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
             return logits, loss
+        if use_cache:
+            return logits, new_caches
         return logits
 
     def count_params(self) -> dict:

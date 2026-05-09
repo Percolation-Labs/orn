@@ -23,6 +23,14 @@ from orn.cli.commands import (
     evaluation,
     hf,
     reproduce,
+    serve,
+    agent_demo,
+    mlx_bench,
+    sft,
+    dpo,
+    long_ctx_ft,
+    fc_sft,
+    eval_fc,
 )
 
 
@@ -35,6 +43,14 @@ _COMMAND_MODULES = [
     evaluation,
     hf,
     reproduce,
+    serve,
+    agent_demo,
+    mlx_bench,
+    sft,
+    dpo,
+    long_ctx_ft,
+    fc_sft,
+    eval_fc,
 ]
 
 
